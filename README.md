@@ -13,7 +13,7 @@ Ingresos de habitantes provinciales medianos (AR$ corrientes de 2021-01) y su ra
 
 Por ejemplo, el habitante medio de CABA gana casi $49000 en enero de 2021, un ingreso mayor que el 70% de los argentinos.
 
-Dependiendo el tamano de sampleo, se puede alcanza tuna resolucion geografica satisfactoria en fracciones o radios censales. El siguiente mapa repite el calculo del mapa anterior pero en las fracciones censales del AMBA.
+Dependiendo el tamano de sampleo, se puede alcanzar una resolucion geografica satisfactoria en fracciones o radios censales. El siguiente mapa repite el calculo del mapa anterior pero en las fracciones censales del AMBA.
 
 <img src="/figuras/plot_5.png" width="400">
 
