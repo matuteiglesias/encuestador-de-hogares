@@ -32,6 +32,7 @@ Podemos tambien estudiar desagregados por edad. Esto se muestra en el siguiente 
 ***Ingresos segun condicion de actividad***
 
 El mayor determinante de ingresos individuales es la condicion de actividad, es decir, si la persona esta ocupada, desocupada, o es inactiva. Los jubilados, estudiantes, amas de casa son inactivos.
+
 ![Plot](/figuras/plot_2.png)
 
 ***Aglomerados rankeados por ingreso***
