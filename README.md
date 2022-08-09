@@ -3,6 +3,31 @@ Entrenador de modelos de random forest que predicen respuestas a las preguntas d
 
 Principalmente, estos modelos permiten predecir los ingresos de las personas segun las caracteristicas capturadas en el censo. Entre las ventajas de esta herramienta podemos estudiar la dependencia de ingresos segun mas de una variable al mismo tiempo, computar muy facilmente percentiles (deciles) de ingreso, contar con una definicion geografica de radio censal, entre otras ventajas muy utiles.
 
+Este repositorio contiene notebooks y rutinas (.py) encargadas de:
+
+   - Crear datasets de entrenamiento a partir de microdatos de la Encuenta de Hogares de INDEC (EPH)
+
+   - Entrenar modelo de Machine Learning en estos datos 
+
+
+El modelo se llama encuestador de hogares. Cuando le suministramos informacion de personas que fueron censadas, predice variables que se preguntan en la Encuesta de Hogares. Por ejemplo, ingreso, formalidad laboral, etc.
+
+## Actualizaciones Periodicas:
+
+Tanto los datasets de entrenamiento, como los archivos que guardan los modelos, son de tamaño demasiado grande para sincronizarse en el repositorio. Por eso se recomienda a cada usuario clonar el repositorio, y correr las rutinas 'crear_EPH_training' y 'entrenar_modelos'. 
+
+Esto se hace simplemente abriendo una terminal, ubicandose en el directorio rutinas y corriendo:
+
+`python crear_EPH_training.py -y 2003 2023 -ow False`
+
+`python entrenar_modelos.py -y 2003 2023 -ow False`
+
+Estas dos rutinas generan los datasets de entrenamiento y entrenan los modelos. Se necesitan los microdatos de EPH elaborados por INDEC, los cuales estan disponibles en el repositorio: https://github.com/matuteiglesias/microdatos-EPH-INDEC
+
+Se puede configurar mediante crontab la ejecucion de estas rutinas todos los dias, con opcion `-ow False` de forma de incorporar datos nuevos subidos por INDEC en un plazo de no mas de 24 hs. 
+
+El INDEC se toma al menos 130 dias luego de terminado el trimestre para publicar los microdatos. De forma que las publicaciones de microdatos se esperan en la primera mitad de los meses de febrero, mayo, agosto y noviembre. 
+
 ## Ejemplos:
 
 ***Heterogeneidad geografica***
