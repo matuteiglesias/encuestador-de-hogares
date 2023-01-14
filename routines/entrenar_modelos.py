@@ -1,15 +1,16 @@
+#!/usr/bin/env python
+# coding: utf-8
+# 
+
+
 ### PARSEO DE ARGUMENTOS
 
 import argparse
-import pandas as pd
 
-#os.chdir(os.path.dirname(__file__))
+parser = argparse.ArgumentParser(description='A script to process data for a range of years')
 
-parser = argparse.ArgumentParser()
-# parser.add_argument('-i', action='append', nargs='+')
-
-parser.add_argument('-y','--years', nargs='+', help='<Required> Set flag', required=False, type=int, default=[2021, 2022])
-parser.add_argument('-ow','--overwrite', nargs=1, required=False, default= True)
+parser.add_argument('-y','--years', nargs='+', help='Set the range of years to process data for. Default is the current year and the next year', required=False, type=int, default=[2022, 2023])
+parser.add_argument('-ow','--overwrite', nargs=1, required=False, default= True, help='Flag to specify if previous data should be overwritten. Default is True')
 
 args = parser.parse_args()
 
@@ -17,9 +18,6 @@ overwrite = args.overwrite
 startyr = args.years[0]
 endyr = args.years[1]
 
-
-import sys
-ipython_vars = ['In', 'Out', 'exit', 'quit', 'get_ipython', 'ipython_vars']
 
 # Column names
 y_cols = ['CAT_OCUP', 'P47T', 'PP10E', 'PP10D', 'PP07K', 'PP07I', 'V3_M', 'PP07G4', 'CH16', 'T_VI', 
@@ -63,7 +61,7 @@ def fit_model(train_data, x_cols, y_cols, out_filename,
     
     X, X_test, y, y_test = train_test_split(X, y, test_size=0.1) # less memory used
     
-    clf = model.fit(X.values, y.values)
+    clf = model.fit(X.values, y.values) # fit model
 
     # save the model to disk
     if not os.path.exists('./../fitted_RF/'):

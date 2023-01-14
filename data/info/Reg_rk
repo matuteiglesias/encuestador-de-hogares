@@ -113,9 +113,9 @@ ANO4,Region,Reg_rk
 2021,Pampeana,0.667
 2021,Cuyo,0.5
 2021,Noreste,0.333
+2022,Noroeste,0.333
+2022,Gran Buenos Aires,0.833
 2022,Patagónica,1.0
 2022,Pampeana,0.667
-2022,Cuyo,0.333
+2022,Cuyo,0.5
 2022,Noreste,0.167
-2022,Gran Buenos Aires,0.833
-2022,Noroeste,0.5
