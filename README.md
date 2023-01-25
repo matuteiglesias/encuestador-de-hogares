@@ -1,16 +1,20 @@
 # encuestador-de-hogares
+
 Entrenador de modelos de random forest que predicen respuestas a las preguntas de la encuesta permanente de hogares (EPH - INDEC).
 
-Principalmente, estos modelos permiten predecir los ingresos de las personas segun las caracteristicas capturadas en el censo. Entre las ventajas de esta herramienta podemos estudiar la dependencia de ingresos segun mas de una variable al mismo tiempo, computar muy facilmente percentiles (deciles) de ingreso, contar con una definicion geografica de radio censal, entre otras ventajas muy utiles.
-
-Este repositorio contiene notebooks y rutinas (.py) encargadas de:
-
-   - Crear datasets de entrenamiento a partir de microdatos de la Encuenta de Hogares de INDEC (EPH)
-
-   - Entrenar modelo de Machine Learning en estos datos 
+This repository contains code and data for analyzing household survey data from the Encuesta Permanente de Hogares (EPH) in Argentina. The goal of this project is to train machine learning models to predict various household characteristics from the EPH data and to extract information from census data that can be used to improve the accuracy of these predictions. The repository includes Jupyter notebooks that load and format the EPH and census data, train machine learning models, and extract samples of data from the census. The EPHARG_train files are the training sets, the CLF files are the machine learning models saved, and the data folder contains information that is used in the analysis. The repository also includes figures that show the results of the analysis.
 
 
-El modelo se llama encuestador de hogares. Cuando le suministramos informacion de personas que fueron censadas, predice variables que se preguntan en la Encuesta de Hogares. Por ejemplo, ingreso, formalidad laboral, etc.
+
+
+## Modelos
+
+En este repositorio se utilizan modelos de Random Forest para predecir diferentes características de hogares a partir de la encuesta EPH. El objetivo es mejorar la precisión de estas predicciones al usar información del Censo Nacional. Los modelos se entrenan en cuatro etapas: clasificación 1, clasificación 2, clasificación 3, y regresión.
+
+En la primera etapa de clasificación, se utilizan variables específicas de la EPH para predecir variables categóricas ausentes en el Censo 2010. En la segunda etapa, se utilizan las variables de la primera etapa junto con tres variables adicionales para predecir otra tanda de variables. En la tercer etapa, se utilizan las variables de las primeras dos etapas para predecir una serie de variables relacionadas con la informalidad laboral. Finalmente, en la etapa de regresión, se utilizan las variables de las tres etapas anteriores para predecir los ingresos de las personas.
+
+Los ingresos se deflactan a valores de enero 2016 utilizando la metodología de Favata Zack Steingart, de promedio de índices provinciales. Los datos de este índice disponible el el repositorio [IPC Argentina](https://github.com/matuteiglesias/IPC-Argentina). Se transforman a logaritmos para una mejor distribución. Al aplicar estas etapas de predicción en una persona censada, se puede obtener una estimación detallada de sus ingresos y entender mejor las condiciones de vida de la población argentina.
+
 
 ## Actualizaciones Periodicas:
 
@@ -42,150 +46,6 @@ Dependiendo el tamano de sampleo, se puede alcanzar una resolucion geografica sa
 
 <img src="/figuras/plot_5.png" width="400">
 
-## Resumen Metodologico
-
-Los modelos usados para predecir son Random Forests en etapas. 
-
-La idea es que si los modelos se entrenan en información de la EPH, en particular, de variables que están incluidas en el Censo Nacional, entonces luego podremos predecir información exclusiva de EPH (por ejemplo ingresos) en la población que fue censada.
-
-Recordar que es posible acceder a la base de datos de más de 40 millones de filas asociadas a las personas censadas en 2010. 
-
-Se usan las estimaciones de población por departamento (partido, comuna) de 2001 al presente publicadas por INDEC para simular los tamaños poblacionales relativos.
-
-Se usa información de niveles de empleo nacionales para sobre-samplear (sub-samplear) personas ocupadas o desocupadas censadas en 2010 en magnitud correspondiente.
-
-Se entrenan modelos para cuatro etapas:
-- Clasificación 1
-- Clasificación 2
-- Clasificación 3
-- Regresion
-
-Las variables incluidas en cada etapa se detallan a continuación:
-
-### Clasificación 1
-
-En la primer etapa, se usan las variables:
-
-'IX_TOT': tamano del hogar
-
-'P02': sexo
-
-'P03': edad
-
-'AGLO rk': ranking del aglomerado por ingreso promedio individual en EPH
-
-'Reg_rk': ranking de la región por ingreso promedio individual en EPH
-
-'V01': tipo de vivienda particular
-
-'H05': material de pisos
-
-'H06': material de techo
-
-'H07': tiene cielorraso
-
-'H08': agua en vivienda/terreno
-
-'H09': fuente del agua
-
-'H10': tiene bano
-
-'H11': baño tiene desagüe
-
-'H12': tipo de desagüe
-
-'H16': cuantas habitaciones
-
-'H15': cuantos dormitorios
-
-'PROP': régimen de propiedad
-
-'H14': combustible de cocina
-
-'H13': baño compartido
-
-'P07': sabe leer
-
-'P08': asistió al colegio
-
-'P09': que nivel cursa o curso
-
-'P10': nivel completo
-
-'P05': nacionalidad argentina?
-
-'CONDACT': condición de actividad
-
-Todas estas variables se usan en el modelo que se entrena en EPH para predecir las siguientes variables categóricas, ausentes del Censo 2010:
-
-'CAT_OCUP': categoria de ocupado (obrero, patron, etc)
-
-'CAT_INAC': categoría de inactividad (estudiante, jubilado, etc)
-
-'CH07': estado civil
-
-
-### Clasificación 2
-
-El segundo modelo de clasificación usa las 25 variables iniciales, además de las 3 variables que el primer modelo tiene como output.
-
-Se entrena un modelo clasificador usando estas 28 variables, para predecir la siguiente tanda de variables:
-
-'INGRESO': tiene algún ingreso?
-
-'INGRESO_NLB' tiene ingreso no laborable?
-
-'INGRESO_JUB': tiene ingreso jubilatorio?
-
-'INGRESO_SBS': tiene ingreso por subsidio?
-
-### Clasificación 3
-
-El tercer modelo de clasificación usa las 32 variables mencionadas hasta ahora, para predecir una tanda de variables de la sección PP07 de la EPH relacionadas con la informalidad laboral:
-
-
-'PP07G1': vacaciones pagas?
-
-'PP07G_59': no tiene vacaciones, ni aguinaldo, ni días por enfermedad ni obra social
-
-'PP07I': hace aporte jubilatorio
-
-'PP07J': trabaja de dia/tarde/noche
-
-'PP07K': cuando cobra le dan recibo / papel / no le dan nada
-
-
-### Regresion
-Finalmente, se usan las 37 variables mencionadas hasta ahora para entrenar en la EPH un modelo de regresión que predice los ingresos de las personas.
-
-Los ingresos son deflactados a valores de enero 2016 según la metodología de Favata Zack Steingart, de promedio de índices provinciales. Los datos de este índice disponible el el repositorio [IPC Argentina](https://github.com/matuteiglesias/IPC-Argentina).
-
-Además, se toma log10 para una adecuada distribución de las magnitudes de ingresos, que suelen ser log-normales. Se suma un mínimo para evitar el log(0).
-
-Las variables de ingresos son:
-
-'P21': ingreso de la ocupación principal
-
-'P47T': ingreso total (laboral y no laboral)
-
-'PP08D1': sueldos, jornales, etc.
-
-'TOT_P12': ingresos por otras ocupaciones
-
-'T_VI': total de ingresos no laborales
-
-'V12_M': cuota de alimentos o ayuda de personas fuera del hogar
-
-'V2_M': jubilacion o pension
-
-'V3_M': indemnizacion por despido
-
-'V5_M': subsidio o ayuda del gobierno, iglesias, etc.
-
-A la información de una persona censada, se le puede aplicar las distintas etapas de predicción para terminar dando con una estimación de sus ingresos. De esta forma podemos obtener estimaciones detalladas de ingresos de subpoblaciones personalizadas.
-
-
-## Mas Ejemplos:
 
 ***Deciles de ingreso***
 
@@ -251,67 +111,14 @@ Las proyecciones de poblacion cuentan personas pero sampleamos hogares. Las pobl
 
 El sampleo de personas no es conveniente porque la incidencia de pobreza e indigencia se calculan a nivel de hogar.
 
-***Armonizacion de respuestas de Censo 2010 a EPH***
 
-Se necesita adaptar algunas de las categorias de respuestas para que sean equivalentes entre el Censo 2010 y la Encuesta Permanente de Hogares. En particular:
-
-**Tipo de vivienda particular** (V01)
-
-Respuesta Censo --> Respuesta EPH
-
-1. Casa --> 1. Casa
-2. Rancho --> 6. Otros
-3. Casilla --> 6. Otros
-4. Departamento --> 2. Departamento
-5. Pieza en inquilinato --> 3. Pieza de inquilinato
-6. Pieza en hotel familiar o pensión --> 4. Pieza en hotel/pensión
-7. Local no construido para habitación --> 5. Local no construido para habitación
-8. Vivienda móvil --> 6. Otros
-
-**Material predominante de la cubierta exterior del techo** (H06)
-
-Respuesta Censo --> Respuesta EPH
-<!-- 
-1. cubierta asfáltica o membrana -> 1. Membrana/cubierta asfáltica
-2. baldosa o losa (sin cubierta) -> 2. Baldosa/losa sin cubierta
-3. pizarra o teja -> 3. Pizarra/teja
-4. chapa de metal (sin cubierta) -> 4. Chapa de metal sin cubierta
-5. chapa de fibrocemento o plástico -> 5. Chapa de fibrocemento/plástico
-6. chapa de cartón -> 6. Chapa de cartón
-7. caña, palma, tabla o paja con o sin barro -> 7. Caña/tabla/paja con barro/paja sola 
--->
-
-9. Otro --> 9. N/S. Depto en propiedad horizontal
-
-**El agua que usa, ¿proviene de...** (H09)
-
-Respuesta Censo --> Respuesta EPH
-
-4. pozo?  --> 4. Otra fuente
-5. transporte por cisterna? --> 4. Otra fuente
-6. agua de lluvia, río, canal, arroyo o acequia? --> 4. Otra fuente
-
-**Y en total, ¿cuántas habitaciones o piezas tiene este hogar? (sin contar baño/s y cocina/s)** (H16)
-
-Esta respuesta tiene que clippearse en 9. Es decir, la EPH no acepta valores de mas de 9 para esta pregunta.
+## Datos
 
 
-**Para cocinar, ¿utiliza principalmente...** (H14)
+Recordar que es posible acceder a la base de datos de más de 40 millones de filas asociadas a las personas censadas en 2010. 
 
-Respuesta Censo --> Respuesta EPH
+Se usan las estimaciones de población por departamento (partido, comuna) de 2001 al presente publicadas por INDEC para simular los tamaños poblacionales relativos.
 
-2. gas a granel (zeppelin)? --> 4. Otro
-3. gas en tubo? --> 2. Gas de tubo/garrafa
-4. gas en garrafa? --> 4. Otro
-5. electricidad? --> 4. Otro
-6. leña o carbón? --> 3. Kerosene/ leña/ carbón
-7. Otro --> 4. Otro
-8 --> 9
+Se usa información de niveles de empleo nacionales para sobre-samplear (sub-samplear) personas ocupadas o desocupadas censadas en 2010 en magnitud correspondiente.
 
-<!-- 
-**El baño / letrina, ¿es...** (H13)
-4. gas en garrafa?  4. Otro
-    table['H13'] = table['H13'].map({1:1, 2:2, 4:0})
-.... hay algo raro...
-     -->  
-    
+
