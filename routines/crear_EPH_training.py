@@ -8,6 +8,8 @@ import pandas as pd
 parser = argparse.ArgumentParser()
 # parser.add_argument('-i', action='append', nargs='+')
 
+
+### ARGUMENTO YEARS PARA PEDIR LA VENTANA DE TIEMPO DESEADA
 parser.add_argument('-y','--years', nargs='+', help='<Required> Set flag', required=False, type=int, default=[2021, 2022])
 parser.add_argument('-ow','--overwrite', nargs=1, required=False, default= True)
 

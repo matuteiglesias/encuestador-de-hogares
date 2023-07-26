@@ -88,19 +88,19 @@ for yr in [str(s) for s in range(startyr, endyr)]:
     out = './../fitted_RF/clf1_'+yr+'_ARG'
     if (not os.path.exists(out)) or (overwrite):
         fit_model(train_data, x_cols = x_cols1, y_cols = predecir1, out_filename = out,
-                 model = RandomForestClassifier(n_estimators=100, max_depth = 20, n_jobs = -1))
+                 model = RandomForestClassifier(n_estimators=100, max_depth = 15, n_jobs = -1))
     
     ## ETAPA 2:
     out = './../fitted_RF/clf2_'+yr+'_ARG'
     if (not os.path.exists(out)) or (overwrite):
         fit_model(train_data, x_cols = x_cols2, y_cols = predecir2, out_filename = out,
-                 model = RandomForestClassifier(n_estimators=100, max_depth = 20, n_jobs = -1))
+                 model = RandomForestClassifier(n_estimators=100, max_depth = 15, n_jobs = -1))
     
     ## ETAPA 3:
     out = './../fitted_RF/clf3_'+yr+'_ARG'
     if (not os.path.exists(out)) or (overwrite):
         fit_model(train_data, x_cols = x_cols3, y_cols = predecir3, out_filename = out,
-                 model = RandomForestClassifier(n_estimators=100, max_depth = 20, n_jobs = -1))
+                 model = RandomForestClassifier(n_estimators=100, max_depth = 15, n_jobs = -1))
     
     ## ETAPA 4 (Regresion)
     ## Tomar log de las columnas en pesos.
