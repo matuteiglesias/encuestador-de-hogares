@@ -23,6 +23,7 @@ endyr = args.years[1]
 # Viedma Patagones, se tendria que tirar de un lado, y la mayoria de sus radios, son Patagonia.
 # Se tiene que corregir a mano, porque el AGLO 0 SI tiene varias regiones.
 AGLO_Region = pd.read_csv('./../data/info/radio_ref.csv', usecols = ['AGLOMERADO', 'Region']).drop_duplicates()
+
 AGLO_Region = AGLO_Region.loc[~((AGLO_Region.AGLOMERADO == 33) & (AGLO_Region.Region == 'Pampeana'))]
 AGLO_Region = AGLO_Region.loc[~((AGLO_Region.AGLOMERADO == 93) & (AGLO_Region.Region == 'Pampeana'))]
 
