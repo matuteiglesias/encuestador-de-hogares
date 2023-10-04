@@ -1,7 +1,127 @@
-ANO4,Region,Reg_rk,region_
-2023,Noroeste,0.5,noroeste
-2023,Pampeana,0.667,pampeana
-2023,Gran Buenos Aires,0.833,gran_buenos_aires
-2023,Patagónica,1.0,patagonia
-2023,Cuyo,0.333,cuyo
-2023,Noreste,0.167,noreste
+ANO4,Region,Reg_rk
+2003,Cuyo,0.5
+2003,Gran Buenos Aires,0.833
+2003,Patagónica,1.0
+2003,Pampeana,0.667
+2003,Noroeste,0.167
+2003,Noreste,0.333
+2004,Cuyo,0.5
+2004,Patagónica,1.0
+2004,Noreste,0.167
+2004,Noroeste,0.333
+2004,Pampeana,0.667
+2004,Gran Buenos Aires,0.833
+2005,Noreste,0.167
+2005,Pampeana,0.667
+2005,Noroeste,0.333
+2005,Gran Buenos Aires,0.833
+2005,Patagónica,1.0
+2005,Cuyo,0.5
+2006,Gran Buenos Aires,0.833
+2006,Noreste,0.167
+2006,Noroeste,0.333
+2006,Pampeana,0.667
+2006,Patagónica,1.0
+2006,Cuyo,0.5
+2007,Noroeste,0.333
+2007,Gran Buenos Aires,0.833
+2007,Cuyo,0.5
+2007,Patagónica,1.0
+2007,Pampeana,0.667
+2007,Noreste,0.167
+2008,Noroeste,0.333
+2008,Cuyo,0.5
+2008,Pampeana,0.667
+2008,Gran Buenos Aires,0.833
+2008,Patagónica,1.0
+2008,Noreste,0.167
+2009,Noroeste,0.333
+2009,Pampeana,0.667
+2009,Gran Buenos Aires,0.833
+2009,Patagónica,1.0
+2009,Noreste,0.167
+2009,Cuyo,0.5
+2010,Noroeste,0.333
+2010,Pampeana,0.667
+2010,Noreste,0.167
+2010,Cuyo,0.5
+2010,Gran Buenos Aires,0.833
+2010,Patagónica,1.0
+2011,Patagónica,1.0
+2011,Gran Buenos Aires,0.833
+2011,Noroeste,0.333
+2011,Cuyo,0.5
+2011,Pampeana,0.667
+2011,Noreste,0.167
+2012,Gran Buenos Aires,0.833
+2012,Cuyo,0.5
+2012,Noreste,0.167
+2012,Patagónica,1.0
+2012,Noroeste,0.333
+2012,Pampeana,0.667
+2013,Cuyo,0.5
+2013,Pampeana,0.667
+2013,Patagónica,1.0
+2013,Noroeste,0.333
+2013,Noreste,0.167
+2013,Gran Buenos Aires,0.833
+2014,Patagónica,1.0
+2014,Cuyo,0.5
+2014,Pampeana,0.667
+2014,Noroeste,0.333
+2014,Gran Buenos Aires,0.833
+2014,Noreste,0.167
+2015,Pampeana,0.667
+2015,Cuyo,0.5
+2015,Gran Buenos Aires,0.833
+2015,Noroeste,0.167
+2015,Patagónica,1.0
+2015,Noreste,0.333
+2016,Noroeste,0.333
+2016,Cuyo,0.5
+2016,Gran Buenos Aires,0.833
+2016,Noreste,0.167
+2016,Pampeana,0.667
+2016,Patagónica,1.0
+2017,Noroeste,0.333
+2017,Cuyo,0.5
+2017,Gran Buenos Aires,0.833
+2017,Patagónica,1.0
+2017,Noreste,0.167
+2017,Pampeana,0.667
+2018,Gran Buenos Aires,0.833
+2018,Cuyo,0.5
+2018,Patagónica,1.0
+2018,Pampeana,0.667
+2018,Noroeste,0.167
+2018,Noreste,0.333
+2019,Gran Buenos Aires,0.833
+2019,Cuyo,0.5
+2019,Patagónica,1.0
+2019,Pampeana,0.667
+2019,Noroeste,0.167
+2019,Noreste,0.333
+2020,Noroeste,0.333
+2020,Gran Buenos Aires,0.833
+2020,Pampeana,0.667
+2020,Patagónica,1.0
+2020,Cuyo,0.5
+2020,Noreste,0.167
+2021,Noroeste,0.167
+2021,Patagónica,1.0
+2021,Gran Buenos Aires,0.833
+2021,Pampeana,0.667
+2021,Cuyo,0.5
+2021,Noreste,0.333
+2022,Noroeste,0.333
+2022,Gran Buenos Aires,0.833
+2022,Patagónica,1.0
+2022,Pampeana,0.667
+2022,Cuyo,0.5
+2022,Noreste,0.167
+2023,Noroeste,0.5
+2023,Pampeana,0.667
+2023,Gran Buenos Aires,0.833
+2023,Patagónica,1.0
+2023,Cuyo,0.333
+2023,Noreste,0.167
