@@ -1,0 +1,26 @@
+name: Actualizar Modelos
+
+on:
+  workflow_run:
+    workflows: ["Preprocesar Datos"]
+    types:
+      - completed
+
+jobs:
+  actualizar-modelos:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Configurar Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: '3.8'
+
+      - name: Instalar dependencias
+        run: |
+          python -m pip install --upgrade pip
+          pip install pandas scikit-learn
+
+      - name: Entrenar y Actualizar Modelos
+        run: python ./codigo/routines/entrenar_modelos.py
