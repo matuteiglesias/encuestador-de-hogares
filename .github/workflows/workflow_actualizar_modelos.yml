@@ -23,4 +23,4 @@ jobs:
           pip install pandas scikit-learn
 
       - name: Entrenar y Actualizar Modelos
-        run: python ./codigo/routines/entrenar_modelos.py
+        run: python ./codigo/routines/entrenar_modelos.py -y 2022 2026
