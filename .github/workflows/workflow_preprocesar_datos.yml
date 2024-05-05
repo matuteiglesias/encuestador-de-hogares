@@ -31,5 +31,4 @@ jobs:
           ls -lah
 
       - name: Preprocesar Datos para Entrenamiento
-        working-directory: ./codigo/routines 
-        run: python preprocesar_datos.py -y 2022 2026 -ow False
+        run: python ./codigo/routines/preprocesar_datos.py -y 2022 2026 -ow False
