@@ -15,7 +15,7 @@ startyr = 2023; endyr = 2025;
 for y in range(startyr, endyr):
     print(y)
     yr = str(y)[2:]
-    training_file = './../../data/training/EPHARG_train_'+str(yr)+'.csv'
+    training_file = './data/training/EPHARG_train_'+str(yr)+'.csv'
 
     if not os.path.exists(training_file):
         continue
@@ -29,7 +29,7 @@ for y in range(startyr, endyr):
 aglo_rk = pd.concat(aglo_list)
 regs_rk = pd.concat(regs_list)
 
-aglo_rk.to_csv('./../../data/info/AGLO_rk', index = False)
+aglo_rk.to_csv('./data/info/AGLO_rk', index = False)
 
 
 
@@ -45,7 +45,7 @@ regiones = {
 
 # Update region names using the mapping dictionary
 regs_rk['region_'] = regs_rk['Region'].map(regiones)
-regs_rk.to_csv('./../../data/info/Reg_rk', index = False)
+regs_rk.to_csv('./data/info/Reg_rk', index = False)
 
 # %% [markdown]
 # ## Listo. Salvado el training set.
