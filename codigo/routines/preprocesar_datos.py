@@ -22,7 +22,7 @@ endyr = args.years[1]
 # Decision sobre cual es la region de un aglomerado. GBA tiene que ir a Gran Buenos Aires, aunque algunos de sus radios en partidos como Rodriguez, Escobar, etc sean region pampeana.
 # Viedma Patagones, se tendria que tirar de un lado, y la mayoria de sus radios, son Patagonia.
 # Se tiene que corregir a mano, porque el AGLO 0 SI tiene varias regiones.
-AGLO_Region = pd.read_csv('./../../data/info/radio_ref.csv', usecols = ['AGLOMERADO', 'Region']).drop_duplicates()
+AGLO_Region = pd.read_csv('./data/info/radio_ref.csv', usecols = ['AGLOMERADO', 'Region']).drop_duplicates()
 
 AGLO_Region = AGLO_Region.loc[~((AGLO_Region.AGLOMERADO == 33) & (AGLO_Region.Region == 'Pampeana'))]
 AGLO_Region = AGLO_Region.loc[~((AGLO_Region.AGLOMERADO == 93) & (AGLO_Region.Region == 'Pampeana'))]
@@ -65,8 +65,8 @@ ix = cpi_M.loc['2016-01'].values[0][0]
 import glob
 import os
 
-if not os.path.exists('./../../data/training/'):
-    os.makedirs('./../../data/training/')
+if not os.path.exists('./data/training/'):
+    os.makedirs('./data/training/')
     
 
 ######################################################################
@@ -75,13 +75,13 @@ if not os.path.exists('./../../data/training/'):
 
 # from pandas.tseries.offsets import MonthEnd
 
-path ='./../../../microdatos-EPH-INDEC/microdatos/' # depende de donde hayamos descargado los microdatos
-# path ='./../../EPH/microdatos/' # depende de donde hayamos descargado los microdatos
+path ='./../microdatos-EPH-INDEC/microdatos/' # depende de donde hayamos descargado los microdatos
+# path ='./EPH/microdatos/' # depende de donde hayamos descargado los microdatos
 
 for y in range(startyr, endyr):
     print(y)
     yr = str(y)[2:]
-    training_file = './../../data/training/EPHARG_train_'+str(yr)+'.csv'
+    training_file = './data/training/EPHARG_train_'+str(yr)+'.csv'
     
     # Si todavia no existe la training data de ese anio, o si la opcion overwrite esta activada:
     if (not os.path.exists(training_file)) or (overwrite): 
