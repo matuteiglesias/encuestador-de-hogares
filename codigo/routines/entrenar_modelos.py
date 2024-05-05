@@ -64,8 +64,8 @@ def fit_model(train_data, x_cols, y_cols, out_filename,
     clf = model.fit(X.values, y.values) # fit model
 
     # save the model to disk
-    if not os.path.exists('./../../modelos/'):
-        os.makedirs('./../../modelos/')
+    if not os.path.exists('./modelos/'):
+        os.makedirs('./modelos/')
     joblib.dump(model, out_filename, compress=3)
     print('saved model at: ' + out_filename)
 
@@ -82,22 +82,22 @@ from numpy import log10
 
 for yr in [str(s) for s in range(startyr, endyr)]:
     print(yr)
-    train_data = pd.read_csv('./../../data/training/EPHARG_train_'+yr[2:]+'.csv')
+    train_data = pd.read_csv('./data/training/EPHARG_train_'+yr[2:]+'.csv')
     
     ## ETAPA 1:
-    out = './../../modelos/clf1_'+yr+'_ARG'
+    out = './modelos/clf1_'+yr+'_ARG'
     if (not os.path.exists(out)) or (overwrite):
         fit_model(train_data, x_cols = x_cols1, y_cols = predecir1, out_filename = out,
                  model = RandomForestClassifier(n_estimators=100, max_depth = 15, n_jobs = -1))
     
     ## ETAPA 2:
-    out = './../../modelos/clf2_'+yr+'_ARG'
+    out = './modelos/clf2_'+yr+'_ARG'
     if (not os.path.exists(out)) or (overwrite):
         fit_model(train_data, x_cols = x_cols2, y_cols = predecir2, out_filename = out,
                  model = RandomForestClassifier(n_estimators=100, max_depth = 15, n_jobs = -1))
     
     ## ETAPA 3:
-    out = './../../modelos/clf3_'+yr+'_ARG'
+    out = './modelos/clf3_'+yr+'_ARG'
     if (not os.path.exists(out)) or (overwrite):
         fit_model(train_data, x_cols = x_cols3, y_cols = predecir3, out_filename = out,
                  model = RandomForestClassifier(n_estimators=100, max_depth = 15, n_jobs = -1))
@@ -109,7 +109,7 @@ for yr in [str(s) for s in range(startyr, endyr)]:
     ## Entrenar modelo, para cada trimestre
     for q in train_data.Q.unique():
         print(q)
-        out = './../../modelos/clf4_'+q+'_ARG'
+        out = './modelos/clf4_'+q+'_ARG'
         if (not os.path.exists(out)) or (overwrite):
             train_q = train_data.loc[train_data.Q == q]
             fit_model(train_q, x_cols = x_cols4, y_cols = y_cols4, out_filename = out,
