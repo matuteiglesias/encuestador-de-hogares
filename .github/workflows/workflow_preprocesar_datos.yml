@@ -23,4 +23,4 @@ jobs:
           pip install pandas
 
       - name: Preprocesar Datos para Entrenamiento
-        run: python ./codigo/routines/preprocesar_datos.py
+        run: python ./codigo/routines/preprocesar_datos.py -y 2022 2026 -ow False
