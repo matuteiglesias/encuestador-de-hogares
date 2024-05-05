@@ -5,7 +5,8 @@ on:
     workflows: ["Preprocesar Datos"]
     types:
       - completed
-
+  workflow_dispatch:  # Permite ejecución manual
+  
 jobs:
   actualizar-modelos:
     runs-on: ubuntu-latest
