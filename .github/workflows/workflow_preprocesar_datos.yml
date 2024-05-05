@@ -5,8 +5,7 @@ on:
     workflows: ["Recalcular Rankings"]
     types:
       - completed
-
-
+  workflow_dispatch:  # Permite ejecución manual
 
 
     
