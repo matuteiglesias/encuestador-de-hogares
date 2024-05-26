@@ -2,6 +2,8 @@
 
 import argparse
 import pandas as pd
+import glob
+import os
 
 #os.chdir(os.path.dirname(__file__))
 
@@ -11,13 +13,15 @@ parser = argparse.ArgumentParser()
 
 ### ARGUMENTO YEARS PARA PEDIR LA VENTANA DE TIEMPO DESEADA
 parser.add_argument('-y','--years', nargs='+', help='<Required> Set flag', required=False, type=int, default=[2021, 2022])
-parser.add_argument('-ow','--overwrite', nargs=1, required=False, default= True)
+# parser.add_argument('-ow','--overwrite', nargs=1, required=False, default= True)
+parser.add_argument('-ow', '--overwrite', action='store_true', help='Overwrite existing files', required=False)
 
 args = parser.parse_args()
 
 overwrite = args.overwrite
 startyr = args.years[0]
-endyr = args.years[1]
+# endyr = args.years[1]
+endyr = args.years[1] + 1  # Include the end year in the range
 
 # Decision sobre cual es la region de un aglomerado. GBA tiene que ir a Gran Buenos Aires, aunque algunos de sus radios en partidos como Rodriguez, Escobar, etc sean region pampeana.
 # Viedma Patagones, se tendria que tirar de un lado, y la mayoria de sus radios, son Patagonia.
@@ -40,55 +44,52 @@ names_EPH = ['IX_TOT','CH04','CH06','CONDACT', 'AGLOMERADO',
 ####  NOMBRES DE VARIABLES MONETARIAS
 col_mon = [u'P21', u'P47T', u'PP08D1', u'TOT_P12', u'T_VI', u'V12_M', u'V2_M', u'V3_M', u'V5_M']
 
-####  CARGA DE IPC
-## TRIMESTRAL
-url = 'https://raw.githubusercontent.com/matuteiglesias/IPC-Argentina/main/data/info/indice_precios_Q.csv'
-
-cpi = pd.read_csv(url, index_col = 0)
+# Load CPI Data
+cpi_url = 'https://raw.githubusercontent.com/matuteiglesias/IPC-Argentina/main/data/info/indice_precios_Q.csv'
+cpi = pd.read_csv(cpi_url, index_col=0)
 cpi.index = pd.to_datetime(cpi.index)
 cpi = cpi['2003':]
-
 ## Forzar dia 15 del mes
 cpi.index = cpi.index - pd.offsets.MonthBegin(1) + pd.offsets.Day(14)
 
 ## MENSUAL
-url = 'https://raw.githubusercontent.com/matuteiglesias/IPC-Argentina/main/data/info/indice_precios_M.csv'
-cpi_M = pd.read_csv(url, index_col = 0)[['index']]
+
+cpi_M_url = 'https://raw.githubusercontent.com/matuteiglesias/IPC-Argentina/main/data/info/indice_precios_M.csv'
+cpi_M = pd.read_csv(cpi_M_url, index_col=0)[['index']]
 cpi_M.index = pd.to_datetime(cpi_M.index)
 cpi_M = cpi_M['2003':]
 
-### INDICE
+## Indice
 ix = cpi_M.loc['2016-01'].values[0][0]
-
-
-## When running the first time we may not have the folder where training data is saved
-import glob
-import os
 
 if not os.path.exists('./data/training/'):
     os.makedirs('./data/training/')
     
-
 ######################################################################
 ###########   LOOP PRINCIPAL. CREACION DE TRAINING SETS    ###########
 ######################################################################
-
-# from pandas.tseries.offsets import MonthEnd
-
+# Main Loop: Create Training Sets
 path ='./../microdatos-EPH-INDEC/microdatos/' # depende de donde hayamos descargado los microdatos
 # path ='./EPH/microdatos/' # depende de donde hayamos descargado los microdatos
 
+# Temporary directory to store downloaded data
+temp_dir = './temp_data/'
+
+if not os.path.exists(temp_dir):
+    os.makedirs(temp_dir)
+    
 for y in range(startyr, endyr):
     print(y)
     yr = str(y)[2:]
     training_file = './data/training/EPHARG_train_'+str(yr)+'.csv'
     
     # Si todavia no existe la training data de ese anio, o si la opcion overwrite esta activada:
-    if (not os.path.exists(training_file)) or (overwrite): 
-
+    if not os.path.exists(training_file) or overwrite:
         allFiles = glob.glob(path + 'hogar/*'+str(yr)+'.txt')
         frame = pd.DataFrame()
         list_ = []
+
+        
         for file_ in allFiles:
             df = pd.read_csv(file_,index_col=None, header=0, delimiter = ';',
                             usecols = ['CODUSU','ANO4','TRIMESTRE','IX_TOT', 'AGLOMERADO',
