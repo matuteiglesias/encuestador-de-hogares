@@ -1,13 +1,10 @@
 name: Preprocesar Datos
 
+
 on:
-  workflow_run:
-    workflows: ["Recalcular Rankings"]
-    types:
-      - completed
+  schedule:
+    - cron: '0 0 * * *'  # Ejecuta todos los días a medianoche UTC
   workflow_dispatch:  # Permite ejecución manual
-
-
     
 jobs:
   preprocesar-datos:
