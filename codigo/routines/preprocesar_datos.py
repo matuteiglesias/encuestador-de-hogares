@@ -12,7 +12,7 @@ parser = argparse.ArgumentParser()
 
 
 ### ARGUMENTO YEARS PARA PEDIR LA VENTANA DE TIEMPO DESEADA
-parser.add_argument('-y','--years', nargs='+', help='<Required> Set flag', required=False, type=int, default=[2021, 2022])
+parser.add_argument('-y','--years', nargs='+', help='<Required> Set flag', required=False, type=int, default=[2021, 2024])
 # parser.add_argument('-ow','--overwrite', nargs=1, required=False, default= True)
 parser.add_argument('-ow', '--overwrite', action='store_true', help='Overwrite existing files', required=False)
 
@@ -69,7 +69,7 @@ if not os.path.exists('./data/training/'):
 ###########   LOOP PRINCIPAL. CREACION DE TRAINING SETS    ###########
 ######################################################################
 # Main Loop: Create Training Sets
-path ='./../microdatos-EPH-INDEC/microdatos/' # depende de donde hayamos descargado los microdatos
+# path ='./../microdatos-EPH-INDEC/microdatos/' # depende de donde hayamos descargado los microdatos
 # path ='./EPH/microdatos/' # depende de donde hayamos descargado los microdatos
 
 # Temporary directory to store downloaded data
@@ -78,125 +78,168 @@ temp_dir = './temp_data/'
 if not os.path.exists(temp_dir):
     os.makedirs(temp_dir)
     
+import requests
+import shutil
+
+
+# Main Loop: Create Training Sets
+repo_base_url = 'https://raw.githubusercontent.com/matuteiglesias/microdatos-EPH-INDEC/master/microdatos'
+
+
 for y in range(startyr, endyr):
     print(y)
     yr = str(y)[2:]
     training_file = './data/training/EPHARG_train_'+str(yr)+'.csv'
     
     # Si todavia no existe la training data de ese anio, o si la opcion overwrite esta activada:
+    # if not os.path.exists(training_file) or overwrite:
+        # allFiles = glob.glob(path + 'hogar/*'+str(yr)+'.txt')
+        # frame = pd.DataFrame()
+        # list_ = []
+
+
+    # Check if training data already exists
     if not os.path.exists(training_file) or overwrite:
-        allFiles = glob.glob(path + 'hogar/*'+str(yr)+'.txt')
-        frame = pd.DataFrame()
-        list_ = []
-
-        
-        for file_ in allFiles:
-            df = pd.read_csv(file_,index_col=None, header=0, delimiter = ';',
-                            usecols = ['CODUSU','ANO4','TRIMESTRE','IX_TOT', 'AGLOMERADO',
-            'IV1', 'IV3', 'IV4','IV5','IV6','IV7','IV8','IV10','IV11','II1','II2','II7','II8','II9']) 
-
-            print(len(df))
-            list_ += [df]
-        df = pd.concat(list_)
-
-        # Correcciones Respuestas. Para que matchee censo
-        df = df.loc[df.IV1 != 9]
-        df['IV10'] = df['IV10'].map({1: 1, 2: 2, 3: 2, 0: 0, 9: 9})
-        df['II9'] = df['II9'].map({1: 1, 2: 2, 3: 2, 4: 4, 0: 0})
-        df['II7'] = df['II7'].map({1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 6, 8: 6, 9: 6, 0: 0})
-        df['IX_TOT'] = df['IX_TOT'].clip(0, 8)
-
-        hogar = df
-        hogar = hogar.drop_duplicates()
-        print(hogar.shape)
-
-        allFiles = glob.glob(path + 'individual/usu_individual*'+str(yr)+'.txt')
-        frame = pd.DataFrame()
-        list_ = []
-        for file_ in allFiles:
-            print(file_)
-        #     print(file_)
-            df = pd.read_csv(file_,index_col=None, header=0, delimiter = ';',
-                             usecols = ['CODUSU','ANO4','TRIMESTRE','CH04','CH06', 'AGLOMERADO', 'CH09','CH10','CH12','CH13','CH15'] +\
-                             ['CH07', 'ESTADO','CAT_INAC','CAT_OCUP','PP07G1', 'PP07G2', 'PP07G3', 'PP07G4', 'PP07G_59', 'PP07H', 'PP07I', 'PP07J', 'PP07K',
-                             'P47T', 'V3_M', 'T_VI', 'V12_M', 'TOT_P12', 'V5_M','V2_M', 'PP08D1', 'P21'])
-            df = df.rename(columns = {'ESTADO': 'CONDACT'})
 
 
-            list_ += [df]
-        df = pd.concat(list_)
+        # Download hogar files
+        hogar_urls = [f'{repo_base_url}/hogar/usu_hogar_t{quarter:01}{yr}.txt' for quarter in range(1, 5)]
+        hogar_files = []
 
-        # Correcciones Respuestas. Para que matchee censo
-        df['CH15'] = df['CH15'].map({1:1, 2:1, 3:1, 4:2, 5:2, 9:0})
-        df['CH06'] = df['CH06'].clip(0)
-        df['CH09'] = df['CH09'].map({1:1, 2:2, 0:2, 3:2})
-        df.loc[df['CH06'] < 14, 'CONDACT'] = 0 # Menores de 14 van con CONDACT 0, como en el Censo
-
-        ## En Censo, Jardin y educacion especial no preguntan terminado si/no.
-        df['CH12'] = df.CH12.replace(99, 0)
-        df.loc[df.CH12.isin([0, 1, 9]), 'CH13'] = 0
-
-        indiv = df
-        indiv = indiv.dropna(subset = ['P47T'])
-        print(indiv.shape)
-
-        indiv_table = indiv[list(indiv.columns.difference(hogar.columns)) + ['CODUSU', 'ANO4', 'TRIMESTRE', 'AGLOMERADO']]
-        EPH = hogar.merge(indiv_table, on = ['CODUSU', 'ANO4', 'TRIMESTRE', 'AGLOMERADO'])#, indicator = True)
-
-        print('Hogar - Indiv merged:')
-        print(EPH.shape)
-
-        EPH = EPH.merge(AGLO_Region)
-
-        EPH_no_aglo = EPH.copy(); 
-        EPH_no_aglo['AGLOMERADO'] = 0
-
-        EPH = pd.concat([EPH, EPH_no_aglo]).reset_index(drop = True)
-
-        print('No aglo agregado:')
-        print(EPH.shape)
-
-    #     # Quarters / deflation
-
-        # Quarters / deflation
-        EPH['Q'] = EPH.ANO4.astype(str) + ':' + (3*EPH.TRIMESTRE).astype(str)
-        EPH['Q'] = pd.to_datetime(EPH['Q'], format='%Y:%m') - pd.DateOffset(months=1) + pd.DateOffset(days=14)
-        print(EPH['Q'].unique())
+        for url in hogar_urls:
+            response = requests.get(url)
+            if response.status_code == 200:
+                file_path = os.path.join(temp_dir, os.path.basename(url))
+                with open(file_path, 'wb') as f:
+                    f.write(response.content)
+                hogar_files.append(file_path)
+            else:
+                print(f"File not found: {url}")
 
 
-    #     EPH[col_mon] = cpi_mes_actual*EPH[col_mon].div(EPH[['Q'] + col_mon].merge(cpi, on = 'Q', how = 'left')['index'].values, 0)
-        EPH[col_mon] = ix*EPH[col_mon].div(EPH[['Q'] + col_mon].merge(cpi, on = 'Q', how = 'left')['index'].values, 0)
-        EPH[col_mon] = EPH[col_mon].round()
+        # Download individual files
+        indiv_urls = [f'{repo_base_url}/individual/usu_individual_t{quarter:01}{yr}.txt' for quarter in range(1, 5)]
+        indiv_files = []
 
-        print('deflactado:')
-        print(EPH.shape)
-        training = EPH.rename(columns = dict(zip(names_EPH, names_censo)))
-        
-        # remove bad observations
-        training = training.loc[training.P47T >= -0.001].fillna(0)
-        
-        for col in ['CAT_OCUP', 'CH07', 'PP07G1', 'PP07G_59', 'PP07I', 'PP07J', 'PP07K']:
-            training = training.loc[training[col] != 9]
+        for url in indiv_urls:
+            response = requests.get(url)
+            if response.status_code == 200:
+                file_path = os.path.join(temp_dir, os.path.basename(url))
+                with open(file_path, 'wb') as f:
+                    f.write(response.content)
+                indiv_files.append(file_path)
+            else:
+                print(f"File not found: {url}")
 
-        ### RANKING AGLOMERADO
-        AGLO_rk = training.loc[(training.CAT_OCUP == 3) & (training.P47T >= 100)].groupby(['ANO4', 'AGLOMERADO'])[['P47T']].mean()
-        AGLO_rk['AGLO_rk'] = AGLO_rk.rank(pct = True).round(3)
-        AGLO_rk = AGLO_rk.sort_values('P47T').reset_index()
 
-        ### RANKING REGION
-        Reg_rk = training.loc[(training.CAT_OCUP == 3) & (training.P47T >= 100)].groupby(['ANO4', 'Region'])[['P47T']].mean()
-        Reg_rk['Reg_rk'] = Reg_rk.rank(pct = True).round(3)
-        Reg_rk = Reg_rk.sort_values('P47T').reset_index()
             
-        training = training.merge(AGLO_rk[['ANO4', 'AGLOMERADO', 'AGLO_rk']]).merge(Reg_rk[['ANO4', 'Region', 'Reg_rk']])
-        
-        ## Crear columnas binarias para ingreso.
-        training['INGRESO'] = (training.P47T > 100).astype(int)
-        training['INGRESO_NLB'] = (training.T_VI > 100).astype(int)
-        training['INGRESO_JUB'] = (training.V2_M > 100).astype(int)
-        training['INGRESO_SBS'] = (training.V5_M > 100).astype(int)
-        
-        ## Ordenar por id de hogar.
-        training = training.sort_values('CODUSU')
-        
-        training.to_csv(training_file, index = False)
+        if hogar_files:
+            
+            # Process hogar files
+            list_ = []
+            for file_ in hogar_files:
+                print(file_)
+                df = pd.read_csv(file_, index_col=None, header=0, delimiter=';', usecols=['CODUSU', 'ANO4', 'TRIMESTRE', 'IX_TOT', 'AGLOMERADO', 
+                                                                'IV1', 'IV3', 'IV4', 'IV5', 'IV6', 'IV7', 'IV8', 'IV10', 'IV11', 'II1', 'II2', 'II7', 'II8', 'II9'])
+                list_.append(df)
+
+            # Correcciones Respuestas. Para que matchee censo
+            hogar = pd.concat(list_).drop_duplicates()
+            hogar = hogar.loc[~hogar.IV1.isin([9])]
+            hogar['IV10'] = hogar['IV10'].map({1: 1, 2: 2, 3: 2, 0: 0, 9: 9})
+            hogar['II9'] = hogar['II9'].map({1: 1, 2: 2, 3: 2, 4: 4, 0: 0})
+            hogar['II7'] = hogar['II7'].map({1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 6, 8: 6, 9: 6, 0: 0})
+            hogar['IX_TOT'] = hogar['IX_TOT'].clip(0, 8)
+
+            hogar = hogar.drop_duplicates()
+
+
+            if indiv_files:
+
+                # Process individual files
+                list_ = []
+                for file_ in indiv_files:
+                    df = pd.read_csv(file_, delimiter=';', usecols=['CODUSU', 'ANO4', 'TRIMESTRE', 'CH04', 'CH06', 'AGLOMERADO', 'CH09', 'CH10', 'CH12', 'CH13', 'CH15', 'CH07', 'ESTADO', 'CAT_INAC', 'CAT_OCUP', 'PP07G1', 'PP07G2', 'PP07G3', 'PP07G4', 'PP07G_59', 'PP07H', 'PP07I', 'PP07J', 'PP07K', 'P47T', 'V3_M', 'T_VI', 'V12_M', 'TOT_P12', 'V5_M', 'V2_M', 'PP08D1', 'P21'])
+                    df = df.rename(columns={'ESTADO': 'CONDACT'})
+                    list_.append(df)
+                indiv = pd.concat(list_).dropna(subset=['P47T']).drop_duplicates()
+
+
+                # Correcciones Respuestas. Para que matchee censo
+                indiv['CH15'] = indiv['CH15'].map({1:1, 2:1, 3:1, 4:2, 5:2, 9:0})
+                indiv['CH06'] = indiv['CH06'].clip(0)
+                indiv['CH09'] = indiv['CH09'].map({1:1, 2:2, 0:2, 3:2})
+                indiv.loc[indiv['CH06'] < 14, 'CONDACT'] = 0 # Menores de 14 van con CONDACT 0, como en el Censo
+
+                ## En Censo, Jardin y educacion especial no preguntan terminado si/no.
+                indiv['CH12'] = indiv.CH12.replace(99, 0)
+                indiv.loc[indiv.CH12.isin([0, 1, 9]), 'CH13'] = 0
+
+                indiv = indiv.dropna(subset = ['P47T'])
+                print(indiv.shape)
+
+                indiv_table = indiv[list(indiv.columns.difference(hogar.columns)) + ['CODUSU', 'ANO4', 'TRIMESTRE', 'AGLOMERADO']]
+
+                    
+                EPH = hogar.merge(indiv_table, on = ['CODUSU', 'ANO4', 'TRIMESTRE', 'AGLOMERADO'])#, indicator = True)
+
+                print('Hogar - Indiv merged:')
+                print(EPH.shape)
+
+                EPH = EPH.merge(AGLO_Region)
+
+                EPH_no_aglo = EPH.copy(); 
+                EPH_no_aglo['AGLOMERADO'] = 0
+
+                EPH = pd.concat([EPH, EPH_no_aglo]).reset_index(drop = True)
+
+                print('No aglo agregado:')
+                print(EPH.shape)
+
+            #     # Quarters / deflation
+
+                # Quarters / deflation
+                EPH['Q'] = EPH.ANO4.astype(str) + ':' + (3*EPH.TRIMESTRE).astype(str)
+                EPH['Q'] = pd.to_datetime(EPH['Q'], format='%Y:%m') - pd.DateOffset(months=1) + pd.DateOffset(days=14)
+                print(EPH['Q'].unique())
+
+
+            #     EPH[col_mon] = cpi_mes_actual*EPH[col_mon].div(EPH[['Q'] + col_mon].merge(cpi, on = 'Q', how = 'left')['index'].values, 0)
+                EPH[col_mon] = ix*EPH[col_mon].div(EPH[['Q'] + col_mon].merge(cpi, on = 'Q', how = 'left')['index'].values, 0)
+                EPH[col_mon] = EPH[col_mon].round()
+
+                print('deflactado:')
+                print(EPH.shape)
+                training = EPH.rename(columns = dict(zip(names_EPH, names_censo)))
+                
+                # remove bad observations
+                training = training.loc[training.P47T >= -0.001].fillna(0)
+                
+                for col in ['CAT_OCUP', 'CH07', 'PP07G1', 'PP07G_59', 'PP07I', 'PP07J', 'PP07K']:
+                    training = training.loc[training[col] != 9]
+
+                ### RANKING AGLOMERADO
+                AGLO_rk = training.loc[(training.CAT_OCUP == 3) & (training.P47T >= 100)].groupby(['ANO4', 'AGLOMERADO'])[['P47T']].mean()
+                AGLO_rk['AGLO_rk'] = AGLO_rk.rank(pct = True).round(3)
+                AGLO_rk = AGLO_rk.sort_values('P47T').reset_index()
+
+                ### RANKING REGION
+                Reg_rk = training.loc[(training.CAT_OCUP == 3) & (training.P47T >= 100)].groupby(['ANO4', 'Region'])[['P47T']].mean()
+                Reg_rk['Reg_rk'] = Reg_rk.rank(pct = True).round(3)
+                Reg_rk = Reg_rk.sort_values('P47T').reset_index()
+                    
+                training = training.merge(AGLO_rk[['ANO4', 'AGLOMERADO', 'AGLO_rk']]).merge(Reg_rk[['ANO4', 'Region', 'Reg_rk']])
+                
+                ## Crear columnas binarias para ingreso.
+                training['INGRESO'] = (training.P47T > 100).astype(int)
+                training['INGRESO_NLB'] = (training.T_VI > 100).astype(int)
+                training['INGRESO_JUB'] = (training.V2_M > 100).astype(int)
+                training['INGRESO_SBS'] = (training.V5_M > 100).astype(int)
+                
+                ## Ordenar por id de hogar.
+                training = training.sort_values('CODUSU')
+                
+                training.to_csv(training_file, index = False)
+
+                # Remove temporary files
+                shutil.rmtree(temp_dir)
