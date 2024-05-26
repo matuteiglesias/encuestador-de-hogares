@@ -19,7 +19,7 @@ jobs:
 
       - name: Instalar dependencias
         run: |
-          python -m pip install --upgrade pip
+          # python -m pip install --upgrade pip
           pip install pandas
           pip install requests
 
@@ -27,6 +27,11 @@ jobs:
         run: |
           pwd
           ls -lah
+
+      - name: Crear y verificar directorio temporal
+        run: |
+          mkdir -p ./temp_data
+          ls -lah ./temp_data
 
       - name: Preprocesar Datos para Entrenamiento
         run: python ./codigo/routines/preprocesar_datos.py -y 2022 2026 -ow
