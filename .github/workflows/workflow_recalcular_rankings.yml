@@ -1,9 +1,12 @@
 name: Recalcular Rankings
 
 on:
-  schedule:
-    - cron: '0 0 * * *'  # Ejecuta todos los días a medianoche UTC
+  workflow_run:
+    workflows: ["Preprocesar Datos"]
+    types:
+      - completed
   workflow_dispatch:  # Permite ejecución manual
+
 
 jobs:
   recalcular-rankings:
