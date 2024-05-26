@@ -41,8 +41,8 @@ jobs:
 
       - name: Configurar Git
         run: |
-          git config --global user.name 'github-actions'
-          git config --global user.email 'github-actions@github.com'
+          git config --global user.name 'matuteiglesias'
+          git config --global user.email 'matuteiglesias@gmail.com'
 
       - name: Commit y push de los cambios
         run: |
