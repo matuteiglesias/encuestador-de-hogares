@@ -77,6 +77,15 @@ temp_dir = './temp_data/'
 
 if not os.path.exists(temp_dir):
     os.makedirs(temp_dir)
+    print(f"Created temporary directory: {temp_dir}")
+else:
+    print(f"Temporary directory already exists: {temp_dir}")
+
+# Function to clean up the temporary directory
+def cleanup_temp_dir():
+    if os.path.exists(temp_dir):
+        shutil.rmtree(temp_dir)
+        print(f"Removed temporary directory: {temp_dir}")
     
 import requests
 import shutil
@@ -241,5 +250,6 @@ for y in range(startyr, endyr):
                 
                 training.to_csv(training_file, index = False)
 
-                # Remove temporary files
-                shutil.rmtree(temp_dir)
+
+# Call cleanup at the end of your script
+cleanup_temp_dir()
