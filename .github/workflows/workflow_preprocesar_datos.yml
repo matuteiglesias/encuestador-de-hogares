@@ -35,3 +35,20 @@ jobs:
 
       - name: Preprocesar Datos para Entrenamiento
         run: python ./codigo/routines/preprocesar_datos.py -y 2022 2026 -ow
+
+      - name: Verificar directorio temporal después del procesamiento
+        run: ls -lah ./temp_data
+
+      - name: Configurar Git
+        run: |
+          git config --global user.name 'github-actions'
+          git config --global user.email 'github-actions@github.com'
+
+      - name: Commit y push de los cambios
+        run: |
+          git add ./data/info/*
+          git add ./data/training/*
+          git commit -m "Add processed training data and rankings"
+          git push origin main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
