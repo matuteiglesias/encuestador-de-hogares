@@ -189,19 +189,21 @@ for y in range(startyr, endyr):
 
                 indiv_table = indiv[list(indiv.columns.difference(hogar.columns)) + ['CODUSU', 'ANO4', 'TRIMESTRE', 'AGLOMERADO']]
 
-                    
-                EPH = hogar.merge(indiv_table, on = ['CODUSU', 'ANO4', 'TRIMESTRE', 'AGLOMERADO'])#, indicator = True)
-
+                # Merge household and individual data
+                EPH = hogar.merge(indiv_table, on=['CODUSU', 'ANO4', 'TRIMESTRE', 'AGLOMERADO'])
                 print('Hogar - Indiv merged:')
                 print(EPH.shape)
 
+                # Merge with AGLO_Region to get the region information
                 EPH = EPH.merge(AGLO_Region)
 
-                EPH_no_aglo = EPH.copy(); 
-                EPH_no_aglo['AGLOMERADO'] = 0
+                # Sample 10% of the data to create the pooled urban areas (AGLOMERADO = 0)
+                sample_size = int(len(EPH) * 0.1)
+                EPH_sampled = EPH.sample(n=sample_size, replace=True, random_state=42)
+                EPH_sampled['AGLOMERADO'] = 0
 
-                EPH = pd.concat([EPH, EPH_no_aglo]).reset_index(drop = True)
-
+                # Combine the original EPH data with the sampled data
+                EPH = pd.concat([EPH, EPH_sampled]).reset_index(drop=True)
                 print('No aglo agregado:')
                 print(EPH.shape)
 
