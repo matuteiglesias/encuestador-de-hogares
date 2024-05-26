@@ -57,7 +57,7 @@ jobs:
             fi
           done
           if [ -n "$add_files" ]; then
-            git add $add_files
+            git add -f $add_files
             git commit -m "Add processed training data and rankings"
             git push origin main
           else
