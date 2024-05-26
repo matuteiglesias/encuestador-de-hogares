@@ -36,8 +36,8 @@ jobs:
       - name: Preprocesar Datos para Entrenamiento
         run: python ./codigo/routines/preprocesar_datos.py -y 2022 2026 -ow
 
-      - name: Verificar directorio temporal después del procesamiento
-        run: ls -lah ./temp_data
+      - name: Verificar directorio después del procesamiento
+        run: ls -lah ./
 
       - name: Configurar Git
         run: |
