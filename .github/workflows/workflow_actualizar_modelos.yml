@@ -25,3 +25,16 @@ jobs:
 
       - name: Entrenar y Actualizar Modelos
         run: python ./codigo/routines/entrenar_modelos.py -y 2022 2026
+
+      - name: Configurar Git
+        run: |
+          git config --global user.name 'matuteiglesias'
+          git config --global user.email 'matuteiglesias@gmail.com'
+
+      - name: Commit y push de los nuevos modelos
+        run: |
+          git add -f ./modelos/*
+          git commit -m "Add updated models"
+          git push origin main
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

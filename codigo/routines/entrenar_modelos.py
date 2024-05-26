@@ -80,9 +80,14 @@ def fit_model(train_data, x_cols, y_cols, out_filename,
 import pandas as pd
 from numpy import log10
 
+
 for yr in [str(s) for s in range(startyr, endyr)]:
     print(yr)
-    train_data = pd.read_csv('./data/training/EPHARG_train_'+yr[2:]+'.csv')
+    try:
+        train_data = pd.read_csv(f'./data/training/EPHARG_train_{yr[2:]}.csv')
+    except FileNotFoundError:
+        print(f"File not found for year {yr}, skipping.")
+        continue
     
     ## ETAPA 1:
     out = './modelos/clf1_'+yr+'_ARG'
