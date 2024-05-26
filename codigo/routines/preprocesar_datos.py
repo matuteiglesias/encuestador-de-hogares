@@ -198,7 +198,7 @@ for y in range(startyr, endyr):
                 EPH = EPH.merge(AGLO_Region)
 
                 # Sample 10% of the data to create the pooled urban areas (AGLOMERADO = 0)
-                sample_size = int(len(EPH) * 0.1)
+                sample_size = int(len(EPH) * 0.05)
                 EPH_sampled = EPH.sample(n=sample_size, replace=True, random_state=42)
                 EPH_sampled['AGLOMERADO'] = 0
 
