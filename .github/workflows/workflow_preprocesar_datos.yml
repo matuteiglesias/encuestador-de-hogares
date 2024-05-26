@@ -44,11 +44,24 @@ jobs:
           git config --global user.name 'matuteiglesias'
           git config --global user.email 'matuteiglesias@gmail.com'
 
-      - name: Commit y push de los cambios
+      - name: Check file sizes and commit if less than 50 MB
         run: |
-          git add ./data/info/*
-          git add ./data/training/*
-          git commit -m "Add processed training data and rankings"
-          git push origin main
+          max_size=52428800  # 50 MB in bytes
+          add_files=""
+          for file in $(find ./data/info -type f) $(find ./data/training -type f); do
+            size=$(stat -c%s "$file")
+            if [ $size -le $max_size ]; then
+              add_files="$add_files $file"
+            else
+              echo "Skipping $file as it is larger than 50 MB"
+            fi
+          done
+          if [ -n "$add_files" ]; then
+            git add $add_files
+            git commit -m "Add processed training data and rankings"
+            git push origin main
+          else
+            echo "No files to commit"
+          fi
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
