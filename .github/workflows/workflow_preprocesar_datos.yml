@@ -58,8 +58,13 @@ jobs:
           done
           if [ -n "$add_files" ]; then
             git add -f $add_files
-            git commit -m "Add processed training data and rankings"
-            git push origin main
+            # Check if there are changes to commit
+            if git diff --staged --quiet; then
+              echo "No changes to commit"
+            else
+              git commit -m "Add processed training data and rankings"
+              git push origin main
+            fi
           else
             echo "No files to commit"
           fi
