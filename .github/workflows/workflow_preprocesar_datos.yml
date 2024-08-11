@@ -5,7 +5,10 @@ on:
   schedule:
     - cron: '0 12 */6 * *'  # Ejecuta cada 6 días a las 12:00 PM UTC
   workflow_dispatch:  # Permite ejecución manual
-    
+  
+  repository_dispatch:
+    types: [microdata-updated]  # Triggered by the dispatch event from microdatos-EPH-INDEC
+
 jobs:
   preprocesar-datos:
     runs-on: ubuntu-latest
