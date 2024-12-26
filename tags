@@ -1,0 +1,117 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_OUTPUT_EXCMD	mixed	/number, pattern, mixed, or combineV2/
+!_TAG_OUTPUT_FILESEP	slash	/slash or backslash/
+!_TAG_OUTPUT_MODE	u-ctags	/u-ctags or e-ctags/
+!_TAG_PATTERN_LENGTH_LIMIT	96	/0 for no limit/
+!_TAG_PROC_CWD	/home/matias/repos/encuestador-de-hogares/	//
+!_TAG_PROGRAM_AUTHOR	Universal Ctags Team	//
+!_TAG_PROGRAM_NAME	Universal Ctags	/Derived from Exuberant Ctags/
+!_TAG_PROGRAM_URL	https://ctags.io/	/official site/
+!_TAG_PROGRAM_VERSION	5.9.0	//
+AGLO_Region	codigo/routines/preprocesar_datos.py	/^AGLO_Region = AGLO_Region.loc[~((AGLO_Region.AGLOMERADO == 33) & (AGLO_Region.Region == 'Pampean/;"	v
+AGLO_Region	codigo/routines/preprocesar_datos.py	/^AGLO_Region = AGLO_Region.loc[~((AGLO_Region.AGLOMERADO == 93) & (AGLO_Region.Region == 'Pampean/;"	v
+AGLO_Region	codigo/routines/preprocesar_datos.py	/^AGLO_Region = pd.read_csv('.\/data\/info\/radio_ref.csv', usecols = ['AGLOMERADO', 'Region']).dr/;"	v
+AGLO_rk	codigo/routines/preprocesar_datos.py	/^                AGLO_rk = AGLO_rk.sort_values('P47T').reset_index()$/;"	v
+AGLO_rk	codigo/routines/preprocesar_datos.py	/^                AGLO_rk = training.loc[(training.CAT_OCUP == 3) & (training.P47T >= 100)].groupb/;"	v
+Actualizaciones Periodicas:	README.md	/^## Actualizaciones Periodicas:$/;"	s	chapter:encuestador-de-hogares
+Datos	README.md	/^## Datos$/;"	s	chapter:encuestador-de-hogares
+EPH	codigo/routines/preprocesar_datos.py	/^                EPH = EPH.merge(AGLO_Region)$/;"	v
+EPH	codigo/routines/preprocesar_datos.py	/^                EPH = hogar.merge(indiv_table, on=['CODUSU', 'ANO4', 'TRIMESTRE', 'AGLOMERADO'])$/;"	v
+EPH	codigo/routines/preprocesar_datos.py	/^                EPH = pd.concat([EPH, EPH_sampled]).reset_index(drop=True)$/;"	v
+EPH_sampled	codigo/routines/preprocesar_datos.py	/^                EPH_sampled = EPH.sample(n=sample_size, replace=True, random_state=42)$/;"	v
+Ejemplos:	README.md	/^## Ejemplos:$/;"	s	chapter:encuestador-de-hogares
+Metodologia:	README.md	/^## Metodologia:$/;"	s	chapter:encuestador-de-hogares
+Modelos	README.md	/^## Modelos$/;"	s	chapter:encuestador-de-hogares
+Reg_rk	codigo/routines/preprocesar_datos.py	/^                Reg_rk = Reg_rk.sort_values('P47T').reset_index()$/;"	v
+Reg_rk	codigo/routines/preprocesar_datos.py	/^                Reg_rk = training.loc[(training.CAT_OCUP == 3) & (training.P47T >= 100)].groupby/;"	v
+[markdown]	codigo/routines/recalcular_rankings.py	/^# %% [markdown]$/;"	c
+aglo_list	codigo/routines/recalcular_rankings.py	/^aglo_list = []$/;"	v
+aglo_rk	codigo/routines/recalcular_rankings.py	/^    aglo_rk = pd.concat(aglo_list)$/;"	v
+args	codigo/routines/entrenar_modelos.py	/^args = parser.parse_args()$/;"	v
+args	codigo/routines/preprocesar_datos.py	/^args = parser.parse_args()$/;"	v
+cleanup_temp_dir	codigo/routines/preprocesar_datos.py	/^def cleanup_temp_dir():$/;"	f
+col_mon	codigo/routines/preprocesar_datos.py	/^col_mon = [u'P21', u'P47T', u'PP08D1', u'TOT_P12', u'T_VI', u'V12_M', u'V2_M', u'V3_M', u'V5_M']$/;"	v
+columnas_pesos	codigo/routines/entrenar_modelos.py	/^columnas_pesos = [u'P21', u'P47T', u'PP08D1', u'TOT_P12', u'T_VI', u'V12_M', u'V2_M', u'V3_M', u/;"	v
+columnas_pesos	data/info/variables.py	/^columnas_pesos = [u'P21', u'P47T', u'PP08D1', u'TOT_P12', u'T_VI', u'V12_M', u'V2_M', u'V3_M', u/;"	v
+cpi	codigo/routines/preprocesar_datos.py	/^cpi = cpi['2003':]$/;"	v
+cpi	codigo/routines/preprocesar_datos.py	/^cpi = pd.read_csv(cpi_url, index_col=0)$/;"	v
+cpi_M	codigo/routines/preprocesar_datos.py	/^cpi_M = cpi_M['2003':]$/;"	v
+cpi_M	codigo/routines/preprocesar_datos.py	/^cpi_M = pd.read_csv(cpi_M_url, index_col=0)[['index']]$/;"	v
+cpi_M_url	codigo/routines/preprocesar_datos.py	/^cpi_M_url = 'https:\/\/raw.githubusercontent.com\/matuteiglesias\/IPC-Argentina\/main\/data\/inf/;"	v
+cpi_url	codigo/routines/preprocesar_datos.py	/^cpi_url = 'https:\/\/raw.githubusercontent.com\/matuteiglesias\/IPC-Argentina\/main\/data\/info\//;"	v
+df	codigo/routines/preprocesar_datos.py	/^                    df = df.rename(columns={'ESTADO': 'CONDACT'})$/;"	v
+df	codigo/routines/preprocesar_datos.py	/^                    df = pd.read_csv(file_, delimiter=';', usecols=['CODUSU', 'ANO4', 'TRIMESTRE/;"	v
+df	codigo/routines/preprocesar_datos.py	/^                df = pd.read_csv(file_, index_col=None, header=0, delimiter=';', usecols=['CODUS/;"	v
+encuestador-de-hogares	README.md	/^# encuestador-de-hogares$/;"	c
+endyr	codigo/routines/entrenar_modelos.py	/^endyr = args.years[1]$/;"	v
+endyr	codigo/routines/preprocesar_datos.py	/^endyr = args.years[1] + 1  # Include the end year in the range$/;"	v
+endyr	codigo/routines/recalcular_rankings.py	/^endyr = 2025$/;"	v
+file_path	codigo/routines/preprocesar_datos.py	/^                file_path = os.path.join(temp_dir, os.path.basename(url))$/;"	v
+fit_model	codigo/routines/entrenar_modelos.py	/^def fit_model(train_data, x_cols, y_cols, out_filename,$/;"	f
+hogar	codigo/routines/preprocesar_datos.py	/^            hogar = hogar.drop_duplicates()$/;"	v
+hogar	codigo/routines/preprocesar_datos.py	/^            hogar = hogar.loc[~hogar.IV1.isin([9])]$/;"	v
+hogar	codigo/routines/preprocesar_datos.py	/^            hogar = pd.concat(list_).drop_duplicates()$/;"	v
+hogar_files	codigo/routines/preprocesar_datos.py	/^        hogar_files = []$/;"	v
+hogar_urls	codigo/routines/preprocesar_datos.py	/^        hogar_urls = [f'{repo_base_url}\/hogar\/usu_hogar_t{quarter:01}{yr}.txt' for quarter in /;"	v
+indiv	codigo/routines/preprocesar_datos.py	/^                indiv = indiv.dropna(subset = ['P47T'])$/;"	v
+indiv	codigo/routines/preprocesar_datos.py	/^                indiv = pd.concat(list_).dropna(subset=['P47T']).drop_duplicates()$/;"	v
+indiv_files	codigo/routines/preprocesar_datos.py	/^        indiv_files = []$/;"	v
+indiv_table	codigo/routines/preprocesar_datos.py	/^                indiv_table = indiv[list(indiv.columns.difference(hogar.columns)) + ['CODUSU', '/;"	v
+indiv_urls	codigo/routines/preprocesar_datos.py	/^        indiv_urls = [f'{repo_base_url}\/individual\/usu_individual_t{quarter:01}{yr}.txt' for q/;"	v
+ix	codigo/routines/preprocesar_datos.py	/^ix = cpi_M.loc['2016-01'].values[0][0]$/;"	v
+list_	codigo/routines/preprocesar_datos.py	/^                list_ = []$/;"	v
+list_	codigo/routines/preprocesar_datos.py	/^            list_ = []$/;"	v
+names_EPH	codigo/routines/preprocesar_datos.py	/^names_EPH = ['IX_TOT','CH04','CH06','CONDACT', 'AGLOMERADO',$/;"	v
+names_censo	codigo/routines/preprocesar_datos.py	/^names_censo = ['IX_TOT', 'P02', 'P03', 'CONDACT', 'AGLOMERADO',$/;"	v
+out	codigo/routines/entrenar_modelos.py	/^        out = '.\/modelos\/clf4_'+q+'_ARG'$/;"	v
+out	codigo/routines/entrenar_modelos.py	/^    out = '.\/modelos\/clf1_'+yr+'_ARG'$/;"	v
+out	codigo/routines/entrenar_modelos.py	/^    out = '.\/modelos\/clf2_'+yr+'_ARG'$/;"	v
+out	codigo/routines/entrenar_modelos.py	/^    out = '.\/modelos\/clf3_'+yr+'_ARG'$/;"	v
+overwrite	codigo/routines/entrenar_modelos.py	/^overwrite = args.overwrite$/;"	v
+overwrite	codigo/routines/preprocesar_datos.py	/^overwrite = args.overwrite$/;"	v
+parser	codigo/routines/entrenar_modelos.py	/^parser = argparse.ArgumentParser(description='A script to process data for a range of years')$/;"	v
+parser	codigo/routines/preprocesar_datos.py	/^parser = argparse.ArgumentParser()$/;"	v
+pd	codigo/routines/entrenar_modelos.py	/^import pandas as pd$/;"	I	nameref:module:pandas
+pd	codigo/routines/preprocesar_datos.py	/^import pandas as pd$/;"	I	nameref:module:pandas
+pd	codigo/routines/recalcular_rankings.py	/^import pandas as pd$/;"	I	nameref:module:pandas
+predecir1	codigo/routines/entrenar_modelos.py	/^predecir1 = ['CAT_OCUP', 'CAT_INAC', 'CH07']$/;"	v
+predecir2	codigo/routines/entrenar_modelos.py	/^predecir2 = ['INGRESO', 'INGRESO_NLB', 'INGRESO_JUB', 'INGRESO_SBS']$/;"	v
+predecir3	codigo/routines/entrenar_modelos.py	/^predecir3 = ['PP07G1','PP07G_59', 'PP07I', 'PP07J', 'PP07K']$/;"	v
+predecir4	codigo/routines/entrenar_modelos.py	/^predecir4 = columnas_pesos$/;"	v
+regiones	codigo/routines/recalcular_rankings.py	/^    regiones = {$/;"	v
+regs_list	codigo/routines/recalcular_rankings.py	/^regs_list = []$/;"	v
+regs_rk	codigo/routines/recalcular_rankings.py	/^    regs_rk = pd.concat(regs_list)$/;"	v
+regs_table	codigo/routines/recalcular_rankings.py	/^        regs_table = pd.read_csv(training_file, usecols=['ANO4', 'Region', 'Reg_rk']).drop_dupli/;"	v
+repo_base_url	codigo/routines/preprocesar_datos.py	/^repo_base_url = 'https:\/\/raw.githubusercontent.com\/matuteiglesias\/microdatos-EPH-INDEC\/mast/;"	v
+response	codigo/routines/preprocesar_datos.py	/^            response = requests.get(url)$/;"	v
+sample_size	codigo/routines/preprocesar_datos.py	/^                sample_size = int(len(EPH) * 0.05)$/;"	v
+startyr	codigo/routines/entrenar_modelos.py	/^startyr = args.years[0]$/;"	v
+startyr	codigo/routines/preprocesar_datos.py	/^startyr = args.years[0]$/;"	v
+startyr	codigo/routines/recalcular_rankings.py	/^startyr = 2023$/;"	v
+temp_dir	codigo/routines/preprocesar_datos.py	/^temp_dir = '.\/temp_data\/'$/;"	v
+train_q	codigo/routines/entrenar_modelos.py	/^            train_q = train_data.loc[train_data.Q == q]$/;"	v
+training	codigo/routines/preprocesar_datos.py	/^                    training = training.loc[training[col] != 9]$/;"	v
+training	codigo/routines/preprocesar_datos.py	/^                training = EPH.rename(columns = dict(zip(names_EPH, names_censo)))$/;"	v
+training	codigo/routines/preprocesar_datos.py	/^                training = training.loc[training.P47T >= -0.001].fillna(0)$/;"	v
+training	codigo/routines/preprocesar_datos.py	/^                training = training.merge(AGLO_rk[['ANO4', 'AGLOMERADO', 'AGLO_rk']]).merge(Reg_/;"	v
+training	codigo/routines/preprocesar_datos.py	/^                training = training.sort_values('CODUSU')$/;"	v
+training_file	codigo/routines/preprocesar_datos.py	/^    training_file = '.\/data\/training\/EPHARG_train_'+str(yr)+'.csv'$/;"	v
+training_file	codigo/routines/recalcular_rankings.py	/^    training_file = f'.\/data\/training\/EPHARG_train_{yr}.csv'$/;"	v
+x_cols1	codigo/routines/entrenar_modelos.py	/^x_cols1 = ['IX_TOT', 'P02', 'P03', 'AGLO_rk', 'Reg_rk', 'V01', 'H05', 'H06',$/;"	v
+x_cols1	data/info/variables.py	/^x_cols1 = ['IX_TOT', 'P02', 'P03', 'AGLO_rk', 'Reg_rk', 'V01', 'H05', 'H06',$/;"	v
+x_cols2	codigo/routines/entrenar_modelos.py	/^x_cols2 = x_cols1 + predecir1$/;"	v
+x_cols2	data/info/variables.py	/^x_cols2 = x_cols1 + y_cols1$/;"	v
+x_cols3	codigo/routines/entrenar_modelos.py	/^x_cols3 = x_cols2 + predecir2$/;"	v
+x_cols3	data/info/variables.py	/^x_cols3 = x_cols2 + y_cols2$/;"	v
+x_cols4	codigo/routines/entrenar_modelos.py	/^x_cols4 = x_cols3 + predecir3$/;"	v
+x_cols4	data/info/variables.py	/^x_cols4 = x_cols3 + y_cols3$/;"	v
+y_cols	codigo/routines/entrenar_modelos.py	/^y_cols = ['CAT_OCUP', 'P47T', 'PP10E', 'PP10D', 'PP07K', 'PP07I', 'V3_M', 'PP07G4', 'CH16', 'T_V/;"	v
+y_cols	data/info/variables.py	/^y_cols = ['CAT_OCUP', 'P47T', 'PP10E', 'PP10D', 'PP07K', 'PP07I', 'V3_M', 'PP07G4', 'CH16', 'T_V/;"	v
+y_cols1	data/info/variables.py	/^y_cols1 = ['CAT_OCUP', 'CAT_INAC', 'CH07']$/;"	v
+y_cols2	data/info/variables.py	/^y_cols2 = ['INGRESO', 'INGRESO_NLB', 'INGRESO_JUB', 'INGRESO_SBS']$/;"	v
+y_cols3	data/info/variables.py	/^y_cols3 = ['PP07G1','PP07G_59', 'PP07I', 'PP07J', 'PP07K']$/;"	v
+y_cols4	codigo/routines/entrenar_modelos.py	/^y_cols4 = predecir4$/;"	v
+y_cols4	data/info/variables.py	/^y_cols4 = columnas_pesos$/;"	v
+yr	codigo/routines/preprocesar_datos.py	/^    yr = str(y)[2:]$/;"	v
+yr	codigo/routines/recalcular_rankings.py	/^    yr = str(y)[2:]$/;"	v
