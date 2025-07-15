@@ -168,8 +168,30 @@ for y in range(startyr, endyr):
                 # Process individual files
                 list_ = []
                 for file_ in indiv_files:
-                    df = pd.read_csv(file_, delimiter=';', usecols=['CODUSU', 'ANO4', 'TRIMESTRE', 'CH04', 'CH06', 'AGLOMERADO', 'CH09', 'CH10', 'CH12', 'CH13', 'CH15', 'CH07', 'ESTADO', 'CAT_INAC', 'CAT_OCUP', 'PP07G1', 'PP07G2', 'PP07G3', 'PP07G4', 'PP07G_59', 'PP07H', 'PP07I', 'PP07J', 'PP07K', 'P47T', 'V3_M', 'T_VI', 'V12_M', 'TOT_P12', 'V5_M', 'V2_M', 'PP08D1', 'P21'])
+
+
+                    cols_to_try = [
+                        'CODUSU', 'ANO4', 'TRIMESTRE', 'CH04', 'CH06', 'AGLOMERADO',
+                        'CH09', 'CH10', 'CH12', 'CH13', 'CH15', 'CH07', 'ESTADO', 'CAT_INAC',
+                        'CAT_OCUP', 'PP07G1', 'PP07G2', 'PP07G3', 'PP07G4', 'PP07G_59',
+                        'PP07H', 'PP07I', 'PP07J', 'PP07K', 'P47T', 'V3_M', 'T_VI',
+                        'V12_M', 'TOT_P12', 'V5_M', 'V2_M', 'PP08D1', 'P21',
+                        'V2_01_M', 'V2_02_M', 'V2_03_M', 'V5_01_M', 'V5_02_M', 'V5_03_M'
+                    ]
+
+                    df = pd.read_csv(file_, delimiter=';', usecols=lambda c: c in cols_to_try)
                     df = df.rename(columns={'ESTADO': 'CONDACT'})
+
+                    # Handle legacy V2_M construction
+                    if 'V2_M' not in df.columns:
+                        v2_parts = ['V2_01_M', 'V2_02_M', 'V2_03_M']
+                        df['V2_M'] = df[v2_parts].sum(axis=1, skipna=True) if all(col in df.columns for col in v2_parts) else 0
+
+                    # Handle legacy V5_M construction
+                    if 'V5_M' not in df.columns:
+                        v5_parts = ['V5_01_M', 'V5_02_M', 'V5_03_M']
+                        df['V5_M'] = df[v5_parts].sum(axis=1, skipna=True) if all(col in df.columns for col in v5_parts) else 0
+
                     list_.append(df)
                 indiv = pd.concat(list_).dropna(subset=['P47T']).drop_duplicates()
 
