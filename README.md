@@ -1,5 +1,8 @@
 # encuestador-de-hogares
 
+> [!IMPORTANT]
+> **Historical/conditional-revival repository.** `income-modeling-eph` is the current authority for annual EPH preprocessing. The data and models retained here are versioned legacy evidence, not automatically current releases. Do **not** resume the cron, workflow, model-training, or automatic-commit instructions below unless a future named consumer passes the revival gate in [LIFECYCLE.md](LIFECYCLE.md).
+
 Entrenador de modelos de random forest que predicen respuestas a las preguntas de la encuesta permanente de hogares (EPH - INDEC).
 
 This repository contains code and data for analyzing household survey data from the Encuesta Permanente de Hogares (EPH) in Argentina. The goal of this project is to train machine learning models to predict various household characteristics from the EPH data and to extract information from census data that can be used to improve the accuracy of these predictions. The repository includes Jupyter notebooks that load and format the EPH and census data, train machine learning models, and extract samples of data from the census. The EPHARG_train files are the training sets, the CLF files are the machine learning models saved, and the data folder contains information that is used in the analysis. The repository also includes figures that show the results of the analysis.

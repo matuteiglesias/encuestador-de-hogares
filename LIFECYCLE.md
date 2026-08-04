@@ -34,3 +34,7 @@ Do not begin maintenance or modernization until a proposal names:
 - prepare a bounded revival decision memo.
 
 Do not run billable or large-scale jobs, refresh datasets, retrain models, or redesign the architecture merely to see whether the project can be made current.
+
+## Preprocessing authority
+
+This repository is historical evidence for the former `EPHARG_train*` preprocessing lineage. `income-modeling-eph` is the current authority for annual preprocessing and `EPHARG_annual_input_*`; no artifact here should be presented as a current release. See `docs/PREPROCESSING_AUTHORITY_HANDOFF.md` before interpreting or transferring legacy behavior. Legacy schedules and automatic commits must remain dormant.
