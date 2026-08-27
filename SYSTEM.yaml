@@ -12,22 +12,25 @@ authority:
   status: current
   owns:
   - statistical transport design from an EPH training frame to an exact Census-derived scoring frame
+  - transport training-population, eligibility, EPH weighting and group/fold semantics
   - deployment DAG declaring shared observables, derived shared features, learned stage targets and terminal welfare targets
+  - transport-time admissibility of donor-vintage Census features, distinct from semantic comparability
+  - optional target-period aggregate calibration when explicitly governed as transport state rather than sample mutation
   - staged model training, including out-of-fold intermediate predictions for every learned feature consumed downstream
-  - transport-model comparison, support/domain-shift diagnostics, cascade error diagnostics and promotion evidence
+  - direct/hurdle/staged model comparison, support/domain-shift diagnostics, cascade error diagnostics and promotion evidence
   - execution of a promoted transport model over one exact Census feature/sample release
   - prediction-scale resolution and construction of a declared person/household welfare concept before downstream poverty use
   - immutable transport-model and welfare releases with exact parent identities, QA, limitations and checksums
   does_not_own:
-  - official EPH publication, raw acquisition or annual EPH preprocessing authority
+  - official EPH publication, raw acquisition or neutral EPH observation-frame production
   - unconstrained EPH-only income-model research or model selection
   - semantic EPH-to-Census variable mapping authority
-  - Census sample identity, sampling design, population calibration or Census geography authority
+  - Census sample identity, sampling design, target-year department sampling or Census geography authority
   - price-index, monetary-reference or monetary-conversion methodology
   - poverty methodology, poverty lines, poverty classification, FGT estimation or official poverty publication
 interfaces:
   consumes:
-  # Transitional neutral EPH input. The producer may change later; this repo consumes the artifact, not sibling runtime code.
+  # Transitional EPH input. Target boundary is a source-backed neutral EPH observation/analysis frame.
   - artifact:research.eph-annual-preprocessed@1
   # Historical artifact id retained by the aligner; semantically this is variable alignment, not a geographic crosswalk.
   - artifact:research.eph-census-crosswalk@1
@@ -44,30 +47,41 @@ upstream:
 downstream:
 - repo.indice-pobreza-uba
 canonical_design:
+  functional_interface: contracts/functional_interface.yaml
+  functional_note: docs/FUNCTIONAL_CONTRACT.md
   deployment_dag: contracts/deployment_dag.yaml
   boundary_note: docs/EPH_CENSUS_TRANSPORT_BOUNDARY.md
 scientific_invariants:
 - external Census inputs must be approved shared_observable or derived_shared features from an exact alignment release
+- semantic shared_observable does not imply that a donor-vintage Census value is observed at the welfare period
+- every deployable Census feature must have an explicit transport-time role before consequential scoring
 - learned stage targets may be used downstream only through out-of-fold predictions during training and fitted predictions during scoring
 - observed stage labels must never replace predicted stage outputs in downstream training evidence
+- approved OOF policy must respect household or stronger grouping once exact EPH household identity is available
+- a direct shared-information -> terminal-welfare baseline is required before staged complexity is promoted
+- target-period aggregate calibration is optional, explicit and diagnosed; it may not silently rewrite donor observations
 - EPH validation alone does not establish Census transport validity
 - semantic alignment alone does not establish statistical transport validity
 - sample/person/household identity must match exactly across scoring and welfare releases; no positional or fuzzy join is permitted
+- EPH survey weights, Census selection probabilities and downstream poverty analysis weights are distinct semantics
 - monetary transforms and price references must be explicit and resolved through a versioned monetary-conversion release before welfare handoff
 - poverty consumes welfare semantics, never model-native latent/log prediction values
 verification:
   status: design-characterized-runtime-pending
-  last_verified: '2026-08-26'
+  last_verified: '2026-08-27'
   evidence:
   - historical four-wave Random Forest cascade in src/encuestador/entrenar_modelos.py
   - historical EPH/Census renames and recodes in src/encuestador/preprocesar_datos.py
+  - historical quarterly notebook that adjusted Census CONDACT toward target-period unemployment before scoring
   - current semantic-alignment vocabulary and pending real-vintage review in repo.eph-censo-aligner
   - out-of-fold staged-training prototype currently recoverable from repo.income-modeling-eph
   unknowns:
   - no real EPH/Census vintage pair is yet approved for deployment
   - exact current Census inference feature frame has not yet been materialized
+  - exact transport training population and EPH survey-weight policy remain unresolved
+  - transport-time role of real Census inputs remains pending variable-level review
   - historical fitted RFC1-RFC4 artifacts are not established as current releases
-  - target monetary lineage for legacy annual EPH artifacts remains unresolved
+  - exact target-period calibration policy, if any, is not approved
   - final household welfare concept and aggregation rule require explicit scientific approval
 maintenance:
   cadence: active-development
