@@ -1,0 +1,68 @@
+name: Scheduled transport maturity sentinel
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "17 12 * * 3"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: scheduled-transport-maturity
+  cancel-in-progress: false
+
+jobs:
+  maturity:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install contract parser
+        run: python -m pip install pyyaml
+
+      - name: Validate governing contract files
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import yaml
+
+          required = [
+              Path("SYSTEM.yaml"),
+              Path("contracts/functional_interface.yaml"),
+              Path("contracts/deployment_dag.yaml"),
+          ]
+          for path in required:
+              if not path.is_file():
+                  raise SystemExit(f"Missing governing contract: {path}")
+              value = yaml.safe_load(path.read_text(encoding="utf-8"))
+              if not isinstance(value, dict):
+                  raise SystemExit(f"Expected mapping in {path}")
+          print("Governing transport contracts parse successfully")
+          PY
+
+      - name: Require deterministic synthetic transport executor
+        run: |
+          if [ ! -f scripts/synthetic_transport_smoke.py ]; then
+            echo "::error::Transport contracts exist, but the deterministic synthetic EPH→Census→household-welfare executor is not implemented yet. See issues #6 and #7."
+            exit 1
+          fi
+          python scripts/synthetic_transport_smoke.py
+
+      - name: Summarize maturity state
+        if: always()
+        run: |
+          {
+            echo "## Scheduled encuestador maturity"
+            echo
+            echo "This sentinel is intentionally red until the first deterministic synthetic transport/welfare executor exists. Contract completeness is not runtime/scientific proof."
+            echo
+            echo "After the synthetic proof exists, the next maturity gates are exact real parents, approved semantic plane, temporal-role review, support/domain-shift evidence, monetary lineage, and household-welfare promotion."
+          } >> "$GITHUB_STEP_SUMMARY"

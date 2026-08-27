@@ -1,0 +1,254 @@
+schema_version: 1
+contract_id: research.eph-census-functional-interface/candidate-v0
+status: candidate
+approval: pending_synthetic_end_to_end_proof
+
+mission: >-
+  Infer a declared target-period household welfare quantity for the exact households
+  in one governed Census-derived sample, using target-period EPH evidence and an
+  approved EPH/Census semantic feature plane, without changing sample identity,
+  owning source semantics, or performing poverty measurement.
+
+scientific_question: >-
+  Given what is jointly knowable from an exact EPH training population and a
+  Census-derived donor/scoring frame, what target-period welfare can be inferred
+  for those exact Census sample units, with what assumptions, support, error and
+  temporal limitations?
+
+boundary:
+  owns:
+    - transport training population and eligibility semantics
+    - statistical transport DAG and direct/hurdle/staged model families
+    - group-aware out-of-fold generation for learned intermediate features
+    - EPH survey-weight use for fitting, calibration and evaluation when declared
+    - target-period admissibility of donor-vintage Census features
+    - optional target-period aggregate calibration inside transport when explicitly governed
+    - transport/domain-shift/cascade/ablation diagnostics
+    - exact Census scoring over a pinned sample namespace
+    - model-scale inversion and monetary-reference resolution through an IPC release
+    - person-to-household construction of the declared welfare concept
+    - transport-model and household-welfare release packaging
+  does_not_own:
+    - raw EPH acquisition or neutral EPH observation-frame production
+    - semantic EPH/Census mapping or category-loss authority
+    - Census sampling, target-year department sampling or sample weights
+    - Census geography authority
+    - price-index or monetary-conversion methodology
+    - poverty lines, adult-equivalence method, poverty classification or FGT estimation
+
+execution_surfaces:
+  qualify_transport:
+    purpose: fit, compare and qualify one transport design before Census scoring
+    requires:
+      eph_training_frame:
+        status: target_interface
+        semantics:
+          - exact EPH person and household identity
+          - native/source-faithful observations
+          - survey/design fields preserved
+          - exact training periods
+          - terminal training targets available under declared monetary semantics
+      semantic_feature_plane:
+        producer: repo.eph-censo-aligner
+        semantics:
+          - exact EPH and Census source vintages
+          - canonical transport feature names
+          - directional recodes and deterministic derivations
+          - shared_observable / derived_shared / stage_target / unsupported classification
+          - loss and ambiguity report
+      census_scoring_frame:
+        semantics:
+          - exact sample_person_id and sample_household_id
+          - exact parent research.census-sample@1
+          - aligned donor-vintage Census features only
+          - frame_vintage and sampling_target_period preserved separately
+          - sampler selection/design metadata preserved as lineage
+      transport_spec:
+        semantics:
+          - welfare_period
+          - EPH training window
+          - training-population contract
+          - feature temporal-role policy
+          - DAG/model-family specification
+          - household/group fold policy
+          - stage-specific weighting policy
+          - optional target-period calibration anchors
+          - terminal welfare concept candidate
+      monetary_reference:
+        producer: repo.ipc-argentina
+        artifact: artifact:research.argentina-monetary-conversion@1
+        required_for: monetary target comparability and final linear welfare resolution
+    produces:
+      transport_model_release:
+        artifact: artifact:research.eph-census-transport-model@1
+      qualification_evidence:
+        packaging: inside transport model release
+        minimum:
+          - OOF metrics under named fold policy
+          - direct baseline comparison
+          - hurdle/stage ablations
+          - EPH/Census support and domain-shift diagnostics
+          - subgroup and tail diagnostics
+          - temporal-role and optional calibration diagnostics
+          - exact parent identities and hashes
+          - limitations and non-claims
+
+  score_welfare:
+    purpose: apply one qualified model to one exact Census scoring frame
+    requires:
+      transport_model_release:
+        artifact: artifact:research.eph-census-transport-model@1
+      census_scoring_frame:
+        constraint: exact namespace/feature contract allowed by model release
+      census_sample_release:
+        artifact: artifact:research.census-sample@1
+        purpose: exact person/household coverage and sampler-lineage verification
+      monetary_reference:
+        producer: repo.ipc-argentina
+        artifact: artifact:research.argentina-monetary-conversion@1
+        purpose: resolve final welfare amount/reference if model target and output reference differ
+    produces:
+      household_welfare_release:
+        artifact: artifact:research.household-welfare@1
+        unit: household
+        minimum_fields:
+          - sample_household_id
+          - welfare_period
+          - welfare_amount
+          - currency
+          - price_reference
+          - welfare_concept
+          - estimation_status
+          - transport_model_release_id
+        required_lineage:
+          - census_sample_release_id
+          - semantic_feature_plane_release_id
+          - EPH_training_release_id
+          - monetary_conversion_release_id
+        qa:
+          - exact household coverage
+          - person-to-household aggregation accounting
+          - invalid/missing prediction counts
+          - support/extrapolation status
+          - transform and monetary round-trip checks
+
+internal_artifacts:
+  person_transport_state:
+    status: internal_or_restricted_by_default
+    purpose: >-
+      Preserve sample_person_id, learned stage outputs/probabilities, terminal person-level
+      welfare candidate, support flags and aggregation status when needed for audit.
+    note: Poverty does not consume model-native person-stage outputs.
+
+feature_temporal_roles:
+  purpose: >-
+    Semantic comparability is not enough when Census observations and welfare periods differ.
+    Every deployable Census-side feature must also have an explicit transport-time role.
+  vocabulary:
+    donor_vintage_proxy: observed in Census vintage and used only as an explicit proxy for target-period state
+    target_period_latent: not treated as observed at welfare_period; must be learned/updated by transport if needed
+    deterministic_target_period_derived: target-period value is produced by an explicit reviewed deterministic rule
+    target_period_anchor: aggregate target-period evidence constraining/calibrating a transport state, never a row-level observation
+    time_stable_or_invariant: approved as usable across the declared frame/welfare clock gap
+    forbidden_temporal_input: semantically mappable but not defensible as a target-period predictor under the approved design
+  invariant: semantic shared_observable does not imply target-period observed
+
+clocks:
+  required:
+    - eph_training_period
+    - census_frame_vintage
+    - sampling_target_period
+    - welfare_period
+    - monetary_reference_period
+  non_equivalences:
+    - census_frame_vintage != sampling_target_period
+    - census_frame_vintage != welfare_period
+    - sampling_target_period != welfare_period unless explicitly equal
+    - training_period != welfare_period unless explicitly equal
+
+model_family_policy:
+  mandatory_baseline:
+    name: direct_shared_to_terminal_welfare
+    purpose: prove whether staged complexity adds final-welfare value
+  candidate_families:
+    - direct regression/classification
+    - two-part or hurdle welfare model
+    - staged dependency DAG
+  stage_retention_rule: >-
+    A learned intermediate survives only if honest OOF evidence shows useful final-welfare
+    value or materially improves calibration/support robustness. Historical RFC1-RFC4
+    membership is not sufficient evidence.
+
+out_of_fold_policy:
+  required: true
+  learned_intermediate_features: out_of_fold_predictions_only_during_downstream_training
+  grouping: household_or_stronger_approved_group
+  observed_stage_label_substitution: forbidden
+  random_person_folds: reference_or_sensitivity_only_once_household_identity_is_available
+
+weight_separation:
+  eph_survey_weight:
+    owner_for_use_decision: repo.encuestador-de-hogares
+    scope: transport fitting/calibration/evaluation only when declared
+  census_selection_probability:
+    owner: repo.sampler-censo-arg
+    scope: sample design lineage; not an EPH training weight
+  census_donor_inverse_probability_weight:
+    owner: repo.sampler-censo-arg
+    scope: optional donor-frame design quantity; not inferred as poverty weight
+  downstream_poverty_analysis_weight:
+    owner_for_estimand_use: repo.indice-pobreza-uba
+    scope: downstream estimation under an explicit population-frame contract
+  generic_weight_field: forbidden
+
+temporal_calibration:
+  default: none
+  optional: true
+  rule: >-
+    Target-period aggregate anchors may constrain a latent/current state only through an
+    explicit transport specification and diagnostics. They must never silently rewrite
+    donor Census observations or sample identity.
+  historical_evidence:
+    - >-
+      The legacy quarterly Census prediction notebook modified CONDACT counts to match a
+      target unemployment ratio before RFC1 scoring. This is evidence that temporal
+      calibration was part of the original scientific intuition, not approval of that
+      specific implementation.
+
+welfare_boundary:
+  downstream_unit: household
+  downstream_scale: linear_monetary_amount
+  adult_equivalence: forbidden_here
+  poverty_classification: forbidden_here
+  candidate_person_to_household_methods:
+    - sum predicted person total income to household total
+    - direct household total-income target
+    - explicitly justified hybrid
+  approval_required: true
+  invariant: Poverty receives resolved household welfare, never log/model-native predictions
+
+identity_invariants:
+  - exact sample_person_id preservation through scoring
+  - exact sample_household_id preservation through aggregation
+  - no positional or fuzzy joins
+  - all scored persons must belong to the exact parent Census sample
+  - every released household welfare row must have complete auditable person membership or explicit failure status
+
+non_claims:
+  - Census donor records are not observed at the welfare period
+  - target-year sampling does not update within-department socioeconomic covariates
+  - semantically common Census variables are not automatically current-period observations
+  - EPH validation does not prove Census welfare accuracy
+  - a calibrated aggregate margin does not make row-level latent states observed
+  - released welfare is model-based synthetic inference, not official Census income
+
+first_end_to_end_definition_of_done:
+  - synthetic neutral EPH frame with stable household/person IDs and explicit survey weights
+  - synthetic exact Census household sample with distinct selection metadata
+  - one approved synthetic semantic feature plane
+  - direct baseline plus at least one hurdle/staged candidate trained with household-aware OOF
+  - explicit temporal role on every Census input
+  - no silent target-period calibration; any anchor is versioned and diagnosed
+  - one deterministic transport-model release
+  - exact scoring of the synthetic Census frame
+  - one linear household-welfare release with complete lineage and coverage QA
