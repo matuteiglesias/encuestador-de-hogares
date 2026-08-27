@@ -1,0 +1,456 @@
+schema_version: 1
+dag_id: research.eph-census-deployment-dag/candidate-v0
+status: candidate
+approval: pending_real_vintage_review
+purpose: >-
+  Preserve the scientifically useful structure of the historical EPH -> Census cascade
+  while separating semantic alignment, statistical transport, monetary semantics and
+  downstream poverty measurement. This file is an evidence-backed candidate design;
+  it does not approve a real EPH/Census vintage or a production inference run.
+
+source_evidence:
+  historical_training:
+    repository: matuteiglesias/encuestador-de-hogares
+    path: src/encuestador/entrenar_modelos.py
+    finding: four-wave Random Forest cascade with three learned feature stages and a final monetary regression stage
+  historical_preprocessing:
+    repository: matuteiglesias/encuestador-de-hogares
+    path: src/encuestador/preprocesar_datos.py
+    finding: explicit EPH-to-Census renames, recodes, Census-mimicking preparation and legacy January-2016 monetary normalization
+  current_semantic_authority:
+    repository: matuteiglesias/eph-censo-aligner
+    paths:
+    - docs/DEPLOYMENT_FEATURE_PLANE.md
+    - docs/MAPPING_REVIEW_REQUIRED.md
+    - aligner/eph_align.py
+    - aligner/censo_align.py
+    finding: feature-plane vocabulary and directional mapping rules exist, but only synthetic fixture-v1 is supported; all real vintages remain pending review
+  current_eph_science:
+    repository: matuteiglesias/income-modeling-eph
+    paths:
+    - configs/feature_contract.yaml
+    - configs/annual_input_consumer_contract.yaml
+    finding: EPH-only baseline intentionally uses observed variables that become learned stage targets under Census deployment; direct model reuse is therefore not assumed
+
+feature_class_vocabulary:
+  shared_observable: concept is directly observable on both approved source vintages after reviewed semantic alignment
+  derived_shared: concept is deterministically constructible on both sides from approved source fields
+  stage_target: observed in EPH but not required as an external Census input; may be learned from approved upstream features
+  unsupported: cannot currently be constructed defensibly on the Census side
+  research_only: allowed in EPH-only research but excluded from the Census deployment input plane
+
+global_invariants:
+  external_census_inputs:
+  - shared_observable
+  - derived_shared
+  training_intermediate_policy: out_of_fold_predictions
+  scoring_intermediate_policy: fitted_stage_predictions
+  forbid_observed_stage_label_substitution: true
+  exact_identity_join_required: true
+  fuzzy_or_positional_join_forbidden: true
+  semantic_alignment_implies_transport_validity: false
+  eph_validation_implies_census_accuracy: false
+  real_vintage_mapping_approval_required: true
+  monetary_reference_owner: matuteiglesias/IPC-Argentina
+  hidden_internal_deflation_forbidden: true
+
+historical_base_plane:
+  description: >-
+    Historical x_cols1 plane. Entries below preserve the observed legacy intent but
+    deliberately distinguish direct Census fields from features that require derived
+    geography/household construction or unresolved review.
+  variables:
+    IX_TOT:
+      role: predictor
+      feature_class: derived_shared
+      eph_source: IX_TOT
+      census_legacy_name: IX_TOT
+      census_raw_candidate: HOGAR.TOTPERS
+      eph_rule: clip to [0,8] in legacy preprocessing
+      approval: pending_mapping_review
+      note: raw CPV mapping to the legacy IX_TOT semantics must be proven; spelling equivalence is not assumed
+    P02:
+      role: predictor
+      feature_class: shared_observable
+      eph_source: CH04
+      census_source: PERSONA.P02
+      legacy_forward: CH04 -> P02
+      approval: pending_mapping_review
+    P03:
+      role: predictor
+      feature_class: shared_observable
+      eph_source: CH06
+      census_source: PERSONA.P03
+      legacy_forward: CH06 -> P03
+      eph_rule: clip negative age to 0
+      approval: pending_mapping_review
+    CONDACT:
+      role: predictor
+      feature_class: shared_observable
+      eph_source: ESTADO
+      census_source: PERSONA.CONDACT
+      legacy_forward: ESTADO -> CONDACT
+      conditional_rule: set CONDACT=0 for EPH CH06 < 14
+      approval: pending_mapping_review
+      note: universe/reference differences require explicit review
+    AGLOMERADO:
+      role: predictor
+      feature_class: derived_shared
+      eph_source: AGLOMERADO
+      census_source: null
+      required_external_authority: matuteiglesias/argentina-geography
+      approval: pending_mapping_review
+      note: CPV raw tables do not expose EPH agglomerate identity directly; any construction must be an explicit geography-derived feature, not a silent lookup
+    V01:
+      role: predictor
+      feature_class: shared_observable
+      eph_source: IV1
+      census_source: VIVIENDA.V01
+      legacy_forward: IV1 -> V01
+      reverse_rule_census_to_eph: {1: 1, 2: 6, 3: 6, 4: 2, 5: 3, 6: 4, 7: 5, 8: 6}
+      approval: pending_mapping_review
+      directionality: reverse recode is independently governed and must not be inverted mechanically
+    H05:
+      role: predictor
+      feature_class: shared_observable
+      eph_source: IV3
+      census_source: HOGAR.H05
+      legacy_forward: IV3 -> H05
+      approval: pending_mapping_review
+    H06:
+      role: predictor
+      feature_class: shared_observable
+      eph_source: IV4
+      census_source: HOGAR.H06
+      legacy_forward: IV4 -> H06
+      reverse_rule_census_to_eph: {1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 7, 8: 9}
+      approval: pending_mapping_review
+    H07:
+      role: predictor
+      feature_class: shared_observable
+      eph_source: IV5
+      census_source: HOGAR.H07
+      legacy_forward: IV5 -> H07
+      approval: pending_mapping_review
+    H08:
+      role: predictor
+      feature_class: shared_observable
+      eph_source: IV6
+      census_source: HOGAR.H08
+      legacy_forward: IV6 -> H08
+      approval: pending_mapping_review
+    H09:
+      role: predictor
+      feature_class: shared_observable
+      eph_source: IV7
+      census_source: HOGAR.H09
+      legacy_forward: IV7 -> H09
+      reverse_rule_census_to_eph: {1: 1, 2: 2, 3: 3, 4: 4, 5: 4, 6: 4}
+      approval: pending_mapping_review
+    H10:
+      role: predictor
+      feature_class: shared_observable
+      eph_source: IV8
+      census_source: HOGAR.H10
+      legacy_forward: IV8 -> H10
+      approval: pending_mapping_review
+    H11:
+      role: predictor
+      feature_class: shared_observable
+      eph_source: IV10
+      census_source: HOGAR.H11
+      legacy_forward: IV10 -> H11
+      forward_rule_eph_to_census: {1: 1, 2: 2, 3: 2, 0: 0, 9: 9}
+      approval: pending_mapping_review
+    H12:
+      role: predictor
+      feature_class: shared_observable
+      eph_source: IV11
+      census_source: HOGAR.H12
+      legacy_forward: IV11 -> H12
+      approval: pending_mapping_review
+    H16:
+      role: predictor
+      feature_class: shared_observable
+      eph_source: II1
+      census_source: HOGAR.H16
+      legacy_forward: II1 -> H16
+      reverse_rule_census_to_eph: clip H16 to [0,9]
+      approval: pending_mapping_review
+    H15:
+      role: predictor
+      feature_class: shared_observable
+      eph_source: II2
+      census_source: HOGAR.H15
+      legacy_forward: II2 -> H15
+      approval: pending_mapping_review
+    PROP:
+      role: predictor
+      feature_class: shared_observable
+      eph_source: II7
+      census_source: HOGAR.PROP
+      legacy_forward: II7 -> PROP
+      forward_rule_eph_to_census: {1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 6, 8: 6, 9: 6, 0: 0}
+      approval: pending_mapping_review
+    H14:
+      role: predictor
+      feature_class: shared_observable
+      eph_source: II8
+      census_source: HOGAR.H14
+      legacy_forward: II8 -> H14
+      reverse_rule_census_to_eph: {1: 1, 2: 4, 3: 2, 4: 2, 5: 4, 6: 3, 7: 4, 8: 9}
+      approval: pending_mapping_review
+    H13:
+      role: predictor
+      feature_class: shared_observable
+      eph_source: II9
+      census_source: HOGAR.H13
+      legacy_forward: II9 -> H13
+      forward_rule_eph_to_census: {1: 1, 2: 2, 3: 2, 4: 4, 0: 0}
+      reverse_rule_census_to_eph: {1: 1, 2: 2, 4: 0}
+      approval: pending_mapping_review
+      directionality: forward and reverse losses are separately governed
+    P07:
+      role: predictor
+      feature_class: shared_observable
+      eph_source: CH09
+      census_source: PERSONA.P07
+      legacy_forward: CH09 -> P07
+      forward_rule_eph_to_census: {1: 1, 2: 2, 0: 2, 3: 2}
+      reverse_rule_census_to_eph: {1: 1, 2: 2, 0: 2}
+      approval: pending_mapping_review
+    P08:
+      role: predictor
+      feature_class: shared_observable
+      eph_source: CH10
+      census_source: PERSONA.P08
+      legacy_forward: CH10 -> P08
+      approval: pending_mapping_review
+    P09:
+      role: predictor
+      feature_class: shared_observable
+      eph_source: CH12
+      census_source: PERSONA.P09
+      legacy_forward: CH12 -> P09
+      eph_rule: replace CH12=99 with 0 before alignment
+      approval: pending_mapping_review
+    P10:
+      role: predictor
+      feature_class: shared_observable
+      eph_source: CH13
+      census_source: PERSONA.P10
+      legacy_forward: CH13 -> P10
+      conditional_rule: set CH13=0 when CH12 is 0, 1 or 9 before alignment
+      approval: pending_mapping_review
+    P05:
+      role: predictor
+      feature_class: shared_observable
+      eph_source: CH15
+      census_source: PERSONA.P05
+      legacy_forward: CH15 -> P05
+      forward_rule_eph_to_census: {1: 1, 2: 1, 3: 1, 4: 2, 5: 2, 9: 0}
+      approval: pending_mapping_review
+    AGLO_rk:
+      role: predictor
+      feature_class: research_only
+      legacy_derivation: percentile rank of mean P47T by ANO4 and AGLOMERADO among CAT_OCUP==3 and P47T>=100
+      deployment_status: forbidden_as_external_census_input
+      reason: target-derived geography rank; current EPH feature contract also marks it leakage-sensitive
+    Reg_rk:
+      role: predictor
+      feature_class: research_only
+      legacy_derivation: percentile rank of mean P47T by ANO4 and Region among CAT_OCUP==3 and P47T>=100
+      deployment_status: forbidden_as_external_census_input
+      reason: target-derived regional rank; current EPH feature contract also marks it leakage-sensitive
+
+stages:
+  stage_1_person_status:
+    historical_name: RFC1
+    inputs:
+    - IX_TOT
+    - P02
+    - P03
+    - AGLO_rk
+    - Reg_rk
+    - V01
+    - H05
+    - H06
+    - H07
+    - H08
+    - H09
+    - H10
+    - H11
+    - H12
+    - H16
+    - H15
+    - PROP
+    - H14
+    - H13
+    - P07
+    - P08
+    - P09
+    - P10
+    - P05
+    - CONDACT
+    targets:
+      CAT_OCUP:
+        feature_class: stage_target
+        role: learned_intermediate
+        eph_source: CAT_OCUP
+        census_external_input: false
+        approval: pending_model_review
+      CAT_INAC:
+        feature_class: stage_target
+        role: learned_intermediate
+        eph_source: CAT_INAC
+        census_external_input: false
+        approval: pending_model_review
+      CH07:
+        feature_class: stage_target
+        role: learned_intermediate
+        eph_source: CH07
+        census_external_input: false
+        approval: pending_model_review
+    modernization_note: AGLO_rk and Reg_rk must be removed or replaced by independently governed non-target-derived features before a deployable stage-1 design can be approved
+
+  stage_2_income_presence:
+    historical_name: RFC2
+    inputs_from_prior_stage:
+    - CAT_OCUP
+    - CAT_INAC
+    - CH07
+    targets:
+      INGRESO:
+        feature_class: stage_target
+        role: learned_intermediate
+        legacy_definition: P47T > 100
+        census_external_input: false
+        approval: pending_model_review
+        note: acceptable only as a predicted hurdle-stage feature trained out-of-fold; observed INGRESO is target leakage in ordinary EPH income modeling
+      INGRESO_NLB:
+        feature_class: stage_target
+        role: learned_intermediate
+        legacy_definition: T_VI > 100
+        census_external_input: false
+        approval: pending_model_review
+      INGRESO_JUB:
+        feature_class: stage_target
+        role: learned_intermediate
+        legacy_definition: V2_M > 100
+        census_external_input: false
+        approval: pending_model_review
+      INGRESO_SBS:
+        feature_class: stage_target
+        role: learned_intermediate
+        legacy_definition: V5_M > 100
+        census_external_input: false
+        approval: pending_model_review
+    modernization_note: retain only if hurdle indicators improve transport evidence after honest out-of-fold training; they are not automatically part of the revived model
+
+  stage_3_labor_detail:
+    historical_name: RFC3
+    inputs_from_prior_stages:
+    - CAT_OCUP
+    - CAT_INAC
+    - CH07
+    - INGRESO
+    - INGRESO_NLB
+    - INGRESO_JUB
+    - INGRESO_SBS
+    targets:
+      PP07G1: {feature_class: stage_target, role: learned_intermediate, census_external_input: false, approval: pending_model_review}
+      PP07G_59: {feature_class: stage_target, role: learned_intermediate, census_external_input: false, approval: pending_model_review}
+      PP07I: {feature_class: stage_target, role: learned_intermediate, census_external_input: false, approval: pending_model_review}
+      PP07J: {feature_class: stage_target, role: learned_intermediate, census_external_input: false, approval: pending_model_review}
+      PP07K: {feature_class: stage_target, role: learned_intermediate, census_external_input: false, approval: pending_model_review}
+
+  stage_4_monetary_outcomes:
+    historical_name: RFC4
+    inputs_from_prior_stages:
+    - CAT_OCUP
+    - CAT_INAC
+    - CH07
+    - INGRESO
+    - INGRESO_NLB
+    - INGRESO_JUB
+    - INGRESO_SBS
+    - PP07G1
+    - PP07G_59
+    - PP07I
+    - PP07J
+    - PP07K
+    historical_targets:
+      P47T:
+        feature_class: stage_target
+        role: terminal_welfare_candidate
+        historical_transform: log10(x + 1 after clipping lower bound -0.9)
+        monetary_semantics: legacy preprocessing normalized to January-2016 reference; lineage is not accepted for a new release
+        new_requirement: exact IPC-Argentina monetary-conversion release and declared welfare concept
+      P21: {feature_class: stage_target, role: auxiliary_monetary_target, new_requirement: explicit monetary reference}
+      PP08D1: {feature_class: stage_target, role: auxiliary_monetary_target, new_requirement: explicit monetary reference}
+      TOT_P12: {feature_class: stage_target, role: auxiliary_monetary_target, new_requirement: explicit monetary reference}
+      T_VI: {feature_class: stage_target, role: auxiliary_monetary_target, new_requirement: explicit monetary reference}
+      V12_M: {feature_class: stage_target, role: auxiliary_monetary_target, new_requirement: explicit monetary reference}
+      V2_M: {feature_class: stage_target, role: auxiliary_monetary_target, new_requirement: explicit monetary reference}
+      V3_M: {feature_class: stage_target, role: auxiliary_monetary_target, new_requirement: explicit monetary reference}
+      V5_M: {feature_class: stage_target, role: auxiliary_monetary_target, new_requirement: explicit monetary reference}
+    first_revived_scope:
+    - P47T-derived welfare only
+    non_goals:
+    - reproduce all nine historical monetary outputs merely for compatibility
+
+current_eph_model_relationship:
+  statement: >-
+    The current EPH-only flagship is not a Census-deployable model by default. Its baseline uses
+    observed CAT_INAC, CAT_OCUP, CH07 and PP07G_59 as predictors; those variables are learned
+    stage targets in the Census transport design. It also admits EPH temporal information and
+    derived features whose Census deployment semantics are not established.
+  overlapping_observed_features:
+  - P02
+  - P03
+  - P09
+  - P10
+  - CONDACT
+  - V01
+  - H05
+  - H06
+  - H07
+  - H08
+  - H09
+  - PROP
+  - H14
+  - H13
+  - IX_TOT
+  observed_in_eph_but_stage_targets_for_transport:
+  - CH07
+  - CAT_INAC
+  - CAT_OCUP
+  - PP07G_59
+  current_features_requiring_separate_transport_review:
+    Max_Nivel_Educativo:
+      provisional_class: derived_shared
+      status: unapproved
+    sanitacion_nivel:
+      provisional_class: derived_shared
+      status: unapproved
+    household_pyramid:
+      provisional_class: derived_shared
+      status: unapproved
+    ANO4:
+      provisional_class: research_only
+      reason: EPH survey year is not a Census-scoring observable with the same semantics
+    TRIMESTRE:
+      provisional_class: research_only
+      reason: EPH survey quarter is not a Census-scoring observable with the same semantics
+
+promotion_gates:
+- approve one exact EPH source/preprocessed release and one exact Census sample/frame release
+- approve real-vintage semantic mappings in eph-censo-aligner; synthetic fixture success is insufficient
+- remove target-derived AGLO_rk and Reg_rk from external deployment inputs or replace them with independently governed features
+- define a stable Census-aligned feature frame keyed exactly to sampler person/household IDs
+- implement out-of-fold generation for every learned stage feature consumed downstream
+- compare the historical four-wave grouping against a dependency-driven DAG; RFC1-RFC4 are evidence, not frozen architecture
+- establish support/domain-shift and subgroup diagnostics between EPH training support and Census scoring support
+- bind all monetary training targets and released welfare to exact IPC-Argentina conversion/reference artifacts
+- define person-to-household welfare aggregation and release semantics before poverty handoff
+- emit a transport-model release and household-welfare fixture before any real poverty run
