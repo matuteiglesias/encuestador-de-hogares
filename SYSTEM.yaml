@@ -1,0 +1,73 @@
+# Repository boundary for the revived EPH -> Census inference instrument.
+schema_version: 1
+id: research.eph-census.inference
+repository:
+  id: repo.encuestador-de-hogares
+  github: matuteiglesias/encuestador-de-hogares
+domain: research
+system: research.eph-census
+role: survey-to-census-welfare-inference
+lifecycle: active-bounded
+authority:
+  status: current
+  owns:
+  - statistical transport design from an EPH training frame to an exact Census-derived scoring frame
+  - deployment DAG declaring shared observables, derived shared features, learned stage targets and terminal welfare targets
+  - staged model training, including out-of-fold intermediate predictions for every learned feature consumed downstream
+  - transport-model comparison, support/domain-shift diagnostics, cascade error diagnostics and promotion evidence
+  - execution of a promoted transport model over one exact Census feature/sample release
+  - prediction-scale resolution and construction of a declared person/household welfare concept before downstream poverty use
+  - immutable transport-model and welfare releases with exact parent identities, QA, limitations and checksums
+  does_not_own:
+  - official EPH publication, raw acquisition or annual EPH preprocessing authority
+  - unconstrained EPH-only income-model research or model selection
+  - semantic EPH-to-Census variable mapping authority
+  - Census sample identity, sampling design, population calibration or Census geography authority
+  - price-index, monetary-reference or monetary-conversion methodology
+  - poverty methodology, poverty lines, poverty classification, FGT estimation or official poverty publication
+interfaces:
+  consumes:
+  # Transitional neutral EPH input. The producer may change later; this repo consumes the artifact, not sibling runtime code.
+  - artifact:research.eph-annual-preprocessed@1
+  # Historical artifact id retained by the aligner; semantically this is variable alignment, not a geographic crosswalk.
+  - artifact:research.eph-census-crosswalk@1
+  - artifact:research.census-sample@1
+  - artifact:research.argentina-monetary-conversion@1
+  produces:
+  - artifact:research.eph-census-transport-model@1
+  - artifact:research.household-welfare@1
+upstream:
+- repo.income-modeling-eph
+- repo.eph-censo-aligner
+- repo.sampler-censo-arg
+- repo.ipc-argentina
+downstream:
+- repo.indice-pobreza-uba
+canonical_design:
+  deployment_dag: contracts/deployment_dag.yaml
+  boundary_note: docs/EPH_CENSUS_TRANSPORT_BOUNDARY.md
+scientific_invariants:
+- external Census inputs must be approved shared_observable or derived_shared features from an exact alignment release
+- learned stage targets may be used downstream only through out-of-fold predictions during training and fitted predictions during scoring
+- observed stage labels must never replace predicted stage outputs in downstream training evidence
+- EPH validation alone does not establish Census transport validity
+- semantic alignment alone does not establish statistical transport validity
+- sample/person/household identity must match exactly across scoring and welfare releases; no positional or fuzzy join is permitted
+- monetary transforms and price references must be explicit and resolved through a versioned monetary-conversion release before welfare handoff
+- poverty consumes welfare semantics, never model-native latent/log prediction values
+verification:
+  status: design-characterized-runtime-pending
+  last_verified: '2026-08-26'
+  evidence:
+  - historical four-wave Random Forest cascade in src/encuestador/entrenar_modelos.py
+  - historical EPH/Census renames and recodes in src/encuestador/preprocesar_datos.py
+  - current semantic-alignment vocabulary and pending real-vintage review in repo.eph-censo-aligner
+  - out-of-fold staged-training prototype currently recoverable from repo.income-modeling-eph
+  unknowns:
+  - no real EPH/Census vintage pair is yet approved for deployment
+  - exact current Census inference feature frame has not yet been materialized
+  - historical fitted RFC1-RFC4 artifacts are not established as current releases
+  - target monetary lineage for legacy annual EPH artifacts remains unresolved
+  - final household welfare concept and aggregation rule require explicit scientific approval
+maintenance:
+  cadence: active-development
