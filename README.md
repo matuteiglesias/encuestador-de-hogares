@@ -1,127 +1,215 @@
 # encuestador-de-hogares
 
-> [!IMPORTANT]
-> **Historical/conditional-revival repository.** `income-modeling-eph` is the current authority for annual EPH preprocessing. The data and models retained here are versioned legacy evidence, not automatically current releases. Do **not** resume the cron, workflow, model-training, or automatic-commit instructions below unless a future named consumer passes the revival gate in [LIFECYCLE.md](LIFECYCLE.md).
+**Status:** active-bounded scientific revival  
+**Role:** survey-to-Census welfare inference
+
+This repository is the statistical bridge between target-period EPH evidence and an exact Census-derived household sample.
+
+Its modern mission is:
+
+> Given target-period EPH evidence, an approved EPH/Census semantic feature plane, one exact Census sample/scoring frame, and explicit monetary semantics, infer a declared target-period household welfare quantity for those exact sample households, with auditable assumptions, diagnostics and lineage.
+
+```text
+neutral EPH observation frame
+        +
+approved EPH/Census semantic feature plane
+        +
+exact Census sample + aligned scoring frame
+        +
+explicit monetary semantics
+        +
+transport study specification
+                 |
+                 v
+       direct / hurdle / staged transport
+                 |
+                 v
+       qualified transport model
+                 |
+                 v
+        exact Census sample scoring
+                 |
+                 v
+       resolved household welfare
+                 |
+                 v
+             Poverty v2
+```
+
+## What this repository owns
+
+- the transport training population and eligibility contract;
+- direct, hurdle and staged/DAG transport model science;
+- honest household/group-aware out-of-fold intermediate predictions;
+- EPH survey-weight policy for transport fitting/calibration/evaluation;
+- the distinction between semantically comparable Census variables and scientifically admissible target-period inputs;
+- optional, explicit target-period aggregate calibration inside the transport study;
+- support/domain-shift, cascade, subgroup, tail and ablation diagnostics;
+- scoring one exact Census sample namespace;
+- inverse transforms and monetary-reference resolution through an exact `IPC-Argentina` release;
+- construction of the declared household welfare concept;
+- governed transport-model and household-welfare releases.
+
+## What it does not own
+
+- raw EPH acquisition or the neutral EPH observation-frame producer;
+- EPH-only income-model research;
+- semantic EPH↔Census mapping authority;
+- Census sample construction or target-year department sampling;
+- Census geography;
+- price-index methodology;
+- poverty lines, adult equivalence, poverty classification or FGT estimation.
+
+The neighboring authorities are intentionally separate:
+
+```text
+income-modeling-eph    -> EPH-only income science
+samplerCensoARG        -> exact Census sample identity/design
+eph-censo-aligner      -> semantic variable alignment
+IPC-Argentina          -> monetary semantics/conversion
+indice-pobreza-UBA     -> poverty method and estimation
+```
+
+## What does it ask for?
+
+A modern transport run consumes five kinds of governed evidence:
+
+1. a **neutral EPH training frame** with exact person/household identity, survey-design fields, periods and candidate transport targets;
+2. an **approved semantic feature plane** from `eph-censo-aligner`;
+3. an **exact Census sample and aligned scoring frame** preserving `sample_person_id` and `sample_household_id`;
+4. an exact **monetary-reference/conversion release** from `IPC-Argentina`;
+5. a **transport study specification** declaring training population, welfare period, temporal-role assumptions, model family/DAG, fold policy, weighting policy, optional aggregate anchors and terminal welfare concept.
 
-Entrenador de modelos de random forest que predicen respuestas a las preguntas de la encuesta permanente de hogares (EPH - INDEC).
+It does **not** consume the flagship model from `income-modeling-eph`. It consumes EPH evidence and owns a different scientific question.
 
-This repository contains code and data for analyzing household survey data from the Encuesta Permanente de Hogares (EPH) in Argentina. The goal of this project is to train machine learning models to predict various household characteristics from the EPH data and to extract information from census data that can be used to improve the accuracy of these predictions. The repository includes Jupyter notebooks that load and format the EPH and census data, train machine learning models, and extract samples of data from the census. The EPHARG_train files are the training sets, the CLF files are the machine learning models saved, and the data folder contains information that is used in the analysis. The repository also includes figures that show the results of the analysis.
+## What does it return?
 
+Two external products define the modern system boundary:
+
+```text
+artifact:research.eph-census-transport-model@1
+artifact:research.household-welfare@1
+```
+
+The model release records the scientific transport claim: exact parents, cohort, temporal assumptions, folds, weighting, fitted estimators, OOF evidence, support diagnostics, ablations, monetary semantics and limitations.
 
+The household-welfare release is the clean downstream handoff to Poverty. Its conceptual row is:
 
+```text
+sample_household_id
+welfare_period
+welfare_amount
+currency
+price_reference
+welfare_concept
+estimation_status
+transport_model_release_id
+```
 
-## Modelos
+Person-level stage predictions remain internal/restricted audit state by default. Poverty should not need to understand classifiers, RFC stages or log transforms.
 
-En este repositorio se utilizan modelos de Random Forest para predecir diferentes características de hogares a partir de la encuesta EPH. El objetivo es mejorar la precisión de estas predicciones al usar información del Censo Nacional. Los modelos se entrenan en cuatro etapas: clasificación 1, clasificación 2, clasificación 3, y regresión.
+## The key scientific distinction: semantic alignment is not temporal transport
 
-En la primera etapa de clasificación, se utilizan variables específicas de la EPH para predecir variables categóricas ausentes en el Censo 2010. En la segunda etapa, se utilizan las variables de la primera etapa junto con tres variables adicionales para predecir otra tanda de variables. En la tercer etapa, se utilizan las variables de las primeras dos etapas para predecir una serie de variables relacionadas con la informalidad laboral. Finalmente, en la etapa de regresión, se utilizan las variables de las tres etapas anteriores para predecir los ingresos de las personas.
+A Census variable may mean the same thing as an EPH variable and still be stale for the welfare period.
 
-Los ingresos se deflactan a valores de enero 2016 utilizando la metodología de Favata Zack Steingart, de promedio de índices provinciales. Los datos de este índice disponible el el repositorio [IPC Argentina](https://github.com/matuteiglesias/IPC-Argentina). Se transforman a logaritmos para una mejor distribución. Al aplicar estas etapas de predicción en una persona censada, se puede obtener una estimación detallada de sus ingresos y entender mejor las condiciones de vida de la población argentina.
+For example, a condition-of-activity value observed in Census 2010 is not automatically an observed condition-of-activity value for 2024. The historical project already encountered this problem: one quarterly prediction notebook changed Census `CONDACT` counts to match a quarter-specific unemployment target before the first classifier.
 
+The implementation was artisanal, but the scientific distinction survives. The modern system classifies every deployable Census feature not only by semantic class, but also by transport-time role, such as:
 
-## Actualizaciones Periodicas:
+- `donor_vintage_proxy`;
+- `target_period_latent`;
+- `deterministic_target_period_derived`;
+- `target_period_anchor`;
+- `time_stable_or_invariant`;
+- `forbidden_temporal_input`.
 
-Tanto los datasets de entrenamiento, como los archivos que guardan los modelos, son de tamaño demasiado grande para sincronizarse en el repositorio. Por eso se recomienda a cada usuario clonar el repositorio, y correr las rutinas 'crear_EPH_training' y 'entrenar_modelos'. 
+Any target-period calibration is optional and explicit. It must never silently rewrite a donor Census value and call it observed current data.
 
-Esto se hace simplemente abriendo una terminal, ubicandose en el directorio rutinas y corriendo:
+## Model families
 
-`python crear_EPH_training.py -y 2003 2023 -ow False`
+The historical RFC1→RFC4 cascade is scientific evidence, not the new architecture.
 
-`python entrenar_modelos.py -y 2003 2023 -ow False`
+Every modern study begins with a mandatory direct baseline:
 
-Estas dos rutinas generan los datasets de entrenamiento y entrenan los modelos. Se necesitan los microdatos de EPH elaborados por INDEC, los cuales estan disponibles en el repositorio: https://github.com/matuteiglesias/microdatos-EPH-INDEC
+```text
+approved common/donor information -> terminal welfare
+```
 
-Se puede configurar mediante crontab la ejecucion de estas rutinas todos los dias, con opcion `-ow False` de forma de incorporar datos nuevos subidos por INDEC en un plazo de no mas de 24 hs. 
+Then it may compare:
 
-El INDEC se toma al menos 130 dias luego de terminado el trimestre para publicar los microdatos. De forma que las publicaciones de microdatos se esperan en la primera mitad de los meses de febrero, mayo, agosto y noviembre. 
+```text
+direct model
+hurdle / two-part welfare model
+staged dependency DAG
+```
 
-## Ejemplos:
+A learned intermediate stage survives only if honest OOF evidence shows useful **final-welfare** value or improves calibration/support robustness. Historical membership in RFC1/RFC2/RFC3 is not sufficient.
 
-***Heterogeneidad geografica***
+## Time and identity
 
-Ingresos de habitantes provinciales medianos (AR$ corrientes de 2021-01) y su ranking segun el ingreso individual nacional.
+Every consequential run must keep these clocks separate:
 
-<img src="/figuras/plot_6.png" width="400">
+```text
+eph_training_period
+census_frame_vintage
+sampling_target_period
+welfare_period
+monetary_reference_period
+```
 
-Por ejemplo, el habitante medio de CABA gana casi $49000 en enero de 2021, un ingreso mayor que el 70% de los argentinos.
+The same exact annual Census sample can be scored at several welfare periods. Those repeated outputs are synthetic snapshots on stable donor IDs, not observed longitudinal records.
 
-Dependiendo el tamano de sampleo, se puede alcanzar una resolucion geografica satisfactoria en fracciones o radios censales. El siguiente mapa repite el calculo del mapa anterior pero en las fracciones censales del AMBA.
+Exact sampler identity is never changed during inference. Positional or fuzzy joins are forbidden.
 
-<img src="/figuras/plot_5.png" width="400">
+## Weight semantics
 
+These are different quantities and must remain different:
 
-***Deciles de ingreso***
+```text
+EPH survey / expansion weight
+!= Census sample selection probability
+!= donor-frame inverse-probability quantity
+!= Poverty analysis weight
+```
 
-El encuestador permite observar la composicion de los deciles de ingreso individual. Por ejemplo en el siguiente grafico tenemos la composicion de deciles por genero, donde vemos que los deciles mas alto tienen mayoria de hombres.
+The encuestador decides only how EPH survey weights enter transport fitting/calibration/evaluation. It does not reinterpret sampler probabilities as training weights or invent the final Poverty estimand.
 
-![Plot](/figuras/plot_4.png)
+## First modern proof
 
-***Ingresos segun edad***
+No real Census inference should run before a deterministic synthetic fixture proves:
 
-Podemos tambien estudiar desagregados por edad. Esto se muestra en el siguiente grafico donde ademas de la evolucion de ingreso por edad tipica, se ve una brecha de genero importante. Esta brecha se cierra con la jubilacion, que en Argentina es casi universal.
+- neutral EPH person/household identity and explicit EPH survey weights;
+- exact Census sample identity and separate selection metadata;
+- one approved synthetic semantic feature plane;
+- a direct baseline plus at least one hurdle/staged candidate;
+- household-aware OOF;
+- explicit temporal role for every Census input;
+- explicit/no-hidden calibration policy;
+- exact model and monetary lineage;
+- exact Census scoring coverage;
+- complete person→household accounting;
+- one linear `research.household-welfare@1` release.
 
-![Plot](/figuras/plot_8.png)
+## Current documents
 
-***Ingresos segun condicion de actividad***
+Start here:
 
-El mayor determinante de ingresos individuales es la condicion de actividad, es decir, si la persona esta ocupada, desocupada, o es inactiva. Los jubilados, estudiantes, amas de casa son inactivos.
+- [`docs/FUNCTIONAL_CONTRACT.md`](docs/FUNCTIONAL_CONTRACT.md) — what the system asks for, does, evaluates and returns;
+- [`contracts/functional_interface.yaml`](contracts/functional_interface.yaml) — machine-readable target interface;
+- [`contracts/deployment_dag.yaml`](contracts/deployment_dag.yaml) — recovered variable/stage archaeology and candidate deployment DAG;
+- [`docs/EPH_CENSUS_TRANSPORT_BOUNDARY.md`](docs/EPH_CENSUS_TRANSPORT_BOUNDARY.md) — revival boundary and promotion gates;
+- [`SYSTEM.yaml`](SYSTEM.yaml) — repository authority;
+- [`LIFECYCLE.md`](LIFECYCLE.md) — active-bounded lifecycle and real-run stop conditions;
+- [`docs/HISTORICAL_README.md`](docs/HISTORICAL_README.md) — preserved historical project description.
 
-![Plot](/figuras/plot_2.png)
+## Historical assets
 
-***Aglomerados rankeados por ingreso***
+The legacy Random Forest models, EPH/Census preparation code, notebooks, figures and serialized artifacts remain valuable evidence. They are not automatically current releases.
 
-En el siguiente grafico, la distribucion de ingresos individuales segun aglomerado:
+In particular, the old project preserved three durable ideas that the modern system is testing rather than blindly inheriting:
 
-![Plot](/figuras/plot_3.png)
+1. learn EPH-only states from a common EPH/Census information plane;
+2. propagate those learned states toward income/welfare;
+3. adapt inference to a target period rather than pretending Census-2010 states are all current.
 
-***Extranjeros rankeados por ingreso***
-
-Y tambien podemos consultar los ingresos segun nacionalidad de los inmigrantes y compararlos con los argentinos.
-
-![Plot](/figuras/plot_9.png)
-
-***Nivel educativo y nacionalidad***
-
-Podemos ver tambien la distribucion de ingresos segun nivel educativo y nacionalidad (argentino - extranjero).
-
-![Plot](/figuras/plot_7.png)
-
-***Nivel educativo y genero***
-
-Similarmente, podemos ver las brechas de genero segun nivel educativo:
-
-![Plot](/figuras/plot_0.png)
-
-## Metodologia:
-
-***Indice de Precios***
-
-El indice de precios mensual se grafica a continuacion. Para el periodo de enero de 2016 al presente la fuente es el INDEC y informacion se descarga del sistema de almacenamiento de archivos y catálogos de infra.datos.gob.ar.
-
-Para el periodo de 2003 a 2015 se usa provisoriamente la serie ofrecida por pricestats, tambien conocida como "inflacion verdadera". El uso de esta serie puede ser desafiado y abandonado en el futuro por un indice consensuadamente mas robusto.
-
-La serie de indice de precios en infra.datos.gob.ar suele terminar algunos meses antes del presente. El nivel de precios en el presente se extiende aplicando el ritmo promedio de aumento de los ultimos 6 meses con informacion disponible.
-
-***Muestreos de Censo***
-
-Se usan las proyecciones de poblacion por departamento (2001 - 2025) elaboradas por INDEC.
-
-Se toman muestreos de la informacion censal de 2010 (40117096 filas).
-
-Para muestreo general randomizado se elige una fraccion de muestreo (ej, 1%, 2%, 4%). Se multiplica la fraccion de muestreo por la razon entre poblacion del departamento en el año proyectado y poblacion observada en el departamento en 2010. Esta nueva fraccion nos indica cuantos hogares tomar aleatoriamente para simular un departamento en un año a eleccion. Por ejemplo, simula tomar el 1% de la poblacion del partido de Tigre en 2021. Si se repite para el resto de los departamentos para el mismo año, tenemos un sampleo teorico del 1% de hogares de Argentina en 2021.
-
-Las proyecciones de poblacion cuentan personas pero sampleamos hogares. Las poblaciones de personas que obtenemos con este metodo por lo tanto no se ajustan con precision a las proyecciones que tomamos como base, aunque si se aproximan a ella a los fines practicos. 
-
-El sampleo de personas no es conveniente porque la incidencia de pobreza e indigencia se calculan a nivel de hogar.
-
-
-## Datos
-
-
-Recordar que es posible acceder a la base de datos de más de 40 millones de filas asociadas a las personas censadas en 2010. 
-
-Se usan las estimaciones de población por departamento (partido, comuna) de 2001 al presente publicadas por INDEC para simular los tamaños poblacionales relativos.
-
-Se usa información de niveles de empleo nacionales para sobre-samplear (sub-samplear) personas ocupadas o desocupadas censadas en 2010 en magnitud correspondiente.
-
-
+The modern architecture keeps those ideas while moving preprocessing, sampling, semantic mapping, monetary authority and poverty measurement into their proper neighboring systems.
