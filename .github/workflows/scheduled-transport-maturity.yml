@@ -25,8 +25,8 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install contract parser
-        run: python -m pip install pyyaml
+      - name: Install bounded proof dependencies
+        run: python -m pip install pyyaml numpy
 
       - name: Validate governing contract files
         run: |
@@ -38,17 +38,23 @@ jobs:
               Path("SYSTEM.yaml"),
               Path("contracts/functional_interface.yaml"),
               Path("contracts/deployment_dag.yaml"),
+              Path("contracts/model_specs/historical_staged_v1.json"),
+              Path("fixtures/semantic_plane/synthetic_fixture_v1.json"),
           ]
           for path in required:
               if not path.is_file():
                   raise SystemExit(f"Missing governing contract: {path}")
-              value = yaml.safe_load(path.read_text(encoding="utf-8"))
+              if path.suffix == ".json":
+                  import json
+                  value = json.loads(path.read_text(encoding="utf-8"))
+              else:
+                  value = yaml.safe_load(path.read_text(encoding="utf-8"))
               if not isinstance(value, dict):
                   raise SystemExit(f"Expected mapping in {path}")
           print("Governing transport contracts parse successfully")
           PY
 
-      - name: Require deterministic synthetic transport executor
+      - name: Run deterministic synthetic transport executor
         run: |
           if [ ! -f scripts/synthetic_transport_smoke.py ]; then
             echo "::error::Transport contracts exist, but the deterministic synthetic EPH→Census→household-welfare executor is not implemented yet. See issues #6 and #7."
@@ -62,7 +68,7 @@ jobs:
           {
             echo "## Scheduled encuestador maturity"
             echo
-            echo "This sentinel is intentionally red until the first deterministic synthetic transport/welfare executor exists. Contract completeness is not runtime/scientific proof."
+            echo "A green result establishes only the deterministic synthetic mechanics: household-grouped OOF stages, unweighted person-income prediction, no target-period calibration, and complete-member household aggregation."
             echo
-            echo "After the synthetic proof exists, the next maturity gates are exact real parents, approved semantic plane, temporal-role review, support/domain-shift evidence, monetary lineage, and household-welfare promotion."
+            echo "Real-vintage maturity remains blocked on approved semantic mappings, support/domain-shift evidence, exact monetary lineage, and governed real Census scoring."
           } >> "$GITHUB_STEP_SUMMARY"
