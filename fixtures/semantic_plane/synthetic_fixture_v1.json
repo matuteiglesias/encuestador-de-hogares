@@ -1,0 +1,48 @@
+{
+  "contract": "research.eph-census-semantic-feature-plane@1",
+  "release_id": "synthetic-fixture-v1",
+  "status": "synthetic_fixture_only",
+  "real_vintage_approval": false,
+  "approved_external_inputs": [
+    "IX_TOT", "P02", "P03", "V01", "H05", "H06", "H07", "H08", "H09",
+    "H10", "H11", "H12", "H16", "H15", "PROP", "H14", "H13", "P07",
+    "P08", "P09", "P10", "P05", "CONDACT"
+  ],
+  "features": {
+    "IX_TOT": {"semantic_class": "derived_shared", "transport_time_role": "donor_vintage_proxy"},
+    "P02": {"semantic_class": "shared_observable", "transport_time_role": "time_stable_or_invariant"},
+    "P03": {"semantic_class": "shared_observable", "transport_time_role": "donor_vintage_proxy"},
+    "V01": {"semantic_class": "shared_observable", "transport_time_role": "donor_vintage_proxy"},
+    "H05": {"semantic_class": "shared_observable", "transport_time_role": "donor_vintage_proxy"},
+    "H06": {"semantic_class": "shared_observable", "transport_time_role": "donor_vintage_proxy"},
+    "H07": {"semantic_class": "shared_observable", "transport_time_role": "donor_vintage_proxy"},
+    "H08": {"semantic_class": "shared_observable", "transport_time_role": "donor_vintage_proxy"},
+    "H09": {"semantic_class": "shared_observable", "transport_time_role": "donor_vintage_proxy"},
+    "H10": {"semantic_class": "shared_observable", "transport_time_role": "donor_vintage_proxy"},
+    "H11": {"semantic_class": "shared_observable", "transport_time_role": "donor_vintage_proxy"},
+    "H12": {"semantic_class": "shared_observable", "transport_time_role": "donor_vintage_proxy"},
+    "H16": {"semantic_class": "shared_observable", "transport_time_role": "donor_vintage_proxy"},
+    "H15": {"semantic_class": "shared_observable", "transport_time_role": "donor_vintage_proxy"},
+    "PROP": {"semantic_class": "shared_observable", "transport_time_role": "donor_vintage_proxy"},
+    "H14": {"semantic_class": "shared_observable", "transport_time_role": "donor_vintage_proxy"},
+    "H13": {"semantic_class": "shared_observable", "transport_time_role": "donor_vintage_proxy"},
+    "P07": {"semantic_class": "shared_observable", "transport_time_role": "donor_vintage_proxy"},
+    "P08": {"semantic_class": "shared_observable", "transport_time_role": "donor_vintage_proxy"},
+    "P09": {"semantic_class": "shared_observable", "transport_time_role": "donor_vintage_proxy"},
+    "P10": {"semantic_class": "shared_observable", "transport_time_role": "donor_vintage_proxy"},
+    "P05": {"semantic_class": "shared_observable", "transport_time_role": "donor_vintage_proxy"},
+    "CONDACT": {"semantic_class": "shared_observable", "transport_time_role": "donor_vintage_proxy"},
+    "AGLO_rk": {"semantic_class": "research_only", "transport_time_role": "forbidden_temporal_input"},
+    "Reg_rk": {"semantic_class": "research_only", "transport_time_role": "forbidden_temporal_input"}
+  },
+  "calibration_policy": {
+    "target_period_calibration": "none",
+    "aggregate_anchors": [],
+    "donor_field_mutation": false
+  },
+  "limitations": [
+    "This fixture exists only to exercise the transport machinery.",
+    "It is not evidence that any real EPH/CPV-2010 mapping has been approved.",
+    "Donor-vintage proxy roles make temporal staleness explicit rather than correcting it."
+  ]
+}
