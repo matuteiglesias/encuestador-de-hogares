@@ -9,8 +9,10 @@ on:
       - contracts/model_specs/historical_staged_v1.json
       - fixtures/semantic_plane/synthetic_fixture_v1.json
       - src/encuestador/transport_proof.py
+      - src/encuestador/census_sample_intake.py
       - scripts/synthetic_transport_smoke.py
       - tests/test_transport_proof.py
+      - tests/test_census_sample_intake.py
   push:
     branches:
       - main
@@ -20,8 +22,10 @@ on:
       - contracts/model_specs/historical_staged_v1.json
       - fixtures/semantic_plane/synthetic_fixture_v1.json
       - src/encuestador/transport_proof.py
+      - src/encuestador/census_sample_intake.py
       - scripts/synthetic_transport_smoke.py
       - tests/test_transport_proof.py
+      - tests/test_census_sample_intake.py
 
 permissions:
   contents: read
@@ -41,14 +45,24 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install bounded proof dependencies
-        run: python -m pip install numpy pytest
-      - name: Compile executor
+        run: python -m pip install numpy pytest ruff
+      - name: Lint intake boundary
+        run: >-
+          ruff check
+          src/encuestador/census_sample_intake.py
+          tests/test_census_sample_intake.py
+      - name: Compile executor and intake
         run: >-
           python -m py_compile
           src/encuestador/transport_proof.py
+          src/encuestador/census_sample_intake.py
           scripts/synthetic_transport_smoke.py
           tests/test_transport_proof.py
-      - name: Verify synthetic transport proof
-        run: pytest -q tests/test_transport_proof.py
+          tests/test_census_sample_intake.py
+      - name: Verify synthetic transport and sampler intake
+        run: >-
+          pytest -q
+          tests/test_transport_proof.py
+          tests/test_census_sample_intake.py
       - name: Execute maturity smoke
         run: python scripts/synthetic_transport_smoke.py > /tmp/synthetic-proof.json
