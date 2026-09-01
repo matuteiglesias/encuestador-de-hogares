@@ -1,0 +1,88 @@
+{
+  "schema": "research.encuestador-model-spec/v1",
+  "spec_id": "historical_staged_v1",
+  "status": "starter_default_frozen",
+  "prediction_unit": "person",
+  "terminal_person_income_target": "P47T",
+  "external_input_policy": {
+    "semantic_plane_required": true,
+    "forbidden_external_inputs": ["AGLO_rk", "Reg_rk"]
+  },
+  "fold_policy": {
+    "strategy": "household_grouped_v1",
+    "group_columns": ["CODUSU", "NRO_HOGAR"],
+    "learned_intermediates_for_training": "out_of_fold_predictions",
+    "observed_intermediate_substitution_forbidden": true
+  },
+  "eph_design_policy": {
+    "preserved_fields": ["PONDERA", "PONDIH", "PONDIIO", "PONDII"],
+    "fit_weight": null,
+    "calibration_weight": null,
+    "evaluation_weight": null,
+    "claim_boundary": "sample_conditional"
+  },
+  "temporal_policy": {
+    "target_period_calibration": "none",
+    "aggregate_anchor": null,
+    "donor_field_mutation": false
+  },
+  "household_aggregation": {
+    "operation": "sum_linear_person_income",
+    "member_policy": "all_released_members_required",
+    "on_missing_or_invalid_member": "incomplete"
+  },
+  "comparison_baseline": {
+    "baseline_id": "direct_person_income_v1",
+    "inputs": "approved_stage_1_external_inputs",
+    "target": "P47T",
+    "fold_policy": "same_as_staged"
+  },
+  "stages": [
+    {
+      "stage_id": "stage_1_labor_state",
+      "inputs": [
+        "IX_TOT", "P02", "P03", "AGLO_rk", "Reg_rk", "V01", "H05",
+        "H06", "H07", "H08", "H09", "H10", "H11", "H12", "H16",
+        "H15", "PROP", "H14", "H13", "P07", "P08", "P09", "P10",
+        "P05", "CONDACT"
+      ],
+      "targets": ["CAT_OCUP", "CAT_INAC", "CH07"]
+    },
+    {
+      "stage_id": "stage_2_income_presence",
+      "inputs": [
+        "IX_TOT", "P02", "P03", "AGLO_rk", "Reg_rk", "V01", "H05",
+        "H06", "H07", "H08", "H09", "H10", "H11", "H12", "H16",
+        "H15", "PROP", "H14", "H13", "P07", "P08", "P09", "P10",
+        "P05", "CONDACT", "CAT_OCUP", "CAT_INAC", "CH07"
+      ],
+      "targets": ["INGRESO", "INGRESO_NLB", "INGRESO_JUB", "INGRESO_SBS"]
+    },
+    {
+      "stage_id": "stage_3_job_characteristics",
+      "inputs": [
+        "IX_TOT", "P02", "P03", "AGLO_rk", "Reg_rk", "V01", "H05",
+        "H06", "H07", "H08", "H09", "H10", "H11", "H12", "H16",
+        "H15", "PROP", "H14", "H13", "P07", "P08", "P09", "P10",
+        "P05", "CONDACT", "CAT_OCUP", "CAT_INAC", "CH07", "INGRESO",
+        "INGRESO_NLB", "INGRESO_JUB", "INGRESO_SBS"
+      ],
+      "targets": ["PP07G1", "PP07G_59", "PP07I", "PP07J", "PP07K"]
+    },
+    {
+      "stage_id": "stage_4_income_components",
+      "inputs": [
+        "IX_TOT", "P02", "P03", "AGLO_rk", "Reg_rk", "V01", "H05",
+        "H06", "H07", "H08", "H09", "H10", "H11", "H12", "H16",
+        "H15", "PROP", "H14", "H13", "P07", "P08", "P09", "P10",
+        "P05", "CONDACT", "CAT_OCUP", "CAT_INAC", "CH07", "INGRESO",
+        "INGRESO_NLB", "INGRESO_JUB", "INGRESO_SBS", "PP07G1",
+        "PP07G_59", "PP07I", "PP07J", "PP07K"
+      ],
+      "targets": [
+        "P21", "P47T", "PP08D1", "TOT_P12", "T_VI", "V12_M", "V2_M",
+        "V3_M", "V5_M"
+      ]
+    }
+  ]
+}
