@@ -5,6 +5,11 @@ import pandas as pd
 from eph_align import harmonize_hogar, harmonize_individual
 from .io import ensure_dir
 
+
+col_mon = [u'P21', u'P47T', u'PP08D1', u'TOT_P12', u'T_VI', u'V12_M', u'V2_M', u'V3_M', u'V5_M']
+
+
+
 def load_and_align(hogar_path: Path, indiv_path: Path, region_df: pd.DataFrame):
     df_h = pd.read_csv(hogar_path, delimiter=";", low_memory=False)
     df_i = pd.read_csv(indiv_path, delimiter=";", low_memory=False)
@@ -62,6 +67,50 @@ def make_splits(df, cv_cfg):
         return list(splitter.split(df, groups=groups))
 
 
+def create_cpi_df(url: str, start_year: int, end_year: int) -> pd.DataFrame:
+    """
+    This function creates a CPI dataframe from a given url and a specified range of years.
+
+    Parameters:
+    url (str): The url where the cpi data is located.
+    start_year (int): The first year to include in the dataframe.
+    end_year (int): The last year to include in the dataframe.
+
+    Returns:
+    pd.DataFrame: The created dataframe with the cpi data.
+    """
+    cpi = pd.read_csv(url, index_col = 0) #reads csv from url and sets first column as index
+    cpi.index = pd.to_datetime(cpi.index) #convert index to datetime
+    cpi = cpi[str(start_year):str(end_year)] #filter dataframe by range of years
+    return cpi
+
+
+
+from datetime import datetime
+ano_actual = datetime.today().strftime("%Y")
+
+# Crear CPI dataframe, TRIMESTRAL
+cpi = create_cpi_df('https://raw.githubusercontent.com/matuteiglesias/IPC-Argentina/main/data/info/indice_precios_Q.csv', 
+    2003, end_year=ano_actual)
+cpi.index = cpi.index - pd.offsets.MonthBegin(1) + pd.offsets.Day(14) #force day 15 of the month
+
+# Crear CPI dataframe, MENSUAL
+cpi_M = create_cpi_df('https://raw.githubusercontent.com/matuteiglesias/IPC-Argentina/main/data/info/indice_precios_M.csv', 
+    2003, end_year=ano_actual)
+
+# Crear CPI dataframe, DIARIO
+cpi_d = create_cpi_df('https://raw.githubusercontent.com/matuteiglesias/IPC-Argentina/main/data/info/indice_precios_d.csv', 
+    2003, end_year=ano_actual)
+
+# Fecha de referencia para el IPC. ix es el nivel del indice en la fecha de referencia, y es 100, por definicion
+ix = cpi_d.loc['2016-01-01']['index']
+
+# Primer dia del mes en curso
+mes_actual = datetime.today().replace(day=1).strftime("%Y-%m-%d")
+
+
+
+
 
 def build_training_matrix(years: list[int], paths_cfg: dict, region_df: pd.DataFrame, overwrite=False) -> None:
     data_root = Path(paths_cfg["data_root"])
@@ -75,8 +124,24 @@ def build_training_matrix(years: list[int], paths_cfg: dict, region_df: pd.DataF
 
         print(f"→ building {y}")
         # read quarterly files (assume downloaded locally)
+        yy = str(y)[2:]
+
         hogar_files = sorted((data_root / "hogar").glob(f"*{y}.txt"))
+        if not hogar_files:
+            hogar_files = sorted((data_root / "hogar").glob(f"*t?{yy}.txt"))
+
         indiv_files = sorted((data_root / "individual").glob(f"*{y}.txt"))
+        if not indiv_files:
+            indiv_files = sorted((data_root / "individual").glob(f"*t?{yy}.txt"))
+
+        print(f"   hogar files: {len(hogar_files)}")
+        print(f"   individual files: {len(indiv_files)}")
+
+        if not hogar_files or not indiv_files:
+            raise FileNotFoundError(
+                f"{y}: no encontré archivos hogar/individual en {data_root}. "
+                f"hogar={len(hogar_files)}, individual={len(indiv_files)}"
+            )
 
         dfh = pd.concat([pd.read_csv(f, delimiter=";") for f in hogar_files], ignore_index=True)
         dfi = pd.concat([pd.read_csv(f, delimiter=";") for f in indiv_files], ignore_index=True)
@@ -100,6 +165,9 @@ def build_training_matrix(years: list[int], paths_cfg: dict, region_df: pd.DataF
         # Quarter date + deflation (simplify for now)
         eph["Q"] = eph.ANO4.astype(str) + ":" + (3*eph.TRIMESTRE).astype(str)
         eph["Q"] = pd.to_datetime(eph["Q"], format="%Y:%m") - pd.DateOffset(months=1) + pd.DateOffset(days=14)
+
+        eph[col_mon] = ix*eph[col_mon].div(eph[['Q'] + col_mon].merge(cpi, on = 'Q', how = 'left')['index'].values, 0)
+        eph[col_mon] = eph[col_mon].round()
 
         # Example CPI deflator hook (replace with your aligner CPI function)
         # eph[col_mon] = eph[col_mon] / eph.merge(cpi, on="Q")["index"]

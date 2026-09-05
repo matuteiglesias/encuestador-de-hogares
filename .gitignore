@@ -1,2 +1,16 @@
 fitted_RF
 data/training
+
+# Local/generated scientific artifacts: keep source, contracts and metadata in Git;
+# obtain heavyweight inputs and fitted outputs from their external authorities.
+/artifacts/models/
+/notebooks/modelos/
+/notebooks/.ipynb_checkpoints/
+/src/encuestador/fitted_models_hgbr/
+/data/raw/
+/data/intermediate/
+/data/processed/
+/outputs/
+/results/
+__pycache__/
+*.py[cod]

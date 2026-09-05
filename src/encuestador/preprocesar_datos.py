@@ -154,7 +154,12 @@ for y in range(startyr, endyr):
 
             # Correcciones Respuestas. Para que matchee censo
             hogar = pd.concat(list_).drop_duplicates()
-            hogar = hogar.loc[~hogar.IV1.isin([9])]
+
+            try:
+                hogar = hogar.loc[~hogar.IV1.isin([9])]
+            except:
+                pass
+
             hogar['IV10'] = hogar['IV10'].map({1: 1, 2: 2, 3: 2, 0: 0, 9: 9})
             hogar['II9'] = hogar['II9'].map({1: 1, 2: 2, 3: 2, 4: 4, 0: 0})
             hogar['II7'] = hogar['II7'].map({1: 1, 2: 2, 3: 3, 4: 4, 5: 5, 6: 6, 7: 6, 8: 6, 9: 6, 0: 0})
