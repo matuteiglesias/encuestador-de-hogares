@@ -6,6 +6,7 @@ on:
     paths:
       - .github/workflows/synthetic-transport-ci.yml
       - .github/workflows/scheduled-transport-maturity.yml
+      - pyproject.toml
       - requirements-science.txt
       - configs/experiments/**
       - contracts/model_specs/historical_staged_v1.json
@@ -29,27 +30,12 @@ on:
       - src/encuestador/census_sample_intake.py
       - src/encuestador/cli.py
       - scripts/synthetic_transport_smoke.py
-      - tests/test_transport_proof.py
-      - tests/test_scientific_primitives.py
-      - tests/test_crossfit.py
-      - tests/test_estimators.py
-      - tests/test_hgb_direct_integration.py
-      - tests/test_dag.py
-      - tests/test_experiments.py
-      - tests/test_cascade.py
-      - tests/test_lean_experiment.py
-      - tests/test_evaluation.py
-      - tests/test_terminal.py
-      - tests/test_runner.py
-      - tests/test_hurdle_runner.py
-      - tests/test_run_bundle.py
-      - tests/test_eph_microdata.py
-      - tests/test_upstream_intake.py
-      - tests/test_census_sample_intake.py
+      - tests/**
   push:
     branches: [main]
     paths:
       - .github/workflows/synthetic-transport-ci.yml
+      - pyproject.toml
       - requirements-science.txt
       - configs/experiments/**
       - src/encuestador/**
@@ -74,8 +60,12 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Install active science runtime and test dependencies
-        run: python -m pip install -r requirements-science.txt pytest ruff
+      - name: Install package and test dependencies
+        run: python -m pip install -e . pytest ruff
+      - name: Prove console command
+        run: >-
+          encuestador validate
+          configs/experiments/real_eph_2024q3_direct_hurdle_gamma_v1.yaml
       - name: Lint integration-finisher boundary
         run: >-
           ruff check
