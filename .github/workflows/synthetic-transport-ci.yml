@@ -17,6 +17,7 @@ on:
       - src/encuestador/dag.py
       - src/encuestador/experiments.py
       - src/encuestador/cascade.py
+      - src/encuestador/evaluation.py
       - src/encuestador/census_sample_intake.py
       - scripts/synthetic_transport_smoke.py
       - tests/test_transport_proof.py
@@ -28,6 +29,7 @@ on:
       - tests/test_experiments.py
       - tests/test_cascade.py
       - tests/test_lean_experiment.py
+      - tests/test_evaluation.py
       - tests/test_census_sample_intake.py
   push:
     branches:
@@ -46,6 +48,7 @@ on:
       - src/encuestador/dag.py
       - src/encuestador/experiments.py
       - src/encuestador/cascade.py
+      - src/encuestador/evaluation.py
       - src/encuestador/census_sample_intake.py
       - scripts/synthetic_transport_smoke.py
       - tests/test_transport_proof.py
@@ -57,6 +60,7 @@ on:
       - tests/test_experiments.py
       - tests/test_cascade.py
       - tests/test_lean_experiment.py
+      - tests/test_evaluation.py
       - tests/test_census_sample_intake.py
 
 permissions:
@@ -87,6 +91,7 @@ jobs:
           src/encuestador/dag.py
           src/encuestador/experiments.py
           src/encuestador/cascade.py
+          src/encuestador/evaluation.py
           src/encuestador/census_sample_intake.py
           tests/test_scientific_primitives.py
           tests/test_crossfit.py
@@ -96,6 +101,7 @@ jobs:
           tests/test_experiments.py
           tests/test_cascade.py
           tests/test_lean_experiment.py
+          tests/test_evaluation.py
           tests/test_census_sample_intake.py
       - name: Compile active executor and intake
         run: >-
@@ -107,6 +113,7 @@ jobs:
           src/encuestador/dag.py
           src/encuestador/experiments.py
           src/encuestador/cascade.py
+          src/encuestador/evaluation.py
           src/encuestador/census_sample_intake.py
           scripts/synthetic_transport_smoke.py
           tests/test_transport_proof.py
@@ -118,6 +125,7 @@ jobs:
           tests/test_experiments.py
           tests/test_cascade.py
           tests/test_lean_experiment.py
+          tests/test_evaluation.py
           tests/test_census_sample_intake.py
       - name: Verify active science path
         run: >-
@@ -131,6 +139,7 @@ jobs:
           tests/test_experiments.py
           tests/test_cascade.py
           tests/test_lean_experiment.py
+          tests/test_evaluation.py
           tests/test_census_sample_intake.py
       - name: Execute maturity smoke
         run: python scripts/synthetic_transport_smoke.py > /tmp/synthetic-proof.json
