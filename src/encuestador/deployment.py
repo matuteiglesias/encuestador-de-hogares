@@ -19,8 +19,10 @@ class DeploymentError(ValueError):
 
 def _matrix(value: np.ndarray | Sequence[Sequence[float]], name: str) -> np.ndarray:
     array = np.asarray(value, dtype=float)
-    if array.ndim != 2 or not len(array) or not np.isfinite(array).all():
-        raise DeploymentError(f"{name}_must_be_nonempty_finite_2d")
+    if array.ndim != 2 or not len(array):
+        raise DeploymentError(f"{name}_must_be_nonempty_2d")
+    if np.isinf(array).any():
+        raise DeploymentError(f"{name}_contains_infinite_value")
     return array
 
 
