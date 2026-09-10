@@ -52,6 +52,7 @@ def _rows() -> list[dict[str, object]]:
 
 
 def _resolved(tmp_path: Path):
+    tmp_path.mkdir(parents=True, exist_ok=True)
     path = tmp_path / "direct.yaml"
     path.write_text(
         SOURCE.read_text(encoding="utf-8")
