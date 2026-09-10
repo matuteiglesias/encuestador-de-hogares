@@ -18,6 +18,8 @@ on:
       - src/encuestador/experiments.py
       - src/encuestador/cascade.py
       - src/encuestador/evaluation.py
+      - src/encuestador/terminal.py
+      - src/encuestador/runner.py
       - src/encuestador/upstream_intake.py
       - src/encuestador/census_sample_intake.py
       - scripts/synthetic_transport_smoke.py
@@ -31,6 +33,8 @@ on:
       - tests/test_cascade.py
       - tests/test_lean_experiment.py
       - tests/test_evaluation.py
+      - tests/test_terminal.py
+      - tests/test_runner.py
       - tests/test_upstream_intake.py
       - tests/test_census_sample_intake.py
   push:
@@ -51,6 +55,8 @@ on:
       - src/encuestador/experiments.py
       - src/encuestador/cascade.py
       - src/encuestador/evaluation.py
+      - src/encuestador/terminal.py
+      - src/encuestador/runner.py
       - src/encuestador/upstream_intake.py
       - src/encuestador/census_sample_intake.py
       - scripts/synthetic_transport_smoke.py
@@ -64,6 +70,8 @@ on:
       - tests/test_cascade.py
       - tests/test_lean_experiment.py
       - tests/test_evaluation.py
+      - tests/test_terminal.py
+      - tests/test_runner.py
       - tests/test_upstream_intake.py
       - tests/test_census_sample_intake.py
 
@@ -96,6 +104,8 @@ jobs:
           src/encuestador/experiments.py
           src/encuestador/cascade.py
           src/encuestador/evaluation.py
+          src/encuestador/terminal.py
+          src/encuestador/runner.py
           src/encuestador/upstream_intake.py
           src/encuestador/census_sample_intake.py
           tests/test_scientific_primitives.py
@@ -107,6 +117,8 @@ jobs:
           tests/test_cascade.py
           tests/test_lean_experiment.py
           tests/test_evaluation.py
+          tests/test_terminal.py
+          tests/test_runner.py
           tests/test_upstream_intake.py
           tests/test_census_sample_intake.py
       - name: Compile active executor and intake
@@ -120,6 +132,8 @@ jobs:
           src/encuestador/experiments.py
           src/encuestador/cascade.py
           src/encuestador/evaluation.py
+          src/encuestador/terminal.py
+          src/encuestador/runner.py
           src/encuestador/upstream_intake.py
           src/encuestador/census_sample_intake.py
           scripts/synthetic_transport_smoke.py
@@ -133,6 +147,8 @@ jobs:
           tests/test_cascade.py
           tests/test_lean_experiment.py
           tests/test_evaluation.py
+          tests/test_terminal.py
+          tests/test_runner.py
           tests/test_upstream_intake.py
           tests/test_census_sample_intake.py
       - name: Verify active science path
@@ -148,6 +164,8 @@ jobs:
           tests/test_cascade.py
           tests/test_lean_experiment.py
           tests/test_evaluation.py
+          tests/test_terminal.py
+          tests/test_runner.py
           tests/test_upstream_intake.py
           tests/test_census_sample_intake.py
       - name: Execute maturity smoke
