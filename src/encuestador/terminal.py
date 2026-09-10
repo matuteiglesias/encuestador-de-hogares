@@ -49,9 +49,14 @@ def classify_income_target(values: Sequence[Any] | np.ndarray) -> TargetEligibil
     missing = np.zeros(len(raw), dtype=bool)
     nonresponse = np.zeros(len(raw), dtype=bool)
     for index, value in enumerate(raw.tolist()):
-        if value is None or (isinstance(value, str) and not value.strip()):
+        if value is None:
             missing[index] = True
             continue
+        if isinstance(value, str):
+            normalized = value.strip()
+            if not normalized or normalized.upper() == "NA":
+                missing[index] = True
+                continue
         try:
             number = float(value)
         except (TypeError, ValueError) as exc:
@@ -116,7 +121,7 @@ class HurdleEstimator:
 
     def fit(self, x: np.ndarray, y: np.ndarray) -> HurdleEstimator:
         features = np.asarray(x, dtype=float)
-        if features.ndim != 2 or not len(features) or not np.isfinite(features).all():
+        if features.ndim != 2 or not len(features) or np.isinf(features).any():
             raise HurdleError("hurdle_training_features_invalid")
         eligibility = classify_income_target(y)
         if len(eligibility.numeric) != len(features):
@@ -166,7 +171,7 @@ class HurdleEstimator:
 
     def _positive_probability(self, x: np.ndarray) -> np.ndarray:
         features = np.asarray(x, dtype=float)
-        if features.ndim != 2 or not np.isfinite(features).all():
+        if features.ndim != 2 or np.isinf(features).any():
             raise HurdleError("hurdle_scoring_features_invalid")
         if self.constant_positive_probability is not None:
             return np.full(len(features), self.constant_positive_probability, dtype=float)
@@ -304,7 +309,7 @@ def crossfit_hurdle(
     raw_target = np.asarray(y, dtype=object)
     if features.ndim != 2 or len(features) != len(raw_target):
         raise HurdleError("hurdle_crossfit_shape_invalid")
-    if len(features) != len(manifest.row_ids) or not np.isfinite(features).all():
+    if len(features) != len(manifest.row_ids) or np.isinf(features).any():
         raise HurdleError("hurdle_crossfit_manifest_or_features_invalid")
     eligibility = classify_income_target(raw_target)
     p_positive = np.full(len(features), np.nan, dtype=float)
@@ -361,6 +366,8 @@ def fit_hurdle_and_score(
     score = np.asarray(x_score, dtype=float)
     if train.ndim != 2 or score.ndim != 2 or train.shape[1] != score.shape[1]:
         raise HurdleError("hurdle_full_score_feature_shape_invalid")
+    if np.isinf(train).any() or np.isinf(score).any():
+        raise HurdleError("hurdle_full_score_features_infinite")
     if len(score) != len(score_row_ids):
         raise HurdleError("hurdle_score_row_id_length_mismatch")
     eligibility = classify_income_target(y_train)
