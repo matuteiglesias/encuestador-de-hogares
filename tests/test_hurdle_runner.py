@@ -27,7 +27,9 @@ def _rows() -> list[dict[str, object]]:
             elif index % 4 == 0:
                 income = 0
             else:
-                income = float(50000 + 3500 * age + 12000 * estado + 7000 * component)
+                income = float(
+                    50000 + 3500 * age + 12000 * estado + 7000 * component
+                )
             rows.append(
                 {
                     "CODUSU": f"Q3-{household:04d}",
@@ -52,16 +54,10 @@ def _rows() -> list[dict[str, object]]:
 
 
 def _resolved(tmp_path: Path, name: str):
+    tmp_path.mkdir(parents=True, exist_ok=True)
     source = CONFIG_ROOT / "experiments" / name
     target = tmp_path / name
-    target.write_text(
-        source.read_text(encoding="utf-8")
-        + """
-overrides:
-  splits:
-    n_splits: 3
-  estimators:
-    roles:
+    latent_override = """
       latent_categorical:
         params:
           early_stopping: false
@@ -70,6 +66,15 @@ overrides:
           max_leaf_nodes: 7
           min_samples_leaf: 3
           learning_rate: 0.08
+""" if "lean" in name else ""
+    target.write_text(
+        source.read_text(encoding="utf-8")
+        + f"""
+overrides:
+  splits:
+    n_splits: 3
+  estimators:
+    roles:{latent_override}
       terminal_presence:
         params:
           early_stopping: false
@@ -120,17 +125,27 @@ def test_committed_real_eph_hurdle_contracts_execute_on_real_shaped_rows(
     assert eligibility["missing"] > 0
     household = result.metrics["household"]
     assert household["unavailable_observed_income_household_count"] > 0
-    assert household["complete_observed_income_household_count"] < household["household_observation_count"]
+    assert household["complete_observed_income_household_count"] < household[
+        "household_observation_count"
+    ]
 
 
-def test_direct_and_lean_hurdle_use_identical_household_outer_folds(tmp_path: Path) -> None:
+def test_direct_and_lean_hurdle_use_identical_household_outer_folds(
+    tmp_path: Path,
+) -> None:
     rows = _rows()
     direct = execute_experiment(
-        _resolved(tmp_path / "direct", "real_eph_2024q3_direct_hurdle_gamma_v1.yaml"),
+        _resolved(
+            tmp_path / "direct",
+            "real_eph_2024q3_direct_hurdle_gamma_v1.yaml",
+        ),
         rows,
     )
     lean = execute_experiment(
-        _resolved(tmp_path / "lean", "real_eph_2024q3_lean_hurdle_gamma_v1.yaml"),
+        _resolved(
+            tmp_path / "lean",
+            "real_eph_2024q3_lean_hurdle_gamma_v1.yaml",
+        ),
         rows,
     )
     assert direct.fold_manifest.row_ids == lean.fold_manifest.row_ids
