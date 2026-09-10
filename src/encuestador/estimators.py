@@ -8,10 +8,13 @@ by the household-safe experiment runtime.
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from typing import Any
+from typing import Any, ClassVar
 
 import numpy as np
-from sklearn.ensemble import HistGradientBoostingClassifier, HistGradientBoostingRegressor
+from sklearn.ensemble import (
+    HistGradientBoostingClassifier,
+    HistGradientBoostingRegressor,
+)
 
 
 class EstimatorConfigurationError(ValueError):
@@ -99,7 +102,7 @@ class HGBClassifierAdapter:
 class HGBRegressorAdapter:
     """HistGradientBoosting regressor for squared-error or positive Gamma targets."""
 
-    ALLOWED_LOSSES = {"squared_error", "gamma"}
+    ALLOWED_LOSSES: ClassVar[frozenset[str]] = frozenset({"squared_error", "gamma"})
 
     def __init__(
         self,
