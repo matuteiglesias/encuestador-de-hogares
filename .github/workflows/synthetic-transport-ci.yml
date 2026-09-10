@@ -6,6 +6,7 @@ on:
     paths:
       - .github/workflows/synthetic-transport-ci.yml
       - .github/workflows/scheduled-transport-maturity.yml
+      - requirements-science.txt
       - contracts/model_specs/historical_staged_v1.json
       - fixtures/semantic_plane/synthetic_fixture_v1.json
       - src/encuestador/transport_proof.py
@@ -25,6 +26,7 @@ on:
     paths:
       - .github/workflows/synthetic-transport-ci.yml
       - .github/workflows/scheduled-transport-maturity.yml
+      - requirements-science.txt
       - contracts/model_specs/historical_staged_v1.json
       - fixtures/semantic_plane/synthetic_fixture_v1.json
       - src/encuestador/transport_proof.py
@@ -56,8 +58,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Install bounded proof dependencies
-        run: python -m pip install numpy pytest ruff scikit-learn
+      - name: Install active science runtime and test dependencies
+        run: python -m pip install -r requirements-science.txt pytest ruff
       - name: Lint active transport boundary
         run: >-
           ruff check
