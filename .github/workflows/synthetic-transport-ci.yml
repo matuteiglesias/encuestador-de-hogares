@@ -19,6 +19,7 @@ on:
       - tests/test_scientific_primitives.py
       - tests/test_crossfit.py
       - tests/test_estimators.py
+      - tests/test_hgb_direct_integration.py
       - tests/test_census_sample_intake.py
   push:
     branches:
@@ -39,6 +40,7 @@ on:
       - tests/test_scientific_primitives.py
       - tests/test_crossfit.py
       - tests/test_estimators.py
+      - tests/test_hgb_direct_integration.py
       - tests/test_census_sample_intake.py
 
 permissions:
@@ -70,6 +72,7 @@ jobs:
           tests/test_scientific_primitives.py
           tests/test_crossfit.py
           tests/test_estimators.py
+          tests/test_hgb_direct_integration.py
           tests/test_census_sample_intake.py
       - name: Compile executor and intake
         run: >-
@@ -84,6 +87,7 @@ jobs:
           tests/test_scientific_primitives.py
           tests/test_crossfit.py
           tests/test_estimators.py
+          tests/test_hgb_direct_integration.py
           tests/test_census_sample_intake.py
       - name: Verify synthetic transport and sampler intake
         run: >-
@@ -92,6 +96,7 @@ jobs:
           tests/test_scientific_primitives.py
           tests/test_crossfit.py
           tests/test_estimators.py
+          tests/test_hgb_direct_integration.py
           tests/test_census_sample_intake.py
       - name: Execute maturity smoke
         run: python scripts/synthetic_transport_smoke.py > /tmp/synthetic-proof.json
