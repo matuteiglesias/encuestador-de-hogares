@@ -162,7 +162,7 @@ def _rank_deciles(
         output.append(
             {
                 "decile": decile,
-                "count": int(len(indices)),
+                "count": len(indices),
                 "reference_min": float(reference[indices].min()),
                 "reference_max": float(reference[indices].max()),
                 "bias": float(residual.mean()),
