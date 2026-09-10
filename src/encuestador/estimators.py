@@ -46,6 +46,17 @@ def _base_parameters(parameters: Mapping[str, Any] | None) -> dict[str, Any]:
     return resolved
 
 
+def _natural_classifier_target(value: np.ndarray) -> np.ndarray:
+    """Recover a homogeneous sklearn label dtype from transport-level object arrays."""
+    target = np.asarray(value)
+    if target.dtype == object:
+        try:
+            target = np.asarray(target.tolist())
+        except (TypeError, ValueError):
+            pass
+    return target
+
+
 class HGBClassifierAdapter:
     """HistGradientBoosting classifier with explicit probability semantics."""
 
@@ -62,7 +73,7 @@ class HGBClassifierAdapter:
 
     def fit(self, x: np.ndarray, y: np.ndarray) -> HGBClassifierAdapter:
         features = np.asarray(x, dtype=float)
-        target = np.asarray(y)
+        target = _natural_classifier_target(y)
         if features.ndim != 2 or target.ndim != 1 or len(features) != len(target):
             raise EstimatorConfigurationError("classifier_training_shape_invalid")
         if not len(features):
