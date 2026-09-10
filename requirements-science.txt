@@ -1,0 +1,3 @@
+# Active bounded science runtime. Legacy/notebook dependencies are intentionally excluded.
+numpy>=1.23,<3
+scikit-learn>=1.3,<2
