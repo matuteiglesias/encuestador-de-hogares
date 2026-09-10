@@ -60,11 +60,11 @@ def test_target_eligibility_preserves_zero_and_excludes_minus9_and_missing() -> 
     result = classify_income_target([0, 120, -9, None, np.nan, "", 50])
     assert result.counts == {
         "rows": 7,
-        "eligible": 4,
-        "positive": 3,
+        "eligible": 3,
+        "positive": 2,
         "zero": 1,
         "nonresponse": 1,
-        "missing": 2,
+        "missing": 3,
     }
     assert result.numeric[0] == 0
     assert np.isnan(result.numeric[2])
