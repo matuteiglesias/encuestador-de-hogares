@@ -12,7 +12,6 @@ import json
 from collections.abc import Sequence
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
 
 from .upstream_intake import UpstreamIntakeError, sha256_file
 
