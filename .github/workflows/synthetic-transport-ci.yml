@@ -7,12 +7,15 @@ on:
       - .github/workflows/synthetic-transport-ci.yml
       - .github/workflows/scheduled-transport-maturity.yml
       - requirements-science.txt
+      - configs/experiments/**
       - contracts/model_specs/historical_staged_v1.json
       - fixtures/semantic_plane/synthetic_fixture_v1.json
       - src/encuestador/transport_proof.py
       - src/encuestador/scientific_primitives.py
       - src/encuestador/crossfit.py
       - src/encuestador/estimators.py
+      - src/encuestador/dag.py
+      - src/encuestador/experiments.py
       - src/encuestador/census_sample_intake.py
       - scripts/synthetic_transport_smoke.py
       - tests/test_transport_proof.py
@@ -20,6 +23,8 @@ on:
       - tests/test_crossfit.py
       - tests/test_estimators.py
       - tests/test_hgb_direct_integration.py
+      - tests/test_dag.py
+      - tests/test_experiments.py
       - tests/test_census_sample_intake.py
   push:
     branches:
@@ -28,12 +33,15 @@ on:
       - .github/workflows/synthetic-transport-ci.yml
       - .github/workflows/scheduled-transport-maturity.yml
       - requirements-science.txt
+      - configs/experiments/**
       - contracts/model_specs/historical_staged_v1.json
       - fixtures/semantic_plane/synthetic_fixture_v1.json
       - src/encuestador/transport_proof.py
       - src/encuestador/scientific_primitives.py
       - src/encuestador/crossfit.py
       - src/encuestador/estimators.py
+      - src/encuestador/dag.py
+      - src/encuestador/experiments.py
       - src/encuestador/census_sample_intake.py
       - scripts/synthetic_transport_smoke.py
       - tests/test_transport_proof.py
@@ -41,6 +49,8 @@ on:
       - tests/test_crossfit.py
       - tests/test_estimators.py
       - tests/test_hgb_direct_integration.py
+      - tests/test_dag.py
+      - tests/test_experiments.py
       - tests/test_census_sample_intake.py
 
 permissions:
@@ -68,19 +78,25 @@ jobs:
           src/encuestador/scientific_primitives.py
           src/encuestador/crossfit.py
           src/encuestador/estimators.py
+          src/encuestador/dag.py
+          src/encuestador/experiments.py
           src/encuestador/census_sample_intake.py
           tests/test_scientific_primitives.py
           tests/test_crossfit.py
           tests/test_estimators.py
           tests/test_hgb_direct_integration.py
+          tests/test_dag.py
+          tests/test_experiments.py
           tests/test_census_sample_intake.py
-      - name: Compile executor and intake
+      - name: Compile active executor and intake
         run: >-
           python -m py_compile
           src/encuestador/transport_proof.py
           src/encuestador/scientific_primitives.py
           src/encuestador/crossfit.py
           src/encuestador/estimators.py
+          src/encuestador/dag.py
+          src/encuestador/experiments.py
           src/encuestador/census_sample_intake.py
           scripts/synthetic_transport_smoke.py
           tests/test_transport_proof.py
@@ -88,8 +104,10 @@ jobs:
           tests/test_crossfit.py
           tests/test_estimators.py
           tests/test_hgb_direct_integration.py
+          tests/test_dag.py
+          tests/test_experiments.py
           tests/test_census_sample_intake.py
-      - name: Verify synthetic transport and sampler intake
+      - name: Verify active science path
         run: >-
           pytest -q
           tests/test_transport_proof.py
@@ -97,6 +115,8 @@ jobs:
           tests/test_crossfit.py
           tests/test_estimators.py
           tests/test_hgb_direct_integration.py
+          tests/test_dag.py
+          tests/test_experiments.py
           tests/test_census_sample_intake.py
       - name: Execute maturity smoke
         run: python scripts/synthetic_transport_smoke.py > /tmp/synthetic-proof.json
