@@ -1,0 +1,81 @@
+experiment:
+  id: real_eph_2024q3_direct_hurdle_gamma_v1
+  seed: 42
+  status: real_eph_science_candidate
+data:
+  id: eph_2024q3_official_release_v1
+  source_release: eph-2024-q3-3b6a7a15c4af
+  source_contract: publicdata.eph-microdata@1
+  source_adapter: microdatos_eph_individual_household_join_v1
+  training_periods: [2024-Q3]
+  row_unit: person
+  household_id_columns: [CODUSU, NRO_HOGAR]
+  person_id_columns: [CODUSU, NRO_HOGAR, COMPONENTE]
+  period_columns: [ANO4, TRIMESTRE]
+  target_eligibility: P47T_zero_or_positive_only_minus9_and_missing_unavailable
+  monetary_reference: nominal_ars_source_2024q3
+  weight_policy:
+    fit: null
+    calibration: null
+    evaluation: null
+    claim_boundary: eph_sample_conditional
+features:
+  id: eph_2024q3_minimal_census_candidate_v1
+  semantic_authority: eph-censo-aligner
+  review_status: eph_side_candidate_only
+  census_scoring_allowed: false
+  columns:
+    CH04: {dtype_role: categorical, semantic_class: shared_observable_candidate, temporal_role: observed_2024q3, allowed_as_external_input: true}
+    CH06: {dtype_role: continuous, semantic_class: shared_observable_candidate, temporal_role: observed_2024q3, allowed_as_external_input: true}
+    CH07: {dtype_role: categorical, semantic_class: shared_observable_candidate, temporal_role: observed_2024q3, allowed_as_external_input: true}
+    CH09: {dtype_role: categorical, semantic_class: shared_observable_candidate, temporal_role: observed_2024q3, allowed_as_external_input: true}
+    CH10: {dtype_role: categorical, semantic_class: shared_observable_candidate, temporal_role: observed_2024q3, allowed_as_external_input: true}
+    CH12: {dtype_role: categorical, semantic_class: shared_observable_candidate, temporal_role: observed_2024q3, allowed_as_external_input: true}
+    CH13: {dtype_role: categorical, semantic_class: shared_observable_candidate, temporal_role: observed_2024q3, allowed_as_external_input: true}
+    CH15: {dtype_role: categorical, semantic_class: shared_observable_candidate, temporal_role: observed_2024q3, allowed_as_external_input: true}
+    IX_TOT: {dtype_role: continuous, semantic_class: derived_shared_candidate, temporal_role: observed_2024q3, allowed_as_external_input: true}
+    PONDERA: {dtype_role: forbidden, semantic_class: research_only, temporal_role: audit_only, allowed_as_external_input: false}
+    PONDII: {dtype_role: forbidden, semantic_class: research_only, temporal_role: audit_only, allowed_as_external_input: false}
+    PONDIH: {dtype_role: forbidden, semantic_class: research_only, temporal_role: audit_only, allowed_as_external_input: false}
+architecture:
+  id: direct_v1
+  nodes: {}
+terminal:
+  id: hurdle_gamma_p47t_v1
+  prediction_unit: person
+  target: P47T
+  formulation: hurdle_gamma
+  scale: linear
+  zero_policy: model_as_valid_state
+  unavailable_codes: [-9]
+  retransformation: linear_identity_v1
+estimators:
+  id: hgb_hurdle_primary_v1
+  roles:
+    terminal_presence:
+      family: hgb
+      task: classification
+      categorical_features: [CH04, CH07, CH09, CH10, CH12, CH13, CH15]
+      params: {early_stopping: false, random_state: 42, max_iter: 60, max_leaf_nodes: 31, min_samples_leaf: 20, learning_rate: 0.08}
+    terminal_positive:
+      family: hgb
+      task: regression
+      loss: gamma
+      categorical_features: [CH04, CH07, CH09, CH10, CH12, CH13, CH15]
+      params: {early_stopping: false, random_state: 42, max_iter: 60, max_leaf_nodes: 31, min_samples_leaf: 20, learning_rate: 0.08}
+splits:
+  id: household_grouped_5fold_v1
+  strategy: household_grouped_v1
+  group_columns: [CODUSU, NRO_HOGAR]
+  n_splits: 5
+  seed: 42
+calibration: {id: raw_v1, method: raw}
+anchors: null
+uncertainty: {id: core_v1, categorical_probabilities: true, quantiles: false, household_cluster_bootstrap: false}
+evaluation:
+  id: real_eph_welfare_core_v1
+  person_metrics: [mae, rmse, mean_error]
+  household_metrics: [mae, rmse, mean_error]
+  distributional_metrics: [dispersion_ratio, quantiles, deciles, tails]
+  household_truth_cohort: all_members_have_valid_terminal_income_v1
+  oracle: {enabled: false}

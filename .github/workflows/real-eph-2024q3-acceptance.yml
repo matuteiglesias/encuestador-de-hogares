@@ -1,0 +1,201 @@
+name: Real EPH 2024-Q3 acceptance
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - .github/workflows/real-eph-2024q3-acceptance.yml
+      - pyproject.toml
+      - configs/experiments/real_eph_2024q3_*.yaml
+      - src/encuestador/terminal.py
+      - src/encuestador/hurdle_cascade.py
+      - src/encuestador/estimators.py
+      - src/encuestador/experiments.py
+      - src/encuestador/runner.py
+      - src/encuestador/deployment.py
+      - src/encuestador/runtime_model.py
+      - src/encuestador/run_bundle.py
+      - src/encuestador/eph_microdata.py
+      - src/encuestador/cli.py
+
+permissions:
+  contents: read
+
+jobs:
+  real-eph-science:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      OMP_NUM_THREADS: "2"
+      OPENBLAS_NUM_THREADS: "2"
+      MKL_NUM_THREADS: "2"
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install encuestador
+        run: python -m pip install -e .
+
+      - name: Pin official EPH producer
+        run: |
+          git clone --filter=blob:none https://github.com/matuteiglesias/microdatos-EPH-INDEC.git /tmp/eph-producer
+          git -C /tmp/eph-producer checkout 492bc92f44894239e58ce40859c5b2e6e7cb60f3
+          python -m pip install -e /tmp/eph-producer
+          test "$(git -C /tmp/eph-producer rev-parse HEAD)" = "492bc92f44894239e58ce40859c5b2e6e7cb60f3"
+
+      - name: Reproduce exact official 2024-Q3 release
+        run: |
+          eph-extractor release --year 2024 --quarter Q3 --out /tmp/eph-releases
+          test -d /tmp/eph-releases/eph-2024-q3-3b6a7a15c4af
+
+      - name: Verify exact release bytes and target eligibility
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          from encuestador.eph_microdata import (
+              load_eph_microdata_release,
+              read_eph_person_observation_frame,
+          )
+          from encuestador.terminal import classify_income_target
+
+          root = Path('/tmp/eph-releases/eph-2024-q3-3b6a7a15c4af')
+          release = load_eph_microdata_release(
+              root,
+              expected_release_id='eph-2024-q3-3b6a7a15c4af',
+              verify_hashes=True,
+          )
+          expected = {
+              'source_archive_sha256': 'fbeacb866777759e2fcbc64e9643734bae29ec6db480dd6d532dc505505b3204',
+              'source_manifest_sha256': '0104a46dc53dfb537a730e6fa323ee5ab0240cc838b66d32459cb2e2c3002f5d',
+              'individual_sha256': 'b435a2f22c72c5d0e281279f27ade8da674c6db6fe6597b620dc0485d9b27260',
+              'household_sha256': '4fc25e8d9e283be1d9c41bc93d237e6c6ad666dbc80bb33559cbe185d17f2fb5',
+              'persons': 47564,
+              'households': 16650,
+          }
+          assert release.source_archive_sha256 == expected['source_archive_sha256']
+          assert release.source_manifest_sha256 == expected['source_manifest_sha256']
+          assert release.individual.sha256 == expected['individual_sha256']
+          assert release.household.sha256 == expected['household_sha256']
+          assert release.individual.rows == expected['persons']
+          assert release.household.rows == expected['households']
+
+          rows = read_eph_person_observation_frame(
+              release,
+              individual_columns=('P47T',),
+          )
+          eligibility = classify_income_target([row['P47T'] for row in rows])
+          assert eligibility.counts == {
+              'rows': 47564,
+              'eligible': 41821,
+              'positive': 25209,
+              'zero': 16612,
+              'nonresponse': 5688,
+              'missing': 55,
+          }
+          evidence = {
+              'release_id': release.release_id,
+              'period': release.period,
+              **expected,
+              'target_eligibility': eligibility.counts,
+          }
+          Path('/tmp/real-eph-target-evidence.json').write_text(
+              json.dumps(evidence, indent=2, sort_keys=True) + '\n',
+              encoding='utf-8',
+          )
+          print(json.dumps(evidence, indent=2, sort_keys=True))
+          PY
+
+      - name: Run direct and lean hurdle-Gamma
+        run: |
+          mkdir -p /tmp/encuestador-runs /tmp/cli-output
+          encuestador run configs/experiments/real_eph_2024q3_direct_hurdle_gamma_v1.yaml \
+            --eph-release-root /tmp/eph-releases/eph-2024-q3-3b6a7a15c4af \
+            --output-root /tmp/encuestador-runs \
+            | tee /tmp/cli-output/direct-gamma.json
+          encuestador run configs/experiments/real_eph_2024q3_lean_hurdle_gamma_v1.yaml \
+            --eph-release-root /tmp/eph-releases/eph-2024-q3-3b6a7a15c4af \
+            --output-root /tmp/encuestador-runs \
+            | tee /tmp/cli-output/lean-gamma.json
+
+      - name: Compare direct versus lean Gamma
+        run: |
+          mkdir -p /tmp/comparisons
+          encuestador compare \
+            /tmp/encuestador-runs/real_eph_2024q3_direct_hurdle_gamma_v1-* \
+            /tmp/encuestador-runs/real_eph_2024q3_lean_hurdle_gamma_v1-* \
+            --output-root /tmp/comparisons \
+            | tee /tmp/cli-output/compare-gamma.json
+
+      - name: Run direct and lean hurdle-log
+        run: |
+          encuestador run configs/experiments/real_eph_2024q3_direct_hurdle_log_v1.yaml \
+            --eph-release-root /tmp/eph-releases/eph-2024-q3-3b6a7a15c4af \
+            --output-root /tmp/encuestador-runs \
+            | tee /tmp/cli-output/direct-log.json
+          encuestador run configs/experiments/real_eph_2024q3_lean_hurdle_log_v1.yaml \
+            --eph-release-root /tmp/eph-releases/eph-2024-q3-3b6a7a15c4af \
+            --output-root /tmp/encuestador-runs \
+            | tee /tmp/cli-output/lean-log.json
+
+      - name: Compare architecture and terminal formulations
+        run: |
+          encuestador compare \
+            /tmp/encuestador-runs/real_eph_2024q3_direct_hurdle_log_v1-* \
+            /tmp/encuestador-runs/real_eph_2024q3_lean_hurdle_log_v1-* \
+            --output-root /tmp/comparisons \
+            | tee /tmp/cli-output/compare-log.json
+          encuestador compare \
+            /tmp/encuestador-runs/real_eph_2024q3_direct_hurdle_gamma_v1-* \
+            /tmp/encuestador-runs/real_eph_2024q3_direct_hurdle_log_v1-* \
+            --output-root /tmp/comparisons \
+            | tee /tmp/cli-output/compare-direct-terminal.json
+          encuestador compare \
+            /tmp/encuestador-runs/real_eph_2024q3_lean_hurdle_gamma_v1-* \
+            /tmp/encuestador-runs/real_eph_2024q3_lean_hurdle_log_v1-* \
+            --output-root /tmp/comparisons \
+            | tee /tmp/cli-output/compare-lean-terminal.json
+
+      - name: Validate every immutable run bundle
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          from encuestador.run_bundle import validate_run_bundle
+
+          rows = []
+          for root in sorted(Path('/tmp/encuestador-runs').iterdir()):
+              manifest = validate_run_bundle(root, verify_hashes=True)
+              metrics = json.loads((root / 'metrics.json').read_text(encoding='utf-8'))
+              rows.append({
+                  'run_id': manifest['run_id'],
+                  'architecture_id': manifest['architecture_id'],
+                  'terminal_formulation': manifest['terminal']['formulation'],
+                  'person_rows': sum(metrics['fold_counts'].values()),
+                  'household_observations': metrics['household']['household_observation_count'],
+                  'complete_households': metrics['household']['complete_observed_income_household_count'],
+                  'unavailable_households': metrics['household']['unavailable_observed_income_household_count'],
+              })
+          assert len(rows) == 4
+          Path('/tmp/real-eph-run-ledger.json').write_text(
+              json.dumps(rows, indent=2, sort_keys=True) + '\n', encoding='utf-8'
+          )
+          print(json.dumps(rows, indent=2, sort_keys=True))
+          PY
+
+      - name: Upload governed real-EPH evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: real-eph-2024q3-science-evidence
+          path: |
+            /tmp/real-eph-target-evidence.json
+            /tmp/real-eph-run-ledger.json
+            /tmp/encuestador-runs
+            /tmp/comparisons
+            /tmp/cli-output
+          if-no-files-found: error
+          retention-days: 14

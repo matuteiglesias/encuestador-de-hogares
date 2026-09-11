@@ -105,9 +105,6 @@ def test_outer_holdout_is_absent_from_every_latent_fit_used_by_that_terminal_fol
     assert result.terminal_artifact.fold_ids == manifest.fold_ids
     assert result.nesting_policy == "outer_fold_isolated_latent_crossfit_v1"
 
-    # For each outer fold there are (n_splits - 1) nested latent fits followed by
-    # one outer-train full latent fit. Every call in that chunk must exclude the
-    # same outer fold; the terminal fit must exclude that exact fold as well.
     calls_per_outer = manifest.n_splits
     assert len(latent_registry) == manifest.n_splits * calls_per_outer
     assert len(terminal_registry) == manifest.n_splits

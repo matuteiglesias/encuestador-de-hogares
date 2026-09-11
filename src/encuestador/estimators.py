@@ -46,6 +46,30 @@ def _base_parameters(parameters: Mapping[str, Any] | None) -> dict[str, Any]:
     return resolved
 
 
+def _natural_classifier_target(value: np.ndarray) -> np.ndarray:
+    """Canonicalize transport labels to a homogeneous discrete sklearn dtype."""
+    raw = np.asarray(value, dtype=object)
+    if raw.ndim != 1:
+        return raw
+    labels: list[str] = []
+    for item in raw.tolist():
+        if item is None:
+            raise EstimatorConfigurationError("classifier_target_missing")
+        if isinstance(item, (float, np.floating)) and np.isnan(float(item)):
+            raise EstimatorConfigurationError("classifier_target_missing")
+        label = str(item)
+        if not label or label.lower() == "nan":
+            raise EstimatorConfigurationError("classifier_target_missing")
+        labels.append(label)
+    return np.asarray(labels, dtype=str)
+
+
+def _validate_hgb_features(features: np.ndarray, *, error: str) -> None:
+    """HGB natively supports NaN feature values; infinities remain invalid."""
+    if np.isinf(features).any():
+        raise EstimatorConfigurationError(error)
+
+
 class HGBClassifierAdapter:
     """HistGradientBoosting classifier with explicit probability semantics."""
 
@@ -62,13 +86,12 @@ class HGBClassifierAdapter:
 
     def fit(self, x: np.ndarray, y: np.ndarray) -> HGBClassifierAdapter:
         features = np.asarray(x, dtype=float)
-        target = np.asarray(y)
+        target = _natural_classifier_target(y)
         if features.ndim != 2 or target.ndim != 1 or len(features) != len(target):
             raise EstimatorConfigurationError("classifier_training_shape_invalid")
         if not len(features):
             raise EstimatorConfigurationError("classifier_training_empty")
-        if not np.isfinite(features).all():
-            raise EstimatorConfigurationError("classifier_features_non_finite")
+        _validate_hgb_features(features, error="classifier_features_infinite")
         if len(np.unique(target)) < 2:
             raise EstimatorConfigurationError("classifier_requires_two_classes")
         if self.categorical_features and max(self.categorical_features) >= features.shape[1]:
@@ -90,13 +113,14 @@ class HGBClassifierAdapter:
         return self.model
 
     def predict(self, x: np.ndarray) -> np.ndarray:
-        return np.asarray(self._fitted().predict(np.asarray(x, dtype=float)))
+        features = np.asarray(x, dtype=float)
+        _validate_hgb_features(features, error="classifier_features_infinite")
+        return np.asarray(self._fitted().predict(features))
 
     def predict_proba(self, x: np.ndarray) -> np.ndarray:
-        return np.asarray(
-            self._fitted().predict_proba(np.asarray(x, dtype=float)),
-            dtype=float,
-        )
+        features = np.asarray(x, dtype=float)
+        _validate_hgb_features(features, error="classifier_features_infinite")
+        return np.asarray(self._fitted().predict_proba(features), dtype=float)
 
 
 class HGBRegressorAdapter:
@@ -128,8 +152,9 @@ class HGBRegressorAdapter:
             raise EstimatorConfigurationError("regressor_training_shape_invalid")
         if not len(features):
             raise EstimatorConfigurationError("regressor_training_empty")
-        if not np.isfinite(features).all() or not np.isfinite(target).all():
-            raise EstimatorConfigurationError("regressor_training_non_finite")
+        _validate_hgb_features(features, error="regressor_features_infinite")
+        if not np.isfinite(target).all():
+            raise EstimatorConfigurationError("regressor_target_non_finite")
         if self.loss == "gamma" and np.any(target <= 0):
             raise EstimatorConfigurationError("gamma_target_must_be_strictly_positive")
         if self.categorical_features and max(self.categorical_features) >= features.shape[1]:
@@ -151,7 +176,6 @@ class HGBRegressorAdapter:
         return self.model
 
     def predict(self, x: np.ndarray) -> np.ndarray:
-        return np.asarray(
-            self._fitted().predict(np.asarray(x, dtype=float)),
-            dtype=float,
-        )
+        features = np.asarray(x, dtype=float)
+        _validate_hgb_features(features, error="regressor_features_infinite")
+        return np.asarray(self._fitted().predict(features), dtype=float)
