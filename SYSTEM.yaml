@@ -61,6 +61,15 @@ active_real_inputs:
     target_year: 2024
     authority: matuteiglesias/samplerCensoARG
     source_contract: research.census-target-year-sample/v2
+    materialization: full-payload
+    frame_release_id: arg-cpv2010-frame-ee6ada167c2d6429
+    frame_contract: research.census-frame/v1
+    donor_vintage: 2010
+    households: 141863
+    persons: 469172
+    dwellings: 141621
+    selected_departments: 525
+    producer_checker: pass
 scientific_invariants:
 - external Census inputs must be approved shared_observable or derived_shared features from an exact alignment release
 - semantic shared_observable does not imply that a donor-vintage Census value is observed at the welfare period
@@ -78,7 +87,7 @@ scientific_invariants:
 - monetary transforms and price references must be explicit and resolved through a versioned monetary-conversion release before welfare handoff
 - poverty consumes welfare semantics, never model-native latent/log prediction values
 verification:
-  status: real-eph-science-active-census-semantic-review-pending
+  status: real-inputs-pinned-census-producer-green-semantic-review-pending
   last_verified: '2026-09-11'
   evidence:
   - deterministic synthetic end-to-end transport runtime with household-safe OOF, direct/hurdle paths, run bundles and CLI evidence
@@ -90,14 +99,19 @@ verification:
   - welfare science diagnostics including oracle-presence, positive-amount, low-tail, rank/transition, complete-vs-incomplete selection and fold-stability helpers
   - experimental nested empirical-residual predictive-distribution primitive with a hard inner-OOF/outer-test leakage boundary
   - sampler-v2 fail-closed intake implemented for research.census-target-year-sample/v2
+  - CPV-2010 frame arg-cpv2010-frame-ee6ada167c2d6429 materialized with full source payload and producer relational validation
+  - Census sample census-sample-2024-0839713eafea8d1b materialized as full-payload v2; producer checker PASS; independent identity/FK/membership checks PASS
+  - Census sample preserves audit-only design probabilities, leaves analysis/generic model weights unset, excludes only donor-only department 94021 with zero reassignment and no source/frame mutation
   pending:
   - complete the real 23-concept CPV-2010/EPH semantic review in repo.eph-censo-aligner; approve only source-backed concepts needed by the active model plane
-  - validate the exact census-sample-2024-0839713eafea8d1b payload through the v2 intake gate where the artifact is present
+  - execute encuestador's own v2 custody/intake check against the exact local sample when the local artifact is mounted in the runtime
+  - integrate landed science-diagnostics helpers into governed P0/P1 run evidence where they are not yet emitted by runner/run bundles
   - approve the resulting real Census scoring feature plane and transport-time roles before Census scoring
   - run and adjudicate P0 versus approved-P1 Gamma on EPH with the expanded diagnostics before any Census scoring
   - resolve final monetary conversion and household-welfare release semantics before downstream Poverty handoff
   limitations:
-  - the pinned Census release id is a required exact parent, but its payload is not stored in this Git repository and cannot be content-validated from repository state alone
+  - producer-side Census custody and QA are green, but the sample payload is intentionally outside Git and cannot be revalidated by repository-only CI
+  - semantic availability of the 23 candidate fields is not semantic equivalence or target-period admissibility
   - experimental predictive distributions are diagnostics only and are not a production uncertainty framework
   - historical fitted RFC1-RFC4 artifacts are not current releases
 maintenance:
