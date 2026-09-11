@@ -13,6 +13,17 @@ The goal is not to preserve the historical implementation. The historical RFC ca
 
 The sprint succeeds when the repository can run reproducible, household-safe, real-EPH experiments that compare a small set of scientifically meaningful welfare-inference architectures under common machinery, produce auditable diagnostics, and optionally condition latent-state predictions on governed external aggregate evidence.
 
+## Current execution overlay
+
+The seed was written before the September 10 real-EPH integration sprint completed. Do **not** replay the original milestone sequence mechanically.
+
+For current work, read the design contract in `00`–`12`, then use these overlays to determine what is already green and what should be pulled next:
+
+- `13_IMPLEMENTATION_STATUS_20260910.md` — evidence-backed capability ledger after the real-EPH integration close;
+- `14_CURRENT_DEVELOPMENT_DIRECTIVE_20260911.md` — current dependency order, exact input pins, hard gates and agent guidance.
+
+When an older milestone says to build a capability that `13` records as green and current `main` confirms is present, reuse the landed implementation rather than creating a parallel version. When code, `13`, and `14` disagree, surface the mismatch and resolve it explicitly.
+
 ## Core scientific object
 
 An experiment is conceptually:
@@ -94,7 +105,7 @@ The first implementation target is a moment-constrained information projection, 
 
 ## Sprint order
 
-The implementation order is intentional:
+The original implementation order was intentional:
 
 ```text
 1. freeze active scientific contracts
@@ -109,7 +120,7 @@ The implementation order is intentional:
 10. finalize run artifacts, CLI, Make targets and acceptance gates
 ```
 
-The sprint must reach **real EPH execution before spending substantial time on optional sophistication**.
+This remains useful history for understanding dependencies, but the current repository has already crossed several of these milestones. `14_CURRENT_DEVELOPMENT_DIRECTIVE_20260911.md` is authoritative for the next pull order.
 
 ## Definition of done
 
@@ -121,21 +132,28 @@ An engineering-successful run does not imply scientific promotion. A candidate m
 
 ## Document map
 
-Read in this order:
+Read in this order for current development:
 
 1. `01_SCIENTIFIC_CONTRACT.md` — estimand, information boundaries, scientific invariants.
-2. `02_CURRENT_TO_TARGET.md` — implementation gap map and green criteria.
-3. `03_EXPERIMENT_MODEL.md` — experiment composition and config semantics.
-4. `04_RUNTIME_ARCHITECTURE.md` — target Python architecture and runtime interfaces.
-5. `05_MODEL_AND_CASCADE_POLICY.md` — HGB/RF, hurdle, Gamma/log, probabilities, architecture policy.
-6. `06_EVALUATION_AND_ACCEPTANCE.md` — scientific diagnostics and acceptance rules.
-7. `07_ANCHORS_AND_UNCERTAINTY.md` — aggregate constraints and bounded uncertainty.
-8. `08_RUN_ARTIFACT_CONTRACT.md` — immutable run evidence and storage rules.
-9. `09_IMPLEMENTATION_MILESTONES.md` — dependency-ordered vertical slices.
-10. `10_AGENT_WORKPACKETS.md` — bounded agent ownership and handoffs.
-11. `11_TEST_AND_INTEGRATION_MATRIX.md` — tests required at each layer.
-12. `12_NON_GOALS_AND_GUARDRAILS.md` — explicit scope controls.
+2. `05_MODEL_AND_CASCADE_POLICY.md` — HGB/RF, hurdle, Gamma/log, probabilities, architecture policy.
+3. `06_EVALUATION_AND_ACCEPTANCE.md` — scientific diagnostics and acceptance rules.
+4. `12_NON_GOALS_AND_GUARDRAILS.md` — explicit scope controls.
+5. `13_IMPLEMENTATION_STATUS_20260910.md` — what actually became green/red on real EPH.
+6. `14_CURRENT_DEVELOPMENT_DIRECTIVE_20260911.md` — what to do now and in what order.
+
+Use the remaining documents as detailed references:
+
+- `02_CURRENT_TO_TARGET.md` — original implementation gap map and green criteria;
+- `03_EXPERIMENT_MODEL.md` — experiment composition and config semantics;
+- `04_RUNTIME_ARCHITECTURE.md` — target Python architecture and runtime interfaces;
+- `07_ANCHORS_AND_UNCERTAINTY.md` — aggregate constraints and bounded uncertainty;
+- `08_RUN_ARTIFACT_CONTRACT.md` — immutable run evidence and storage rules;
+- `09_IMPLEMENTATION_MILESTONES.md` — original dependency-ordered vertical slices;
+- `10_AGENT_WORKPACKETS.md` — bounded agent ownership and handoffs;
+- `11_TEST_AND_INTEGRATION_MATRIX.md` — tests required at each layer.
 
 ## Working rule for agents
 
 When the bundle and current code disagree, do not silently reinterpret the science. Surface the mismatch in the PR or implementation report. Small interface changes are allowed when they preserve the scientific semantics documented here; hidden changes to estimands, folds, feature admissibility, weights, temporal roles or anchor meaning are not.
+
+For current execution, `13` and `14` are overlays over the original seed: they may mark original milestone work as already complete, narrow the current critical path, and pin exact producer releases. They do not relax the scientific invariants in `01`–`12`.
