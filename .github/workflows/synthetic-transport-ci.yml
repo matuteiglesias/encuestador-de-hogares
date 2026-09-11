@@ -6,6 +6,7 @@ on:
     paths:
       - .github/workflows/synthetic-transport-ci.yml
       - .github/workflows/scheduled-transport-maturity.yml
+      - .github/workflows/real-eph-2024q3-acceptance.yml
       - pyproject.toml
       - requirements-science.txt
       - configs/experiments/**
@@ -30,17 +31,21 @@ on:
       - src/encuestador/census_sample_intake.py
       - src/encuestador/cli.py
       - scripts/synthetic_transport_smoke.py
+      - science/2026-09-11/build_predictive_welfare_release.py
       - tests/**
   push:
     branches: [main]
     paths:
       - .github/workflows/synthetic-transport-ci.yml
+      - .github/workflows/scheduled-transport-maturity.yml
+      - .github/workflows/real-eph-2024q3-acceptance.yml
       - pyproject.toml
       - requirements-science.txt
       - configs/experiments/**
       - src/encuestador/**
       - tests/**
       - scripts/synthetic_transport_smoke.py
+      - science/2026-09-11/build_predictive_welfare_release.py
 
 permissions:
   contents: read
@@ -61,7 +66,7 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
       - name: Install package and test dependencies
-        run: python -m pip install -e . pytest ruff
+        run: python -m pip install -e . pytest ruff pandas pyarrow
       - name: Prove console command
         run: >-
           encuestador validate
@@ -86,6 +91,7 @@ jobs:
           src/encuestador/upstream_intake.py
           src/encuestador/census_sample_intake.py
           src/encuestador/cli.py
+          science/2026-09-11/build_predictive_welfare_release.py
           tests/test_scientific_primitives.py
           tests/test_crossfit.py
           tests/test_estimators.py
@@ -123,6 +129,7 @@ jobs:
           src/encuestador/upstream_intake.py
           src/encuestador/census_sample_intake.py
           src/encuestador/cli.py
+          science/2026-09-11/build_predictive_welfare_release.py
       - name: Verify integration-finisher science path
         run: >-
           pytest -q
@@ -143,5 +150,7 @@ jobs:
           tests/test_eph_microdata.py
           tests/test_upstream_intake.py
           tests/test_census_sample_intake.py
+      - name: Prove predictive welfare release CLI surface
+        run: python science/2026-09-11/build_predictive_welfare_release.py --help >/tmp/predictive-welfare-help.txt
       - name: Execute legacy transport maturity smoke
         run: python scripts/synthetic_transport_smoke.py > /tmp/synthetic-proof.json
