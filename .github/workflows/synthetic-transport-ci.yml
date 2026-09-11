@@ -6,42 +6,41 @@ on:
     paths:
       - .github/workflows/synthetic-transport-ci.yml
       - .github/workflows/scheduled-transport-maturity.yml
+      - pyproject.toml
       - requirements-science.txt
+      - configs/experiments/**
       - contracts/model_specs/historical_staged_v1.json
       - fixtures/semantic_plane/synthetic_fixture_v1.json
       - src/encuestador/transport_proof.py
       - src/encuestador/scientific_primitives.py
       - src/encuestador/crossfit.py
       - src/encuestador/estimators.py
+      - src/encuestador/dag.py
+      - src/encuestador/experiments.py
+      - src/encuestador/cascade.py
+      - src/encuestador/hurdle_cascade.py
+      - src/encuestador/evaluation.py
+      - src/encuestador/terminal.py
+      - src/encuestador/deployment.py
+      - src/encuestador/runtime_model.py
+      - src/encuestador/runner.py
+      - src/encuestador/run_bundle.py
+      - src/encuestador/eph_microdata.py
+      - src/encuestador/upstream_intake.py
       - src/encuestador/census_sample_intake.py
+      - src/encuestador/cli.py
       - scripts/synthetic_transport_smoke.py
-      - tests/test_transport_proof.py
-      - tests/test_scientific_primitives.py
-      - tests/test_crossfit.py
-      - tests/test_estimators.py
-      - tests/test_hgb_direct_integration.py
-      - tests/test_census_sample_intake.py
+      - tests/**
   push:
-    branches:
-      - main
+    branches: [main]
     paths:
       - .github/workflows/synthetic-transport-ci.yml
-      - .github/workflows/scheduled-transport-maturity.yml
+      - pyproject.toml
       - requirements-science.txt
-      - contracts/model_specs/historical_staged_v1.json
-      - fixtures/semantic_plane/synthetic_fixture_v1.json
-      - src/encuestador/transport_proof.py
-      - src/encuestador/scientific_primitives.py
-      - src/encuestador/crossfit.py
-      - src/encuestador/estimators.py
-      - src/encuestador/census_sample_intake.py
+      - configs/experiments/**
+      - src/encuestador/**
+      - tests/**
       - scripts/synthetic_transport_smoke.py
-      - tests/test_transport_proof.py
-      - tests/test_scientific_primitives.py
-      - tests/test_crossfit.py
-      - tests/test_estimators.py
-      - tests/test_hgb_direct_integration.py
-      - tests/test_census_sample_intake.py
 
 permissions:
   contents: read
@@ -49,10 +48,11 @@ permissions:
 jobs:
   synthetic-transport:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     env:
       PYTHONPATH: src
     strategy:
+      fail-fast: true
       matrix:
         python-version: ["3.10", "3.12"]
     steps:
@@ -60,36 +60,70 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Install active science runtime and test dependencies
-        run: python -m pip install -r requirements-science.txt pytest ruff
-      - name: Lint active transport boundary
+      - name: Install package and test dependencies
+        run: python -m pip install -e . pytest ruff
+      - name: Prove console command
+        run: >-
+          encuestador validate
+          configs/experiments/real_eph_2024q3_direct_hurdle_gamma_v1.yaml
+      - name: Lint integration-finisher boundary
         run: >-
           ruff check
           src/encuestador/scientific_primitives.py
           src/encuestador/crossfit.py
           src/encuestador/estimators.py
+          src/encuestador/dag.py
+          src/encuestador/experiments.py
+          src/encuestador/cascade.py
+          src/encuestador/hurdle_cascade.py
+          src/encuestador/evaluation.py
+          src/encuestador/terminal.py
+          src/encuestador/deployment.py
+          src/encuestador/runtime_model.py
+          src/encuestador/runner.py
+          src/encuestador/run_bundle.py
+          src/encuestador/eph_microdata.py
+          src/encuestador/upstream_intake.py
           src/encuestador/census_sample_intake.py
+          src/encuestador/cli.py
           tests/test_scientific_primitives.py
           tests/test_crossfit.py
           tests/test_estimators.py
           tests/test_hgb_direct_integration.py
+          tests/test_dag.py
+          tests/test_experiments.py
+          tests/test_cascade.py
+          tests/test_lean_experiment.py
+          tests/test_evaluation.py
+          tests/test_terminal.py
+          tests/test_runner.py
+          tests/test_hurdle_runner.py
+          tests/test_run_bundle.py
+          tests/test_eph_microdata.py
+          tests/test_upstream_intake.py
           tests/test_census_sample_intake.py
-      - name: Compile executor and intake
+      - name: Compile integration-finisher boundary
         run: >-
           python -m py_compile
           src/encuestador/transport_proof.py
           src/encuestador/scientific_primitives.py
           src/encuestador/crossfit.py
           src/encuestador/estimators.py
+          src/encuestador/dag.py
+          src/encuestador/experiments.py
+          src/encuestador/cascade.py
+          src/encuestador/hurdle_cascade.py
+          src/encuestador/evaluation.py
+          src/encuestador/terminal.py
+          src/encuestador/deployment.py
+          src/encuestador/runtime_model.py
+          src/encuestador/runner.py
+          src/encuestador/run_bundle.py
+          src/encuestador/eph_microdata.py
+          src/encuestador/upstream_intake.py
           src/encuestador/census_sample_intake.py
-          scripts/synthetic_transport_smoke.py
-          tests/test_transport_proof.py
-          tests/test_scientific_primitives.py
-          tests/test_crossfit.py
-          tests/test_estimators.py
-          tests/test_hgb_direct_integration.py
-          tests/test_census_sample_intake.py
-      - name: Verify synthetic transport and sampler intake
+          src/encuestador/cli.py
+      - name: Verify integration-finisher science path
         run: >-
           pytest -q
           tests/test_transport_proof.py
@@ -97,6 +131,17 @@ jobs:
           tests/test_crossfit.py
           tests/test_estimators.py
           tests/test_hgb_direct_integration.py
+          tests/test_dag.py
+          tests/test_experiments.py
+          tests/test_cascade.py
+          tests/test_lean_experiment.py
+          tests/test_evaluation.py
+          tests/test_terminal.py
+          tests/test_runner.py
+          tests/test_hurdle_runner.py
+          tests/test_run_bundle.py
+          tests/test_eph_microdata.py
+          tests/test_upstream_intake.py
           tests/test_census_sample_intake.py
-      - name: Execute maturity smoke
+      - name: Execute legacy transport maturity smoke
         run: python scripts/synthetic_transport_smoke.py > /tmp/synthetic-proof.json

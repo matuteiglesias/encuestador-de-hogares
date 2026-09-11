@@ -1,0 +1,107 @@
+experiment:
+  id: synthetic_lean_hgb_v1
+  seed: 42
+  status: synthetic_fixture_only
+
+data:
+  id: synthetic_eph_transport_v1
+  source_release: synthetic-fixture-v1
+  training_periods: [synthetic]
+  row_unit: person
+  household_id_columns: [CODUSU, NRO_HOGAR]
+  person_id_columns: [CODUSU, NRO_HOGAR, COMPONENTE]
+  target_eligibility: all_synthetic_people
+  monetary_reference: synthetic_linear_units
+  weight_policy:
+    fit: null
+    calibration: null
+    evaluation: null
+    claim_boundary: sample_conditional
+features:
+  id: synthetic_deployable_candidate_v1
+  columns:
+    IX_TOT: {dtype_role: continuous, semantic_class: derived_shared, temporal_role: donor_vintage_proxy, allowed_as_external_input: true}
+    P02: {dtype_role: categorical, semantic_class: shared_observable, temporal_role: time_stable_or_invariant, allowed_as_external_input: true}
+    P03: {dtype_role: continuous, semantic_class: shared_observable, temporal_role: donor_vintage_proxy, allowed_as_external_input: true}
+    V01: {dtype_role: categorical, semantic_class: shared_observable, temporal_role: donor_vintage_proxy, allowed_as_external_input: true}
+    H05: {dtype_role: categorical, semantic_class: shared_observable, temporal_role: donor_vintage_proxy, allowed_as_external_input: true}
+    H06: {dtype_role: categorical, semantic_class: shared_observable, temporal_role: donor_vintage_proxy, allowed_as_external_input: true}
+    H07: {dtype_role: categorical, semantic_class: shared_observable, temporal_role: donor_vintage_proxy, allowed_as_external_input: true}
+    H08: {dtype_role: categorical, semantic_class: shared_observable, temporal_role: donor_vintage_proxy, allowed_as_external_input: true}
+    H09: {dtype_role: categorical, semantic_class: shared_observable, temporal_role: donor_vintage_proxy, allowed_as_external_input: true}
+    H10: {dtype_role: categorical, semantic_class: shared_observable, temporal_role: donor_vintage_proxy, allowed_as_external_input: true}
+    H11: {dtype_role: categorical, semantic_class: shared_observable, temporal_role: donor_vintage_proxy, allowed_as_external_input: true}
+    H12: {dtype_role: categorical, semantic_class: shared_observable, temporal_role: donor_vintage_proxy, allowed_as_external_input: true}
+    H16: {dtype_role: continuous, semantic_class: shared_observable, temporal_role: donor_vintage_proxy, allowed_as_external_input: true}
+    H15: {dtype_role: categorical, semantic_class: shared_observable, temporal_role: donor_vintage_proxy, allowed_as_external_input: true}
+    PROP: {dtype_role: categorical, semantic_class: shared_observable, temporal_role: donor_vintage_proxy, allowed_as_external_input: true}
+    H14: {dtype_role: categorical, semantic_class: shared_observable, temporal_role: donor_vintage_proxy, allowed_as_external_input: true}
+    H13: {dtype_role: categorical, semantic_class: shared_observable, temporal_role: donor_vintage_proxy, allowed_as_external_input: true}
+    P07: {dtype_role: categorical, semantic_class: shared_observable, temporal_role: donor_vintage_proxy, allowed_as_external_input: true}
+    P08: {dtype_role: categorical, semantic_class: shared_observable, temporal_role: donor_vintage_proxy, allowed_as_external_input: true}
+    P09: {dtype_role: categorical, semantic_class: shared_observable, temporal_role: donor_vintage_proxy, allowed_as_external_input: true}
+    P10: {dtype_role: categorical, semantic_class: shared_observable, temporal_role: donor_vintage_proxy, allowed_as_external_input: true}
+    P05: {dtype_role: categorical, semantic_class: shared_observable, temporal_role: donor_vintage_proxy, allowed_as_external_input: true}
+    CONDACT: {dtype_role: categorical, semantic_class: shared_observable, temporal_role: donor_vintage_proxy, allowed_as_external_input: true}
+    AGLO_rk: {dtype_role: forbidden, semantic_class: research_only, temporal_role: forbidden_temporal_input, allowed_as_external_input: false}
+    Reg_rk: {dtype_role: forbidden, semantic_class: research_only, temporal_role: forbidden_temporal_input, allowed_as_external_input: false}
+architecture:
+  id: lean_labor_v1
+  nodes:
+    labor_state:
+      targets: [CAT_OCUP, CAT_INAC, CH07]
+      task_by_target:
+        CAT_OCUP: multiclass
+        CAT_INAC: multiclass
+        CH07: multiclass
+      base_inputs: [IX_TOT, P02, P03, V01, H05, H06, H07, H08, H09, H10, H11, H12, H16, H15, PROP, H14, H13, P07, P08, P09, P10, P05, CONDACT]
+      upstream_nodes: []
+      estimator_role: latent_categorical
+      output_representation: probabilities
+terminal:
+  id: direct_linear_income_with_latents_v1
+  prediction_unit: person
+  target: P47T
+  formulation: regression_with_latent_probabilities
+  scale: linear
+estimators:
+  id: hgb_primary_v1
+  roles:
+    latent_categorical:
+      family: hgb
+      task: classification
+      categorical_features: [P02, V01, H05, H06, H07, H08, H09, H10, H11, H12, H15, PROP, H14, H13, P07, P08, P09, P10, P05, CONDACT]
+      params:
+        early_stopping: false
+        random_state: 42
+    terminal:
+      family: hgb
+      task: regression
+      loss: squared_error
+      categorical_features: [P02, V01, H05, H06, H07, H08, H09, H10, H11, H12, H15, PROP, H14, H13, P07, P08, P09, P10, P05, CONDACT]
+      params:
+        early_stopping: false
+        random_state: 42
+splits:
+  id: household_grouped_5fold_v1
+  strategy: household_grouped_v1
+  group_columns: [CODUSU, NRO_HOGAR]
+  n_splits: 5
+  seed: 42
+  cascade_nesting: outer_fold_isolated_latent_crossfit_v1
+calibration:
+  id: raw_v1
+  method: raw
+anchors: null
+uncertainty:
+  id: core_v1
+  categorical_probabilities: true
+  quantiles: false
+  household_cluster_bootstrap: false
+evaluation:
+  id: welfare_core_v1
+  person_metrics: [mae, rmse, mean_error]
+  household_metrics: [mae, rmse, mean_error]
+  distributional_metrics: []
+  oracle:
+    enabled: false
