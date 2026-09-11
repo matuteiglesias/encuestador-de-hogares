@@ -1,0 +1,104 @@
+{
+  "schema": "research.encuestador-scientific-experiment-matrix/v1",
+  "date": "2026-09-11",
+  "global_freeze": {
+    "eph_release_id": "eph-2024-q3-3b6a7a15c4af",
+    "target": "P47T",
+    "terminal": "hurdle_gamma",
+    "estimator": "HistGradientBoosting classifier + Gamma regressor",
+    "estimator_params": {"learning_rate": 0.08, "max_iter": 60, "max_leaf_nodes": 31, "min_samples_leaf": 20, "random_state": 42, "early_stopping": false},
+    "fold_manifest": "Reuse exact household FoldManifest from real_eph_2024q3_direct_hurdle_gamma_v1-7f010f6cb22b4d9c; do not regenerate.",
+    "weight_policy": "none",
+    "evaluation_cohort": "Same terminal-eligible persons and same complete-observed-income households.",
+    "required_outputs": ["person OOF predictions", "household OOF predictions", "fold-wise metrics", "science diagnostics", "immutable run bundle"]
+  },
+  "experiments": [
+    {
+      "id": "Q2_P0_vs_P1R",
+      "priority": 1,
+      "status": "READY_FOR_LOCAL_EXECUTION",
+      "question": "Does real Census-compatible information restore missing conditional-income information?",
+      "arms": [
+        {"id": "P0", "features": ["CH04", "CH06", "CH07", "CH09", "CH10", "CH12", "CH13", "CH15", "IX_TOT"], "source": "exact raw EPH release", "architecture": "direct"},
+        {"id": "P1-R", "features": ["IX_TOT", "P02", "P03", "P05", "P07", "P08", "P09", "P10", "CONDACT", "V01", "H05", "H06", "H07", "H08", "H09", "H10", "H12", "H13", "H14", "H15", "PROP"], "source": "eph_p1.parquet from eph-cpv2010-semantic-plane-2024q3-v1", "architecture": "direct"}
+      ],
+      "paired_metrics": ["positive_amount.r2", "positive_amount.dispersion_ratio", "household.r2", "household.dispersion_ratio", "household.spearman", "household.mean_absolute_decile_displacement", "household.bottom_decile_bias", "household.top_decile_bias"],
+      "uncertainty": "Report fold-wise paired deltas. If both arms persist identical household rows, use paired household bootstrap for headline household deltas.",
+      "trigger": "Always run first."
+    },
+    {
+      "id": "Q3_P1R_grouped_ablation",
+      "priority": 2,
+      "status": "CONDITIONAL",
+      "trigger": "Run only if Q2 shows a material scientific-regime gain.",
+      "base": "P1-R",
+      "design": "leave-one-family-out",
+      "families": {
+        "composition": ["IX_TOT"],
+        "demographics": ["P02", "P03", "P05"],
+        "education": ["P07", "P08", "P09", "P10"],
+        "labor": ["CONDACT"],
+        "housing": ["V01", "H05", "H06", "H07", "H08", "H09", "H10", "H12", "H13", "H14", "H15", "PROP"]
+      },
+      "output": "Rank family marginal loss with fold-wise uncertainty; no individual-feature tuning."
+    },
+    {
+      "id": "Q4_labor_oracle",
+      "priority": 2,
+      "status": "CONDITIONAL_AFTER_Q2",
+      "base_features": "P1-R minus CONDACT",
+      "arms": [
+        {"id": "A", "labor": "none"},
+        {"id": "B", "labor": "true EPH ESTADO/CONDACT-equivalent", "deployable": false},
+        {"id": "C", "labor": "household-safe OOF reconstructed labor-state probabilities", "deployable": true}
+      ],
+      "hard_gate": "No row or household may receive a labor prediction from a stage trained on that household.",
+      "metrics": "Welfare positive-amount and household metrics, not labor classification accuracy alone.",
+      "derived": ["oracle_gain = B-A", "reconstructed_gain = C-A", "capture_ratio = reconstructed_gain/oracle_gain"]
+    },
+    {
+      "id": "Q5_P2_information_ceiling",
+      "priority": 2,
+      "status": "READY_TO_SPECIFY_FROM_UPSTREAM_CONTRACT",
+      "p2_definition": {
+        "source": "income-modeling-eph/configs/feature_contract.yaml",
+        "include_blocks": ["demographic", "education", "labor", "housing_household", "household_pyramid"],
+        "exclude": ["all direct/transformed income components", "income indicators", "P47T/logP47T", "INGRESO/sample indicators", "identifiers", "PONDERA/design weights", "AGLO_rk/Reg_rk", "target-derived leakage"],
+        "note": "Use EPH-observable pre-income variables only; adapt to exact 2024-Q3 raw source columns without changing target, folds, or estimator. Do not inherit income-modeling-eph's historical positive-only log-income target/cohort."
+      },
+      "comparison": ["P0", "P1-R", "P2"]
+    },
+    {
+      "id": "Q6_error_decomposition_best_plane",
+      "priority": 3,
+      "status": "AFTER_Q2_Q5",
+      "arms": ["normal hurdle prediction", "oracle presence: true zero/positive + fitted amount", "target-status-conditioned observed-positive-amount upper bound"],
+      "warning": "Upper-bound arm is non-deployable and non-causal.",
+      "question": "After richer information, does amount magnitude remain the dominant error reservoir?"
+    },
+    {
+      "id": "Q7_nested_predictive_distribution",
+      "priority": 3,
+      "status": "AFTER_MEAN_FRONTIER",
+      "mean_model": "Best scientifically relevant mean model; prefer P1-R if competitive.",
+      "leakage_contract": "outer train -> inner household OOF residual calibration; outer test -> evaluation only; no global OOF residual reuse.",
+      "threshold_evaluation": ["observed prevalence", "point-predicted prevalence", "mean predicted probability", "Brier", "calibration error/bins", "AUC if useful", "absolute prevalence error"],
+      "comparison": "1[predicted household income <= z] versus P(Y_household <= z | X) on a threshold grid"
+    },
+    {
+      "id": "Q8_census_commissioning",
+      "priority": 4,
+      "status": "BLOCKED_BY_EPH_ADJUDICATION",
+      "input": "census_p1.parquet, 469172 rows",
+      "label": "RESEARCH COMMISSIONING",
+      "rules": ["temporal staleness deferred for this pass", "do not clip IX_TOT", "preserve valid value vs training-support overlap vs transport-universe metadata"]
+    }
+  ],
+  "local_input_contract": {
+    "semantic_release_id": "eph-cpv2010-semantic-plane-2024q3-v1",
+    "required_files": ["eph_p1.parquet", "feature_plane_manifest.json", "support_report.json"],
+    "target_source": "exact EPH release eph-2024-q3-3b6a7a15c4af",
+    "join": "Exact person identity only; no positional or fuzzy joins.",
+    "first_action": "Import/materialize P1-R EPH matrix into the current encuestador experiment runtime while reusing the baseline FoldManifest byte-for-byte; execute Q2 only before any ablation, labor rebuild, P2 tuning, or distribution work."
+  }
+}
