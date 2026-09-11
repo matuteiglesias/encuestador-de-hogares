@@ -3,8 +3,8 @@ binding_id: research.eph-census.real-input-binding/2024q3-census2024-v1
 status: pinned_semantic_review_required
 purpose: >-
   Freeze the exact real producer releases used by the first bounded EPH-to-Census
-  transport qualification. This binding is lineage, not semantic approval and not
-  authorization to score Census.
+  transport qualification. This binding is lineage and validated producer custody,
+  not semantic approval and not authorization to score Census.
 
 eph:
   repository: matuteiglesias/microdatos-EPH-INDEC
@@ -19,7 +19,59 @@ census:
   release_id: census-sample-2024-0839713eafea8d1b
   donor_vintage: 2010
   sampling_target_year: 2024
+  materialization: full-payload
   role: exact_future_scoring_population
+  frame_parent:
+    contract: research.census-frame/v1
+    release_id: arg-cpv2010-frame-ee6ada167c2d6429
+    dwellings: 13838097
+    households: 12197647
+    persons: 40117096
+    official_departments: 527
+  sample_evidence:
+    households: 141863
+    persons: 469172
+    dwellings: 141621
+    selected_departments: 525
+    checker: pass
+    household_membership_complete: true
+    identity_and_foreign_key_checks: pass
+    analysis_weight: null
+    generic_sample_weight: null
+    design_inverse_probability_weight_role: audit_only
+    governed_donor_only_exclusion:
+      department_id: '94021'
+      donor_person_mass: 17
+      reassigned_person_mass: 0
+      source_frame_mutated: false
+  payload_tables:
+    persona:
+    - P02
+    - P03
+    - P05
+    - P07
+    - P08
+    - P09
+    - P10
+    - CONDACT
+    hogar:
+    - H05
+    - H06
+    - H07
+    - H08
+    - H09
+    - H10
+    - H11
+    - H12
+    - H13
+    - H14
+    - H15
+    - H16
+    - PROP
+    - TOTPERS
+    vivienda:
+    - V01
+    ix_tot_derivation: complete person membership or declared household/person relation
 
 semantic_authority:
   repository: matuteiglesias/eph-censo-aligner
