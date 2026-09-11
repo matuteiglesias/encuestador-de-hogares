@@ -10,6 +10,8 @@ The Q2-Q6 frontier execution is now complete. P1-R materially improves ranking a
 
 Q7 is now complete. A nested household-safe empirical residual distribution reduced mean absolute prevalence error from 0.0696 to 0.0275 for P2 and from 0.0871 to 0.0270 for P1-R, with favorable direction in all five outer folds for both arms. Both arms are classified CLEAR SUCCESS. Q8 is READY RECOMMENDED, but was not executed here.
 
+Q8 is now complete as a research commissioning run. All 469,172 Census persons and 141,863 households were scored with frozen P1-R plus EPH-only residual calibration. The result is COMMISSIONED — WITH MATERIAL TRANSPORT CAVEATS: 28.8% of Census persons are weak-support under the predetermined rule, the EPH/Census domain-classifier AUC is 0.874, and the P1 artifact has no governed private-versus-collective dwelling indicator. Outputs are not official poverty estimates.
+
 ## Question ledger
 
 | Question | Hypothesis / scientific target | Experiment / evidence | Result | Answer | Confidence | Next consequence |

@@ -1,0 +1,7 @@
+{
+  "git_sha": "a8c122c",
+  "fold_manifest_sha256": "7e1d7fa75684d6ebdeb694176a4dcb07363f77597425405e955b62dfaa84247d",
+  "semantic_release": "eph-cpv2010-semantic-plane-2024q3-v1",
+  "census_rows": 469172,
+  "census_parquet_sha256": "8f687be3b21fa4211ac4860e210f850f5d1234267236a43bcb63ba08a672c2e1"
+}

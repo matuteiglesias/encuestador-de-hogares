@@ -62,9 +62,9 @@
     {
       "id": "Q8",
       "question": "Should we perform first Census commissioning?",
-      "status": "NOT YET RUN",
-      "answer": "Recommended READY for a separately governed research commissioning run; Census scoring was not executed in Q7.",
-      "confidence": "HIGH on status"
+      "status": "YES_WITH_CAVEATS",
+      "answer": "The frozen P1-R plus predictive-distribution system scored all 469,172 Census persons and 141,863 households. It is commissioned for research with material transport caveats: 28.8% of Census persons are weak-support, domain AUC is .874, and the P1 artifact does not identify private versus collective dwellings.",
+      "confidence": "HIGH on technical execution; MATERIAL transport uncertainty"
     },
     {
       "id": "Q9",

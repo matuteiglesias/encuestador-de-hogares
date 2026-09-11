@@ -1,0 +1,16 @@
+{
+  "person_weak_fraction": 0.2878645784488418,
+  "households": 141863,
+  "weak_households": 67246,
+  "high_support_households": 74617,
+  "definition": "all categorical values seen in eligible EPH and all numeric values within EPH observed bounds",
+  "domain_auc_in_sample": 0.8744294117053375,
+  "census_domain_prob_q": {
+    "0.01": 0.6136685153292826,
+    "0.05": 0.7681600535728265,
+    "0.5": 0.9597443533036996,
+    "0.95": 0.9974080349115738,
+    "0.99": 0.9990162502495344
+  },
+  "census_extreme_domain_prob_gt99": 0.20801113450930575
+}

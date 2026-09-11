@@ -1,0 +1,5 @@
+{
+  "primary": "all governed Census P1-R household IDs; P1 artifact contains no private/collective dwelling indicator, so no defensible split was invented",
+  "secondary": "high-support vs weak-support diagnostic subsets",
+  "collective_indicator_available": false
+}

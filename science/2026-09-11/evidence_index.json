@@ -88,6 +88,6 @@
     "q5": {"status": "CLOSED_CASE_B", "answer": "P2 > P1-R > P0", "evidence": "results/q5_p2"},
     "q6": {"status": "CLOSED_VERY_HIGH", "answer": "positive amount is dominant error reservoir", "evidence": "results/q6_error_reservoir"},
     "q7": {"status": "CLOSED", "arms": ["P2 scientific ceiling", "P1-R deployable plane"], "classification": {"p2": "CLEAR SUCCESS", "p1r": "CLEAR SUCCESS"}, "mean_abs_prevalence_error": {"p2_hard": 0.0696284, "p2_probabilistic": 0.0274882, "p1r_hard": 0.0870907, "p1r_probabilistic": 0.0269607}, "favorable_outer_folds": {"p2": 5, "p1r": 5}, "evidence": "results/q7_predictive_distribution"},
-    "q8": {"status": "READY_RECOMMENDED_NOT_EXECUTED", "census_scoring": false, "basis": "Both Q7 arms are clear successes; P1-R is favorable in all five outer folds with no observed leakage."}
+    "q8": {"status": "COMPLETE_WITH_MATERIAL_TRANSPORT_CAVEATS", "census_scoring": true, "official_poverty_estimate": false, "census_persons": 469172, "census_households": 141863, "weak_support_person_fraction": 0.2878646, "domain_classifier_auc": 0.8744294, "private_collective_indicator_available": false, "evidence": "results/q8_census_commissioning", "basis": "All Census rows scored without technical failure; transport shift and universe ambiguity materially limit interpretation."}
   }
 }

@@ -1,0 +1,70 @@
+{
+  "thresholds": [
+    285610,
+    350000,
+    400000,
+    475000,
+    536000,
+    600000,
+    660000
+  ],
+  "rows": [
+    {
+      "threshold": 285610,
+      "hard_prevalence": 0.04996369736999781,
+      "probabilistic_prevalence": 0.1735565904658206,
+      "difference_prob_minus_hard": 0.12359289309582278,
+      "bootstrap_95_low": 0.1726418443048933,
+      "bootstrap_95_high": 0.17444360197986983
+    },
+    {
+      "threshold": 350000,
+      "hard_prevalence": 0.08692893848290252,
+      "probabilistic_prevalence": 0.20533621279202532,
+      "difference_prob_minus_hard": 0.1184072743091228,
+      "bootstrap_95_low": 0.20431785691759444,
+      "bootstrap_95_high": 0.2063818050616276
+    },
+    {
+      "threshold": 400000,
+      "hard_prevalence": 0.12266764413553921,
+      "probabilistic_prevalence": 0.23167990591401436,
+      "difference_prob_minus_hard": 0.10901226177847514,
+      "bootstrap_95_low": 0.23060855817883627,
+      "bootstrap_95_high": 0.23285887461564314
+    },
+    {
+      "threshold": 475000,
+      "hard_prevalence": 0.19318638404658015,
+      "probabilistic_prevalence": 0.2732645564666564,
+      "difference_prob_minus_hard": 0.08007817242007628,
+      "bootstrap_95_low": 0.2720909793269184,
+      "bootstrap_95_high": 0.27459331153022526
+    },
+    {
+      "threshold": 536000,
+      "hard_prevalence": 0.24553266179342043,
+      "probabilistic_prevalence": 0.3082967968939902,
+      "difference_prob_minus_hard": 0.06276413510056977,
+      "bootstrap_95_low": 0.30686331341325607,
+      "bootstrap_95_high": 0.3097858342060931
+    },
+    {
+      "threshold": 600000,
+      "hard_prevalence": 0.2981961469868817,
+      "probabilistic_prevalence": 0.3457553607598562,
+      "difference_prob_minus_hard": 0.04755921377297451,
+      "bootstrap_95_low": 0.3441458455428885,
+      "bootstrap_95_high": 0.3471983082607159
+    },
+    {
+      "threshold": 660000,
+      "hard_prevalence": 0.3483572178792215,
+      "probabilistic_prevalence": 0.38108143985196036,
+      "difference_prob_minus_hard": 0.03272422197273883,
+      "bootstrap_95_low": 0.3794674924467094,
+      "bootstrap_95_high": 0.38260412951395856
+    }
+  ],
+  "label": "research thresholds, not official poverty lines"
+}

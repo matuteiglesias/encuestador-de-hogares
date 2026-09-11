@@ -88,7 +88,7 @@
     {
       "id": "Q8_census_commissioning",
       "priority": 4,
-      "status": "READY_RECOMMENDED_NOT_EXECUTED",
+      "status": "COMPLETE_WITH_MATERIAL_TRANSPORT_CAVEATS",
       "input": "census_p1.parquet, 469172 rows",
       "label": "RESEARCH COMMISSIONING",
       "rules": ["temporal staleness deferred for this pass", "do not clip IX_TOT", "preserve valid value vs training-support overlap vs transport-universe metadata"]

@@ -1,0 +1,49 @@
+{
+  "features": [
+    "IX_TOT",
+    "P02",
+    "P03",
+    "P05",
+    "P07",
+    "P08",
+    "P09",
+    "P10",
+    "CONDACT",
+    "V01",
+    "H05",
+    "H06",
+    "H07",
+    "H08",
+    "H09",
+    "H10",
+    "H12",
+    "H13",
+    "H14",
+    "H15",
+    "PROP"
+  ],
+  "h11_absent": true,
+  "h16_absent": true,
+  "mean_model": {
+    "learning_rate": 0.08,
+    "max_iter": 60,
+    "max_leaf_nodes": 31,
+    "min_samples_leaf": 20,
+    "random_state": 42,
+    "early_stopping": false
+  },
+  "terminal": "direct hurdle-Gamma",
+  "calibration": "EPH-only 5-fold OOF household residual ECDF",
+  "residual_count": 12568,
+  "thresholds": [
+    285610,
+    350000,
+    400000,
+    475000,
+    536000,
+    600000,
+    660000
+  ],
+  "weights": "none",
+  "ix_tot_clipped": false
+}

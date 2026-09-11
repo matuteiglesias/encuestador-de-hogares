@@ -1,0 +1,16 @@
+{
+  "classification": "COMMISSIONED \u2014 WITH MATERIAL TRANSPORT CAVEATS",
+  "technical_transport": "PASS",
+  "scientific_transport": "INTERPRETABLE BUT MATERIAL SHIFT",
+  "reasons": [
+    "469172/469172 unique person rows scored",
+    "141863 households aggregated",
+    "28.8% Census persons weak-support by predetermined marginal rule",
+    "domain-classifier AUC 0.874; 20.8% Census persons have domain propensity > .99",
+    "P1 artifact has no governed private-versus-collective dwelling indicator, so universe split remains unresolved",
+    "probabilistic prevalence is stable numerically but cannot be outcome-validated on Census"
+  ],
+  "q8_recommendation": "research commissioning outputs may be used with caveats; not an official poverty estimate",
+  "census_scoring_executed": true,
+  "official_poverty_estimate": false
+}
