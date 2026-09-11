@@ -1,0 +1,45 @@
+schema_version: 1
+binding_id: research.eph-census.real-input-binding/2024q3-census2024-v1
+status: pinned_semantic_review_required
+purpose: >-
+  Freeze the exact real producer releases used by the first bounded EPH-to-Census
+  transport qualification. This binding is lineage, not semantic approval and not
+  authorization to score Census.
+
+eph:
+  repository: matuteiglesias/microdatos-EPH-INDEC
+  contract: publicdata.eph-microdata@1
+  release_id: eph-2024-q3-3b6a7a15c4af
+  period: 2024-Q3
+  role: training_and_eph_validation_evidence
+
+census:
+  repository: matuteiglesias/samplerCensoARG
+  contract: research.census-target-year-sample/v2
+  release_id: census-sample-2024-0839713eafea8d1b
+  donor_vintage: 2010
+  sampling_target_year: 2024
+  role: exact_future_scoring_population
+
+semantic_authority:
+  repository: matuteiglesias/eph-censo-aligner
+  required_review_inventory: historical_staged_v1_legacy_bridge
+  requested_concept_count: 23
+  approval_policy: >-
+    Review all 23 historical bridge concepts against these exact releases, but
+    approve only source-backed concepts justified for the active P0/P1 plane.
+
+execution_order:
+- validate producer release contracts and exact identities
+- complete real semantic review and emit the approved feature plane
+- run P0 versus approved-P1 Gamma on EPH only
+- adjudicate scientific promotion using governed diagnostics
+- only then authorize bounded Census scoring
+
+hard_gates:
+- census_scoring_before_semantic_approval: forbidden
+- census_scoring_before_p0_p1_eph_adjudication: forbidden
+- sampler_v1_input: forbidden
+- fuzzy_or_positional_identity_join: forbidden
+- global_oof_residual_reuse_for_predictive_distribution: forbidden
+- outer_test_households_in_predictive_distribution_calibration: forbidden
