@@ -30,17 +30,15 @@ authority:
   - poverty methodology, poverty lines, poverty classification, FGT estimation or official poverty publication
 interfaces:
   consumes:
-  # Transitional EPH input. Target boundary is a source-backed neutral EPH observation/analysis frame.
-  - artifact:research.eph-annual-preprocessed@1
-  # Historical artifact id retained by the aligner; semantically this is variable alignment, not a geographic crosswalk.
+  - artifact:publicdata.eph-microdata@1
   - artifact:research.eph-census-crosswalk@1
-  - artifact:research.census-sample@1
+  - artifact:research.census-target-year-sample@2
   - artifact:research.argentina-monetary-conversion@1
   produces:
   - artifact:research.eph-census-transport-model@1
   - artifact:research.household-welfare@1
 upstream:
-- repo.income-modeling-eph
+- repo.microdatos-eph-indec
 - repo.eph-censo-aligner
 - repo.sampler-censo-arg
 - repo.ipc-argentina
@@ -51,6 +49,18 @@ canonical_design:
   functional_note: docs/FUNCTIONAL_CONTRACT.md
   deployment_dag: contracts/deployment_dag.yaml
   boundary_note: docs/EPH_CENSUS_TRANSPORT_BOUNDARY.md
+  real_input_binding: contracts/real_input_binding_2024q3_census2024.yaml
+active_real_inputs:
+  eph:
+    release_id: eph-2024-q3-3b6a7a15c4af
+    period: 2024-Q3
+    authority: matuteiglesias/microdatos-EPH-INDEC
+    source_contract: publicdata.eph-microdata@1
+  census:
+    release_id: census-sample-2024-0839713eafea8d1b
+    target_year: 2024
+    authority: matuteiglesias/samplerCensoARG
+    source_contract: research.census-target-year-sample/v2
 scientific_invariants:
 - external Census inputs must be approved shared_observable or derived_shared features from an exact alignment release
 - semantic shared_observable does not imply that a donor-vintage Census value is observed at the welfare period
@@ -58,6 +68,7 @@ scientific_invariants:
 - learned stage targets may be used downstream only through out-of-fold predictions during training and fitted predictions during scoring
 - observed stage labels must never replace predicted stage outputs in downstream training evidence
 - approved OOF policy must respect household or stronger grouping once exact EPH household identity is available
+- nested predictive-distribution calibration must use inner household OOF evidence from the outer-training partition only; outer-test households must never contribute calibration residuals
 - a direct shared-information -> terminal-welfare baseline is required before staged complexity is promoted
 - target-period aggregate calibration is optional, explicit and diagnosed; it may not silently rewrite donor observations
 - EPH validation alone does not establish Census transport validity
@@ -67,21 +78,27 @@ scientific_invariants:
 - monetary transforms and price references must be explicit and resolved through a versioned monetary-conversion release before welfare handoff
 - poverty consumes welfare semantics, never model-native latent/log prediction values
 verification:
-  status: design-characterized-runtime-pending
-  last_verified: '2026-08-27'
+  status: real-eph-science-active-census-semantic-review-pending
+  last_verified: '2026-09-11'
   evidence:
-  - historical four-wave Random Forest cascade in src/encuestador/entrenar_modelos.py
-  - historical EPH/Census renames and recodes in src/encuestador/preprocesar_datos.py
-  - historical quarterly notebook that adjusted Census CONDACT toward target-period unemployment before scoring
-  - current semantic-alignment vocabulary and pending real-vintage review in repo.eph-censo-aligner
-  - out-of-fold staged-training prototype currently recoverable from repo.income-modeling-eph
-  unknowns:
-  - no real EPH/Census vintage pair is yet approved for deployment
-  - exact current Census inference feature frame has not yet been materialized
-  - exact transport training population and EPH survey-weight policy remain unresolved
-  - transport-time role of real Census inputs remains pending variable-level review
-  - historical fitted RFC1-RFC4 artifacts are not established as current releases
-  - exact target-period calibration policy, if any, is not approved
-  - final household welfare concept and aggregation rule require explicit scientific approval
+  - deterministic synthetic end-to-end transport runtime with household-safe OOF, direct/hurdle paths, run bundles and CLI evidence
+  - HistGradientBoosting classifier/regressor adapters with explicit categorical positions, NaN-aware feature semantics and estimator-internal early stopping disabled by default
+  - real Q3-2024 EPH direct and hurdle experiments bound to eph-2024-q3-3b6a7a15c4af
+  - real EPH scientific acceptance workflow and governed comparison/run evidence
+  - one-layer latent-probability cascade with outer-fold-isolated nested fitting
+  - oracle/direct/deployable evaluation triangle and distributional diagnostics
+  - welfare science diagnostics including oracle-presence, positive-amount, low-tail, rank/transition, complete-vs-incomplete selection and fold-stability helpers
+  - experimental nested empirical-residual predictive-distribution primitive with a hard inner-OOF/outer-test leakage boundary
+  - sampler-v2 fail-closed intake implemented for research.census-target-year-sample/v2
+  pending:
+  - complete the real 23-concept CPV-2010/EPH semantic review in repo.eph-censo-aligner; approve only source-backed concepts needed by the active model plane
+  - validate the exact census-sample-2024-0839713eafea8d1b payload through the v2 intake gate where the artifact is present
+  - approve the resulting real Census scoring feature plane and transport-time roles before Census scoring
+  - run and adjudicate P0 versus approved-P1 Gamma on EPH with the expanded diagnostics before any Census scoring
+  - resolve final monetary conversion and household-welfare release semantics before downstream Poverty handoff
+  limitations:
+  - the pinned Census release id is a required exact parent, but its payload is not stored in this Git repository and cannot be content-validated from repository state alone
+  - experimental predictive distributions are diagnostics only and are not a production uncertainty framework
+  - historical fitted RFC1-RFC4 artifacts are not current releases
 maintenance:
   cadence: active-development
