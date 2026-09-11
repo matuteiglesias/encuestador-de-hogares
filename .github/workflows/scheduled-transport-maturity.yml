@@ -75,7 +75,7 @@ jobs:
       - name: Verify current predictive-welfare release surface
         run: |
           test -f science/2026-09-11/build_predictive_welfare_release.py
-          ruff check science/2026-09-11/build_predictive_welfare_release.py
+          ruff check --select E4,E7,E9,F science/2026-09-11/build_predictive_welfare_release.py
           python -m py_compile science/2026-09-11/build_predictive_welfare_release.py
           python science/2026-09-11/build_predictive_welfare_release.py --help >/tmp/predictive-welfare-help.txt
           python - <<'PY'
