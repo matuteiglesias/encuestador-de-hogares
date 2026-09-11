@@ -2,6 +2,10 @@ name: Real EPH 2024-Q3 acceptance
 
 on:
   workflow_dispatch:
+  schedule:
+    # Expensive but bounded real-data reproducibility check. Runs before the
+    # lighter Wednesday welfare and Poverty pulses.
+    - cron: "17 9 * * 3"
   pull_request:
     paths:
       - .github/workflows/real-eph-2024q3-acceptance.yml
@@ -20,6 +24,10 @@ on:
 
 permissions:
   contents: read
+
+concurrency:
+  group: real-eph-2024q3-acceptance
+  cancel-in-progress: false
 
 jobs:
   real-eph-science:
