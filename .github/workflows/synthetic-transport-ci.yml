@@ -91,7 +91,6 @@ jobs:
           src/encuestador/upstream_intake.py
           src/encuestador/census_sample_intake.py
           src/encuestador/cli.py
-          science/2026-09-11/build_predictive_welfare_release.py
           tests/test_scientific_primitives.py
           tests/test_crossfit.py
           tests/test_estimators.py
@@ -108,6 +107,8 @@ jobs:
           tests/test_eph_microdata.py
           tests/test_upstream_intake.py
           tests/test_census_sample_intake.py
+      - name: Correctness-lint predictive welfare research builder
+        run: ruff check --select E4,E7,E9,F science/2026-09-11/build_predictive_welfare_release.py
       - name: Compile integration-finisher boundary
         run: >-
           python -m py_compile
