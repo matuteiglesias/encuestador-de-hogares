@@ -10,6 +10,7 @@ on:
       - requirements-science.txt
       - configs/experiments/**
       - contracts/model_specs/historical_staged_v1.json
+      - contracts/real_input_binding_2024q3_census2024.yaml
       - fixtures/semantic_plane/synthetic_fixture_v1.json
       - src/encuestador/transport_proof.py
       - src/encuestador/scientific_primitives.py
@@ -20,6 +21,8 @@ on:
       - src/encuestador/cascade.py
       - src/encuestador/hurdle_cascade.py
       - src/encuestador/evaluation.py
+      - src/encuestador/science_diagnostics.py
+      - src/encuestador/predictive_distribution.py
       - src/encuestador/terminal.py
       - src/encuestador/deployment.py
       - src/encuestador/runtime_model.py
@@ -27,7 +30,6 @@ on:
       - src/encuestador/run_bundle.py
       - src/encuestador/eph_microdata.py
       - src/encuestador/upstream_intake.py
-      - src/encuestador/census_sample_intake.py
       - src/encuestador/cli.py
       - scripts/synthetic_transport_smoke.py
       - tests/**
@@ -38,6 +40,7 @@ on:
       - pyproject.toml
       - requirements-science.txt
       - configs/experiments/**
+      - contracts/**
       - src/encuestador/**
       - tests/**
       - scripts/synthetic_transport_smoke.py
@@ -66,7 +69,7 @@ jobs:
         run: >-
           encuestador validate
           configs/experiments/real_eph_2024q3_direct_hurdle_gamma_v1.yaml
-      - name: Lint integration-finisher boundary
+      - name: Lint integration boundary
         run: >-
           ruff check
           src/encuestador/scientific_primitives.py
@@ -77,6 +80,8 @@ jobs:
           src/encuestador/cascade.py
           src/encuestador/hurdle_cascade.py
           src/encuestador/evaluation.py
+          src/encuestador/science_diagnostics.py
+          src/encuestador/predictive_distribution.py
           src/encuestador/terminal.py
           src/encuestador/deployment.py
           src/encuestador/runtime_model.py
@@ -84,7 +89,6 @@ jobs:
           src/encuestador/run_bundle.py
           src/encuestador/eph_microdata.py
           src/encuestador/upstream_intake.py
-          src/encuestador/census_sample_intake.py
           src/encuestador/cli.py
           tests/test_scientific_primitives.py
           tests/test_crossfit.py
@@ -95,14 +99,14 @@ jobs:
           tests/test_cascade.py
           tests/test_lean_experiment.py
           tests/test_evaluation.py
+          tests/test_encuestador_predictive_distribution.py
           tests/test_terminal.py
           tests/test_runner.py
           tests/test_hurdle_runner.py
           tests/test_run_bundle.py
           tests/test_eph_microdata.py
           tests/test_upstream_intake.py
-          tests/test_census_sample_intake.py
-      - name: Compile integration-finisher boundary
+      - name: Compile integration boundary
         run: >-
           python -m py_compile
           src/encuestador/transport_proof.py
@@ -114,6 +118,8 @@ jobs:
           src/encuestador/cascade.py
           src/encuestador/hurdle_cascade.py
           src/encuestador/evaluation.py
+          src/encuestador/science_diagnostics.py
+          src/encuestador/predictive_distribution.py
           src/encuestador/terminal.py
           src/encuestador/deployment.py
           src/encuestador/runtime_model.py
@@ -121,9 +127,8 @@ jobs:
           src/encuestador/run_bundle.py
           src/encuestador/eph_microdata.py
           src/encuestador/upstream_intake.py
-          src/encuestador/census_sample_intake.py
           src/encuestador/cli.py
-      - name: Verify integration-finisher science path
+      - name: Verify integration science path
         run: >-
           pytest -q
           tests/test_transport_proof.py
@@ -136,12 +141,12 @@ jobs:
           tests/test_cascade.py
           tests/test_lean_experiment.py
           tests/test_evaluation.py
+          tests/test_encuestador_predictive_distribution.py
           tests/test_terminal.py
           tests/test_runner.py
           tests/test_hurdle_runner.py
           tests/test_run_bundle.py
           tests/test_eph_microdata.py
           tests/test_upstream_intake.py
-          tests/test_census_sample_intake.py
       - name: Execute legacy transport maturity smoke
         run: python scripts/synthetic_transport_smoke.py > /tmp/synthetic-proof.json
