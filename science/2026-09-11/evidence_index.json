@@ -1,0 +1,81 @@
+{
+  "schema": "research.encuestador-science-evidence-index/v1",
+  "date": "2026-09-11",
+  "repository_heads": {
+    "encuestador-de-hogares": {"ref": "main", "sha": "d216cf3b8ff9b6c10880c51f00c3407e7e278efc", "note": "PR22 merged science diagnostics and nested predictive-distribution primitive; no P1-R run is on main."},
+    "eph-censo-aligner": {"ref": "main", "sha": "4e01f4bb2cceca039879969568f2370221c59dbc", "note": "Executable real feature-plane machinery merged; final successful local materialization is newer than current committed policy."},
+    "income-modeling-eph": {"ref": "main", "sha": "774c290c8befccb4f7dc4c78fe6a47a334443a05", "note": "Governed EPH income-study cohort and explicit feature contract; used only to bound P2 features, not its historical target/cohort."},
+    "microdatos-EPH-INDEC": {"ref": "master", "sha": "492bc92f44894239e58ce40859c5b2e6e7cb60f3", "note": "Source/acquisition authority for exact Q3-2024 release."}
+  },
+  "exact_inputs": {
+    "eph": {"release_id": "eph-2024-q3-3b6a7a15c4af", "persons": 47564},
+    "census": {"release_id": "census-sample-2024-0839713eafea8d1b", "persons": 469172},
+    "semantic_plane": {
+      "release_id": "eph-cpv2010-semantic-plane-2024q3-v1",
+      "current_local_status": "pass",
+      "unresolved_fields": [],
+      "p1_r": ["IX_TOT", "P02", "P03", "P05", "P07", "P08", "P09", "P10", "CONDACT", "V01", "H05", "H06", "H07", "H08", "H09", "H10", "H12", "H13", "H14", "H15", "PROP"],
+      "rejected": ["H11", "H16"],
+      "p1_s": ["P02", "P05"],
+      "authority_note": "Final local successful-materialization handoff supersedes earlier failing support_report snapshots. Temporal reconstruction is deferred for this sprint. Large IX_TOT values remain valid and unclipped."
+    }
+  },
+  "baseline_q1": {
+    "run_id": "real_eph_2024q3_direct_hurdle_gamma_v1-7f010f6cb22b4d9c",
+    "architecture": "direct_v1",
+    "terminal": "hurdle_gamma",
+    "features": ["CH04", "CH06", "CH07", "CH09", "CH10", "CH12", "CH13", "CH15", "IX_TOT"],
+    "fold_counts": {"0": 9831, "1": 9543, "2": 9425, "3": 9260, "4": 9505},
+    "complete_households": 12568,
+    "incomplete_households": 4082,
+    "weights": "none",
+    "estimator": {"learning_rate": 0.08, "max_iter": 60, "max_leaf_nodes": 31, "min_samples_leaf": 20, "random_state": 42, "early_stopping": false},
+    "presence": {"accuracy": 0.8883336123, "balanced_accuracy": 0.8723620126, "macro_f1": 0.8804349889, "log_loss": 0.2758430384, "brier": 0.1664853364, "ece": 0.0052176868},
+    "positive_amount": {"r2": 0.2315581162, "observed_sd": 579073.6422, "predicted_sd": 269146.8564, "dispersion_ratio": 0.46478865, "low_tail_mean_bias": 272862.7264, "high_tail_mean_bias": -910453.3975},
+    "household": {"r2": 0.2880880435, "observed_sd": 901756.8469, "predicted_sd": 489292.0383, "dispersion_ratio": 0.5425986396, "spearman": 0.6178162831, "mean_absolute_decile_displacement": 1.9010184596, "same_decile_share": 0.2027371101, "within_one_decile_share": 0.5030235519, "bottom_decile_bias": 397563.8609, "top_decile_bias": -1423714.0853},
+    "fold_stability": {
+      "positive_r2_range": [0.1913403295, 0.2515305463],
+      "positive_dispersion_range": [0.4575731718, 0.4733221155],
+      "household_r2_range": [0.2319748686, 0.3207040009],
+      "household_dispersion_range": [0.5320125114, 0.5524129675],
+      "household_spearman_range": [0.6087191549, 0.6326755273],
+      "household_bottom_tail_bias_range": [374909.9409, 415711.8233],
+      "household_top_tail_bias_range": [-1506111.789, -1332763.996]
+    },
+    "oracle_presence": {
+      "person": {"mae": 170922.8698, "rmse": 394112.2318, "r2": 0.4403741373, "dispersion_ratio": 0.6476589022},
+      "household": {"mae": 437782.1639, "rmse": 746510.2123, "r2": 0.3146812572, "dispersion_ratio": 0.5812238651}
+    },
+    "target_status_positive_amount_upper_bound": {
+      "deployable": false,
+      "warning": "Diagnostic only; not causal and not a deployable predictor.",
+      "person": {"mae": 64776.3418, "rmse": 136720.0735, "r2": 0.9326523393, "dispersion_ratio": 0.9163972835},
+      "household": {"mae": 132338.3464, "rmse": 222821.1514, "r2": 0.9389432152, "dispersion_ratio": 0.9294854964}
+    }
+  },
+  "prior_architecture_evidence": {
+    "direct_gamma": {"person_mae": 198969, "person_rmse": 414089, "household_mae": 449640, "household_rmse": 760856},
+    "lean_gamma": {"person_mae": 199054, "person_rmse": 415156, "household_mae": 449897, "household_rmse": 762890},
+    "estado_oracle": {"direct_person_mae": 198969, "oracle_person_mae": 177693, "deployable_lean_person_mae": 199054, "oracle_gain_mae": 21277, "deployable_gain_mae": -85, "capture_ratio_mae": -0.004, "capture_ratio_rmse": -0.059, "oof_reconstruction": {"accuracy": 0.8359, "balanced_accuracy": 0.5365, "macro_f1": 0.5314, "log_loss": 0.4243, "brier": 0.2373, "ece": 0.00238}}
+  },
+  "p2_source_contract": {
+    "repository": "income-modeling-eph",
+    "contract_path": "configs/feature_contract.yaml",
+    "candidate_blocks": ["demographic", "education", "labor", "housing_household", "household_pyramid"],
+    "forbidden": ["P47T", "logP47T", "P21", "T_VI", "V12_M", "V2_M", "V3_M", "V5_M", "TOT_P12", "PP08D1", "INGRESO_NLB", "INGRESO_JUB", "INGRESO_SBS", "INGRESO", "identifiers", "survey/design weights", "target-derived features"],
+    "exclude_for_this_P2": ["geography_raw", "geo_ranks"]
+  },
+  "known_reproducibility_drift": [
+    {
+      "repository": "eph-censo-aligner",
+      "issue": "Current GitHub main still commits IX_TOT validation max=40, while the final local semantic materialization explicitly accepts large collective-dwelling IX_TOT and passed support.",
+      "classification": "implementation drift, not semantic-review reopening",
+      "consequence": "Do not regenerate the final plane from current GitHub main until the local successful-materialization fixes are captured."
+    }
+  ],
+  "negative_search_results": {
+    "p1_r_run_bundle": "No immutable P1-R EPH run/prediction bundle found in connected Library.",
+    "p2_matched_run": "No matched P2 Gamma run found.",
+    "predictive_distribution_real_threshold_run": "No real threshold-grid nested predictive-distribution result found."
+  }
+}
