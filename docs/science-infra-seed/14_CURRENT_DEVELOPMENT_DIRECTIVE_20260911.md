@@ -4,7 +4,7 @@
 **Applies after:** `13_IMPLEMENTATION_STATUS_20260910.md`  
 **Purpose:** tell a fresh implementation agent what to do next without re-running already-green seed milestones.
 
-The original `00`–`12` documents remain the scientific/design contract. They should not be read as an instruction to replay the sprint from M0. The implementation has crossed the real-EPH gateway. This file is the current pull order.
+The original `00`–`12` documents remain the scientific/design contract. They should not be read as an instruction to replay the sprint from M0. The implementation has crossed the real-EPH gateway, and the exact CPV-2010 -> 2024 Census producer integration is now green. This file is the current pull order.
 
 ## Current baseline
 
@@ -31,12 +31,26 @@ EPH
   contract: publicdata.eph-microdata@1
   release: eph-2024-q3-3b6a7a15c4af
 
-Census
+Census frame
+  repository: matuteiglesias/samplerCensoARG
+  contract: research.census-frame/v1
+  release: arg-cpv2010-frame-ee6ada167c2d6429
+  vintage: 2010
+  status: producer validation green
+
+Census sample
   repository: matuteiglesias/samplerCensoARG
   contract: research.census-target-year-sample/v2
   release: census-sample-2024-0839713eafea8d1b
   target year: 2024
+  materialization: full-payload
+  households: 141863
+  persons: 469172
+  dwellings: 141621
+  checker: PASS
 ```
+
+The sampling universe is governed explicitly. Department `94021` is the sole donor-only exclusion (17 donor persons), with zero reassignment and no mutation of the source/frame. `analysis_weight` and generic model weights are unset; inverse-probability quantities remain audit/design metadata only.
 
 See `contracts/real_input_binding_2024q3_census2024.yaml`.
 
@@ -44,10 +58,10 @@ These identities are parents, not hints. Do not silently substitute another quar
 
 ## Current dependency order
 
-### D1 — Make governance truthful
+### D1 — Keep governance truthful
 
 - keep `SYSTEM.yaml` synchronized with the real runtime and exact pinned inputs;
-- make sampler v2 the only active Census intake contract;
+- keep sampler v2 as the only active Census intake contract;
 - remove or quarantine transitional v1 runtime/test/CI paths rather than maintaining two active meanings of "Census sample";
 - keep legacy files as archaeology only when useful for reconstruction.
 
@@ -95,25 +109,25 @@ Forbidden:
 - claiming independent person residual draws form a coherent household posterior;
 - allowing this primitive to block P0/P1 point-prediction qualification.
 
-### D4 — Complete exact sampler-v2 intake
+### D4 — Sampler-v2 intake is a consumer gate, not a production blocker
 
-The active consumer is `research.census-target-year-sample/v2`.
+The exact Census producer release is already materialized and producer-validated. Do not rebuild or resample CPV-2010 as part of encuestador development.
 
-The intake gate must validate at minimum:
+The active consumer is `research.census-target-year-sample/v2`. The encuestador intake gate must validate, when the local release is available to the run:
 
-- exact release identity;
-- frame identity/vintage and target year;
+- exact release identity `census-sample-2024-0839713eafea8d1b`;
+- exact parent frame `arg-cpv2010-frame-ee6ada167c2d6429`, donor vintage 2010 and target year 2024;
 - household selection unit and person target-mass semantics;
 - complete membership assertion;
 - artifact hashes;
 - selection/design metadata kept distinct from model or poverty weights;
-- full-payload requirements when semantic review/scoring needs `persona`, `hogar`, `vivienda`.
+- full-payload presence for `persona`, `hogar`, `vivienda`.
 
-Passing intake never authorizes semantic scoring.
+Producer evidence already records PASS for the complete sampler checker plus independent identity/FK/membership checks. Consumer validation is a custody check, not permission to score.
 
 ### D5 — Real 23-concept semantic review in `eph-censo-aligner`
 
-Move immediately to the exact-release review of the historical 23-concept bridge:
+This is the active bottleneck. Review the exact historical 23-concept bridge against the pinned EPH release and the validated CPV-2010 full-payload sample:
 
 ```text
 IX_TOT
@@ -124,6 +138,15 @@ P07 P08 P09 P10 P05
 ```
 
 The review is intentionally broader than the first approved model plane. Review all 23 so ambiguity is visible, but approve only source-backed concepts justified by the active P0/P1 design.
+
+The real Census payload already confirms structural availability:
+
+- `persona.parquet`: `P02 P03 P05 P07 P08 P09 P10 CONDACT`;
+- `hogar.parquet`: `H05 H06 H07 H08 H09 H10 H11 H12 H13 H14 H15 H16 PROP`;
+- `vivienda.parquet`: `V01`;
+- `IX_TOT`: deterministic from complete household membership / household-person relation, not a raw field in the sample.
+
+`AGLO_rk` and `Reg_rk` remain forbidden external predictors. No geography-derived substitute should be invented for this first bounded plane.
 
 For every concept record:
 
@@ -166,7 +189,7 @@ P1 is promoted only if deployable evidence improves the terminal welfare objecti
 
 ### D7 — Census scoring only after D5 + D6
 
-Do not score the Census sample merely because intake succeeds.
+Do not score the Census sample merely because its production and intake are green.
 
 Required parents/gates:
 
@@ -183,7 +206,7 @@ Then execute one bounded scoring pass and emit the household-welfare handoff wit
 
 ## Current bottleneck
 
-The current bottleneck is **real semantic approval of the exact EPH/CPV feature plane**, followed immediately by the P0/P1 Gamma decision. Additional estimator families, deeper cascades, anchors, broad uncertainty machinery and generalized multi-vintage frameworks are subordinate to that path.
+The current bottleneck is **real semantic approval of the exact EPH/CPV feature plane**, followed immediately by the P0/P1 Gamma decision. Census production, sampler architecture, additional estimator families, deeper cascades, anchors, broad uncertainty machinery and generalized multi-vintage frameworks are subordinate to that path.
 
 ## Agent behavior
 
