@@ -41,6 +41,8 @@ def _matrix(value: np.ndarray | Sequence[Sequence[float]], name: str) -> np.ndar
         raise CrossfitError(f"{name}_must_be_2d")
     if not len(array):
         raise CrossfitError(f"{name}_must_not_be_empty")
+    if not np.isfinite(array).all():
+        raise CrossfitError(f"{name}_must_be_finite")
     # Missing feature values are estimator policy. HGB supports NaN natively;
     # infinity is never a meaningful missing-value encoding.
     if np.isinf(array).any():
