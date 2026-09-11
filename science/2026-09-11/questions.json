@@ -54,8 +54,8 @@
     {
       "id": "Q7",
       "question": "Does a predictive distribution solve something the point predictor fundamentally cannot?",
-      "status": "FIRED",
-      "answer": "Run identical leakage-safe threshold-grid distribution experiments for the P2 scientific ceiling and P1-R deployable plane.",
+      "status": "YES",
+      "answer": "Nested household-safe empirical residual distributions materially reduce threshold prevalence error for both P2 and P1-R across all five outer folds.",
       "confidence": "HIGH",
       "evidence_key": "q7_nested_predictive_distribution"
     },
@@ -63,7 +63,7 @@
       "id": "Q8",
       "question": "Should we perform first Census commissioning?",
       "status": "NOT YET RUN",
-      "answer": "Deliberately downstream of Q1-Q7 model/plane adjudication. Exact Census scoring matrix exists locally.",
+      "answer": "Recommended READY for a separately governed research commissioning run; Census scoring was not executed in Q7.",
       "confidence": "HIGH on status"
     },
     {

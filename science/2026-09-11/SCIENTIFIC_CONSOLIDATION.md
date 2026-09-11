@@ -8,6 +8,8 @@ The strongest result that is already fully evidenced is Q1: **the current direct
 
 The Q2-Q6 frontier execution is now complete. P1-R materially improves ranking and dispersion in all five folds; P2 adds further signal; and the remaining error reservoir is overwhelmingly positive-amount compression. Q7 is fired with matched P2-ceiling and P1-R-deployable arms. Census scoring remains on hold.
 
+Q7 is now complete. A nested household-safe empirical residual distribution reduced mean absolute prevalence error from 0.0696 to 0.0275 for P2 and from 0.0871 to 0.0270 for P1-R, with favorable direction in all five outer folds for both arms. Both arms are classified CLEAR SUCCESS. Q8 is READY RECOMMENDED, but was not executed here.
+
 ## Question ledger
 
 | Question | Hypothesis / scientific target | Experiment / evidence | Result | Answer | Confidence | Next consequence |

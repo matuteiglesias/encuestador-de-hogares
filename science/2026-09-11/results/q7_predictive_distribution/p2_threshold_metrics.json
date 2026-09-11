@@ -1,0 +1,459 @@
+{
+  "thresholds": [
+    285610.1,
+    350000.0,
+    400000.0,
+    475000.0,
+    536000.0,
+    600000.0,
+    660000.0
+  ],
+  "rows": [
+    {
+      "fold": 0,
+      "threshold": 285610.1,
+      "observed_prevalence": 0.09447900466562986,
+      "hard_prevalence": 0.035381026438569205,
+      "hard_abs_error": 0.05909797822706066,
+      "probabilistic_prevalence": 0.15570645054289212,
+      "probabilistic_abs_error": 0.061227445877262254,
+      "brier": 0.06942379326117215,
+      "auc": 0.8895037874571293
+    },
+    {
+      "fold": 0,
+      "threshold": 350000.0,
+      "observed_prevalence": 0.15163297045101087,
+      "hard_prevalence": 0.08320373250388803,
+      "hard_abs_error": 0.06842923794712284,
+      "probabilistic_prevalence": 0.186384001501067,
+      "probabilistic_abs_error": 0.034751031050056114,
+      "brier": 0.08721041706661174,
+      "auc": 0.891553855554772
+    },
+    {
+      "fold": 0,
+      "threshold": 400000.0,
+      "observed_prevalence": 0.19129082426127528,
+      "hard_prevalence": 0.10964230171073094,
+      "hard_abs_error": 0.08164852255054433,
+      "probabilistic_prevalence": 0.21208856793106046,
+      "probabilistic_abs_error": 0.02079774366978518,
+      "brier": 0.09865539089955229,
+      "auc": 0.8872669441838649
+    },
+    {
+      "fold": 0,
+      "threshold": 475000.0,
+      "observed_prevalence": 0.23211508553654744,
+      "hard_prevalence": 0.1734059097978227,
+      "hard_abs_error": 0.05870917573872475,
+      "probabilistic_prevalence": 0.2530898829205088,
+      "probabilistic_abs_error": 0.02097479738396138,
+      "brier": 0.11232918411490238,
+      "auc": 0.8800873566142952
+    },
+    {
+      "fold": 0,
+      "threshold": 536000.0,
+      "observed_prevalence": 0.2896578538102644,
+      "hard_prevalence": 0.22628304821150855,
+      "hard_abs_error": 0.06337480559875583,
+      "probabilistic_prevalence": 0.2879357419484123,
+      "probabilistic_abs_error": 0.0017221118618520603,
+      "brier": 0.12314708979956501,
+      "auc": 0.8808917688806603
+    },
+    {
+      "fold": 0,
+      "threshold": 600000.0,
+      "observed_prevalence": 0.35497667185069987,
+      "hard_prevalence": 0.2651632970451011,
+      "hard_abs_error": 0.08981337480559876,
+      "probabilistic_prevalence": 0.3256785606933287,
+      "probabilistic_abs_error": 0.029298111157371187,
+      "brier": 0.13951560796325121,
+      "auc": 0.8707488180570382
+    },
+    {
+      "fold": 0,
+      "threshold": 660000.0,
+      "observed_prevalence": 0.3965785381026439,
+      "hard_prevalence": 0.30870917573872475,
+      "hard_abs_error": 0.08786936236391912,
+      "probabilistic_prevalence": 0.36160035553879405,
+      "probabilistic_abs_error": 0.034978182563849824,
+      "brier": 0.14337073813408185,
+      "auc": 0.8730373205983424
+    },
+    {
+      "fold": 1,
+      "threshold": 285610.1,
+      "observed_prevalence": 0.11044176706827309,
+      "hard_prevalence": 0.04176706827309237,
+      "hard_abs_error": 0.06867469879518072,
+      "probabilistic_prevalence": 0.1682216462595769,
+      "probabilistic_abs_error": 0.0577798791913038,
+      "brier": 0.07641281929203421,
+      "auc": 0.8902704699363841
+    },
+    {
+      "fold": 1,
+      "threshold": 350000.0,
+      "observed_prevalence": 0.15582329317269075,
+      "hard_prevalence": 0.10240963855421686,
+      "hard_abs_error": 0.05341365461847389,
+      "probabilistic_prevalence": 0.2004892361667348,
+      "probabilistic_abs_error": 0.044665942994044056,
+      "brier": 0.09200967915636121,
+      "auc": 0.8871650220212464
+    },
+    {
+      "fold": 1,
+      "threshold": 400000.0,
+      "observed_prevalence": 0.20321285140562248,
+      "hard_prevalence": 0.13453815261044177,
+      "hard_abs_error": 0.0686746987951807,
+      "probabilistic_prevalence": 0.2273193986503665,
+      "probabilistic_abs_error": 0.02410654724474401,
+      "brier": 0.1028481209847642,
+      "auc": 0.8869906883526713
+    },
+    {
+      "fold": 1,
+      "threshold": 475000.0,
+      "observed_prevalence": 0.2606425702811245,
+      "hard_prevalence": 0.21004016064257028,
+      "hard_abs_error": 0.0506024096385542,
+      "probabilistic_prevalence": 0.2691787989425453,
+      "probabilistic_abs_error": 0.008536228661420842,
+      "brier": 0.11843984305029198,
+      "auc": 0.8790861133453128
+    },
+    {
+      "fold": 1,
+      "threshold": 536000.0,
+      "observed_prevalence": 0.31244979919678717,
+      "hard_prevalence": 0.25502008032128515,
+      "hard_abs_error": 0.05742971887550202,
+      "probabilistic_prevalence": 0.30430342126593296,
+      "probabilistic_abs_error": 0.00814637793085421,
+      "brier": 0.12569913468247482,
+      "auc": 0.883419698844389
+    },
+    {
+      "fold": 1,
+      "threshold": 600000.0,
+      "observed_prevalence": 0.3783132530120482,
+      "hard_prevalence": 0.29839357429718877,
+      "hard_abs_error": 0.07991967871485944,
+      "probabilistic_prevalence": 0.34162926761620804,
+      "probabilistic_abs_error": 0.03668398539584017,
+      "brier": 0.14359933448922088,
+      "auc": 0.8682396846557712
+    },
+    {
+      "fold": 1,
+      "threshold": 660000.0,
+      "observed_prevalence": 0.41164658634538154,
+      "hard_prevalence": 0.3349397590361446,
+      "hard_abs_error": 0.07670682730923695,
+      "probabilistic_prevalence": 0.37696126837176047,
+      "probabilistic_abs_error": 0.034685317973621066,
+      "brier": 0.14751107812136996,
+      "auc": 0.8670946474652459
+    },
+    {
+      "fold": 2,
+      "threshold": 285610.1,
+      "observed_prevalence": 0.0996031746031746,
+      "hard_prevalence": 0.039285714285714285,
+      "hard_abs_error": 0.06031746031746031,
+      "probabilistic_prevalence": 0.16233638061116165,
+      "probabilistic_abs_error": 0.06273320600798706,
+      "brier": 0.07508427605969384,
+      "auc": 0.8778539434154085
+    },
+    {
+      "fold": 2,
+      "threshold": 350000.0,
+      "observed_prevalence": 0.1626984126984127,
+      "hard_prevalence": 0.09206349206349207,
+      "hard_abs_error": 0.07063492063492063,
+      "probabilistic_prevalence": 0.19395591636336063,
+      "probabilistic_abs_error": 0.03125750366494792,
+      "brier": 0.09396679865847249,
+      "auc": 0.8795347358686856
+    },
+    {
+      "fold": 2,
+      "threshold": 400000.0,
+      "observed_prevalence": 0.21071428571428572,
+      "hard_prevalence": 0.125,
+      "hard_abs_error": 0.08571428571428572,
+      "probabilistic_prevalence": 0.22025515620260844,
+      "probabilistic_abs_error": 0.009540870488322722,
+      "brier": 0.10734303349652886,
+      "auc": 0.8785637389824826
+    },
+    {
+      "fold": 2,
+      "threshold": 475000.0,
+      "observed_prevalence": 0.25476190476190474,
+      "hard_prevalence": 0.19206349206349208,
+      "hard_abs_error": 0.06269841269841267,
+      "probabilistic_prevalence": 0.26175117373116974,
+      "probabilistic_abs_error": 0.0069892689692649945,
+      "brier": 0.11940511574340924,
+      "auc": 0.8758294102229787
+    },
+    {
+      "fold": 2,
+      "threshold": 536000.0,
+      "observed_prevalence": 0.30317460317460315,
+      "hard_prevalence": 0.24087301587301588,
+      "hard_abs_error": 0.062301587301587275,
+      "probabilistic_prevalence": 0.297050625252755,
+      "probabilistic_abs_error": 0.006123977921848156,
+      "brier": 0.12795029823744597,
+      "auc": 0.8759153359014419
+    },
+    {
+      "fold": 2,
+      "threshold": 600000.0,
+      "observed_prevalence": 0.3626984126984127,
+      "hard_prevalence": 0.28214285714285714,
+      "hard_abs_error": 0.08055555555555555,
+      "probabilistic_prevalence": 0.3348081194393893,
+      "probabilistic_abs_error": 0.02789029325902337,
+      "brier": 0.13821884980103918,
+      "auc": 0.8737577356248858
+    },
+    {
+      "fold": 2,
+      "threshold": 660000.0,
+      "observed_prevalence": 0.4003968253968254,
+      "hard_prevalence": 0.325,
+      "hard_abs_error": 0.0753968253968254,
+      "probabilistic_prevalence": 0.37069119812203016,
+      "probabilistic_abs_error": 0.029705627274795254,
+      "brier": 0.14135646874148639,
+      "auc": 0.8747559194253702
+    },
+    {
+      "fold": 3,
+      "threshold": 285610.1,
+      "observed_prevalence": 0.09822150363783347,
+      "hard_prevalence": 0.036782538399353276,
+      "hard_abs_error": 0.06143896523848019,
+      "probabilistic_prevalence": 0.16159607370587137,
+      "probabilistic_abs_error": 0.0633745700680379,
+      "brier": 0.07510101792414772,
+      "auc": 0.8699055397845179
+    },
+    {
+      "fold": 3,
+      "threshold": 350000.0,
+      "observed_prevalence": 0.1608730800323363,
+      "hard_prevalence": 0.08690379951495554,
+      "hard_abs_error": 0.07396928051738076,
+      "probabilistic_prevalence": 0.19318426996419588,
+      "probabilistic_abs_error": 0.03231118993185958,
+      "brier": 0.0927900277550709,
+      "auc": 0.8846805075473707
+    },
+    {
+      "fold": 3,
+      "threshold": 400000.0,
+      "observed_prevalence": 0.20654810024252224,
+      "hard_prevalence": 0.11358124494745352,
+      "hard_abs_error": 0.09296685529506872,
+      "probabilistic_prevalence": 0.21976296699464806,
+      "probabilistic_abs_error": 0.013214866752125826,
+      "brier": 0.1012939297748549,
+      "auc": 0.8952255673202785
+    },
+    {
+      "fold": 3,
+      "threshold": 475000.0,
+      "observed_prevalence": 0.2550525464834276,
+      "hard_prevalence": 0.18067906224737268,
+      "hard_abs_error": 0.07437348423605494,
+      "probabilistic_prevalence": 0.26206940931476935,
+      "probabilistic_abs_error": 0.00701686283134173,
+      "brier": 0.11256273209958258,
+      "auc": 0.8924529616065585
+    },
+    {
+      "fold": 3,
+      "threshold": 536000.0,
+      "observed_prevalence": 0.3027485852869846,
+      "hard_prevalence": 0.23443815683104285,
+      "hard_abs_error": 0.06831042845594176,
+      "probabilistic_prevalence": 0.2979155998288681,
+      "probabilistic_abs_error": 0.004832985458116501,
+      "brier": 0.12236086222211019,
+      "auc": 0.8885187980108743
+    },
+    {
+      "fold": 3,
+      "threshold": 600000.0,
+      "observed_prevalence": 0.36499595796281326,
+      "hard_prevalence": 0.2813257881972514,
+      "hard_abs_error": 0.08367016976556185,
+      "probabilistic_prevalence": 0.3363426234783496,
+      "probabilistic_abs_error": 0.028653334484463666,
+      "brier": 0.136860934428072,
+      "auc": 0.8786494272927148
+    },
+    {
+      "fold": 3,
+      "threshold": 660000.0,
+      "observed_prevalence": 0.40379951495553756,
+      "hard_prevalence": 0.32619240097008895,
+      "hard_abs_error": 0.07760711398544862,
+      "probabilistic_prevalence": 0.3728626737287124,
+      "probabilistic_abs_error": 0.030936841226825162,
+      "brier": 0.14478120754464743,
+      "auc": 0.8703303303303302
+    },
+    {
+      "fold": 4,
+      "threshold": 285610.1,
+      "observed_prevalence": 0.09753184713375797,
+      "hard_prevalence": 0.05214968152866242,
+      "hard_abs_error": 0.045382165605095545,
+      "probabilistic_prevalence": 0.16385589425332786,
+      "probabilistic_abs_error": 0.06632404711956989,
+      "brier": 0.0696803664472065,
+      "auc": 0.8956735053968654
+    },
+    {
+      "fold": 4,
+      "threshold": 350000.0,
+      "observed_prevalence": 0.15127388535031847,
+      "hard_prevalence": 0.09792993630573249,
+      "hard_abs_error": 0.053343949044585975,
+      "probabilistic_prevalence": 0.19498737009055025,
+      "probabilistic_abs_error": 0.04371348474023179,
+      "brier": 0.0889298651018187,
+      "auc": 0.8884448750864027
+    },
+    {
+      "fold": 4,
+      "threshold": 400000.0,
+      "observed_prevalence": 0.2014331210191083,
+      "hard_prevalence": 0.12778662420382167,
+      "hard_abs_error": 0.07364649681528662,
+      "probabilistic_prevalence": 0.22084978578558798,
+      "probabilistic_abs_error": 0.019416664766479685,
+      "brier": 0.10176472129575131,
+      "auc": 0.8881202243073152
+    },
+    {
+      "fold": 4,
+      "threshold": 475000.0,
+      "observed_prevalence": 0.24960191082802546,
+      "hard_prevalence": 0.18710191082802546,
+      "hard_abs_error": 0.0625,
+      "probabilistic_prevalence": 0.26171453396014166,
+      "probabilistic_abs_error": 0.012112623132116196,
+      "brier": 0.11347368406598975,
+      "auc": 0.886943002550988
+    },
+    {
+      "fold": 4,
+      "threshold": 536000.0,
+      "observed_prevalence": 0.29339171974522293,
+      "hard_prevalence": 0.24243630573248406,
+      "hard_abs_error": 0.05095541401273887,
+      "probabilistic_prevalence": 0.29644995192526946,
+      "probabilistic_abs_error": 0.0030582321800465273,
+      "brier": 0.1278739222511144,
+      "auc": 0.873190513501634
+    },
+    {
+      "fold": 4,
+      "threshold": 600000.0,
+      "observed_prevalence": 0.3570859872611465,
+      "hard_prevalence": 0.2770700636942675,
+      "hard_abs_error": 0.08001592356687898,
+      "probabilistic_prevalence": 0.33396740197568775,
+      "probabilistic_abs_error": 0.023118585285458737,
+      "brier": 0.13906271753213673,
+      "auc": 0.8718007393064602
+    },
+    {
+      "fold": 4,
+      "threshold": 660000.0,
+      "observed_prevalence": 0.3913216560509554,
+      "hard_prevalence": 0.3144904458598726,
+      "hard_abs_error": 0.0768312101910828,
+      "probabilistic_prevalence": 0.3699147433607467,
+      "probabilistic_abs_error": 0.021406912690208724,
+      "brier": 0.14291008907996816,
+      "auc": 0.8716070517302981
+    }
+  ],
+  "by_threshold": [
+    {
+      "threshold": 285610.1,
+      "observed_prevalence": 0.1000554594217338,
+      "hard_abs_error": 0.05898225363665548,
+      "probabilistic_abs_error": 0.06228782965283218,
+      "mean_brier": 0.07314045459685088
+    },
+    {
+      "threshold": 350000.0,
+      "observed_prevalence": 0.15646032834095383,
+      "hard_abs_error": 0.06395820855249681,
+      "probabilistic_abs_error": 0.037339830476227895,
+      "mean_brier": 0.09098135754766701
+    },
+    {
+      "threshold": 400000.0,
+      "observed_prevalence": 0.2026398365285628,
+      "hard_abs_error": 0.08053017183407321,
+      "probabilistic_abs_error": 0.017415338584291486,
+      "mean_brier": 0.10238103929029033
+    },
+    {
+      "threshold": 475000.0,
+      "observed_prevalence": 0.2504348035782059,
+      "hard_abs_error": 0.06177669646234931,
+      "probabilistic_abs_error": 0.01112595619562103,
+      "mean_brier": 0.1152421118148352
+    },
+    {
+      "threshold": 536000.0,
+      "observed_prevalence": 0.30028451224277247,
+      "hard_abs_error": 0.06047439084890516,
+      "probabilistic_abs_error": 0.004776737070543491,
+      "mean_brier": 0.12540626143854208
+    },
+    {
+      "threshold": 600000.0,
+      "observed_prevalence": 0.3636140565570241,
+      "hard_abs_error": 0.08279494048169092,
+      "probabilistic_abs_error": 0.029128861916431426,
+      "mean_brier": 0.139451488842744
+    },
+    {
+      "threshold": 660000.0,
+      "observed_prevalence": 0.40074862417026874,
+      "hard_abs_error": 0.07888226784930258,
+      "probabilistic_abs_error": 0.030342576345860007,
+      "mean_brier": 0.14398591632431076
+    }
+  ],
+  "aggregate": {
+    "mean_hard_abs_error": 0.06962841852363906,
+    "mean_probabilistic_abs_error": 0.027488161463115356,
+    "median_hard_abs_error": 0.06867469879518072,
+    "median_probabilistic_abs_error": 0.02789029325902337,
+    "fraction_probabilistic_better": 0.8857142857142857,
+    "mean_brier": 0.1129412328364629,
+    "max_hard_abs_error": 0.09296685529506872,
+    "max_probabilistic_abs_error": 0.06632404711956989
+  }
+}

@@ -79,7 +79,7 @@
     {
       "id": "Q7_nested_predictive_distribution",
       "priority": 3,
-      "status": "FIRED",
+      "status": "COMPLETE",
       "mean_model": "Run two matched arms: P2 scientific ceiling and P1-R deployable Census plane.",
       "leakage_contract": "outer train -> inner household OOF residual calibration; outer test -> evaluation only; no global OOF residual reuse.",
       "threshold_evaluation": ["observed prevalence", "point-predicted prevalence", "mean predicted probability", "Brier", "calibration error/bins", "AUC if useful", "absolute prevalence error"],
@@ -88,7 +88,7 @@
     {
       "id": "Q8_census_commissioning",
       "priority": 4,
-      "status": "BLOCKED_BY_EPH_ADJUDICATION",
+      "status": "READY_RECOMMENDED_NOT_EXECUTED",
       "input": "census_p1.parquet, 469172 rows",
       "label": "RESEARCH COMMISSIONING",
       "rules": ["temporal staleness deferred for this pass", "do not clip IX_TOT", "preserve valid value vs training-support overlap vs transport-universe metadata"]

@@ -1,0 +1,17 @@
+{
+  "p1r": {
+    "classification": "CLEAR SUCCESS",
+    "mean_abs_error_reduction": 0.06012993965925985,
+    "probabilistic_better_fraction": 0.9428571428571428,
+    "favorable_folds": 5
+  },
+  "p2": {
+    "classification": "CLEAR SUCCESS",
+    "mean_abs_error_reduction": 0.042140257060523705,
+    "probabilistic_better_fraction": 0.8857142857142857,
+    "favorable_folds": 5
+  },
+  "cross_arm_case": "CASE 1: P2 success and P1-R success",
+  "q8_recommendation": "READY",
+  "caveat": "Q8 remains unexecuted; this is a research commissioning recommendation only."
+}

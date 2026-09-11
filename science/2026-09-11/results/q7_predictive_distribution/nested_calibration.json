@@ -1,0 +1,56 @@
+{
+  "p1r": [
+    {
+      "outer_fold": 0,
+      "calibration_households": 9996,
+      "residual_sd": 710675.8084656793
+    },
+    {
+      "outer_fold": 1,
+      "calibration_households": 10078,
+      "residual_sd": 730089.6036933102
+    },
+    {
+      "outer_fold": 2,
+      "calibration_households": 10048,
+      "residual_sd": 731582.265433731
+    },
+    {
+      "outer_fold": 3,
+      "calibration_households": 10094,
+      "residual_sd": 731417.0935531297
+    },
+    {
+      "outer_fold": 4,
+      "calibration_households": 10056,
+      "residual_sd": 726479.7758305905
+    }
+  ],
+  "p2": [
+    {
+      "outer_fold": 0,
+      "calibration_households": 9996,
+      "residual_sd": 696573.2621101849
+    },
+    {
+      "outer_fold": 1,
+      "calibration_households": 10078,
+      "residual_sd": 720745.6596723913
+    },
+    {
+      "outer_fold": 2,
+      "calibration_households": 10048,
+      "residual_sd": 723212.0691754428
+    },
+    {
+      "outer_fold": 3,
+      "calibration_households": 10094,
+      "residual_sd": 717824.332532466
+    },
+    {
+      "outer_fold": 4,
+      "calibration_households": 10056,
+      "residual_sd": 716237.5522260319
+    }
+  ]
+}
