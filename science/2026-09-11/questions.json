@@ -14,44 +14,50 @@
     {
       "id": "Q2",
       "question": "Does real Census-compatible P1-R information repair the problem?",
-      "status": "NOT YET RUN",
-      "answer": "The exact 21-field plane is materialized locally, but no immutable P1-R run/prediction bundle was found in accessible evidence. The paired experiment is fully specified in experiment_matrix.json.",
-      "confidence": "HIGH on status; none on scientific effect"
+      "status": "YES",
+      "answer": "P1-R materially improves information/ranking and amount dispersion; every principal paired metric improves in 5/5 folds.",
+      "confidence": "HIGH",
+      "evidence_key": "q2_p1r"
     },
     {
       "id": "Q3",
       "question": "If P1-R helps, which information family does the work?",
-      "status": "NOT YET RUN",
-      "answer": "Gated on a material Q2 gain; no ablation should be run before that trigger.",
-      "confidence": "HIGH on status"
+      "status": "YES",
+      "answer": "Education dominates; labor and housing are meaningful; demographics are smaller; composition is largely redundant.",
+      "confidence": "HIGH",
+      "evidence_key": "q3_ablations"
     },
     {
       "id": "Q4",
       "question": "Is labor state intrinsically useful, and can we reconstruct enough of it?",
-      "status": "PARTIALLY",
-      "answer": "Prior minimal-plane evidence says true ESTADO has useful downstream welfare signal, but the existing OOF reconstruction captured essentially none of the oracle gain. The P1-R-specific A/B/C labor experiment remains required.",
-      "confidence": "MEDIUM-HIGH"
+      "status": "YES",
+      "answer": "True labor state is useful, but household-safe OOF reconstruction captured none of the downstream oracle gain; further reconstruction polishing is not the next frontier.",
+      "confidence": "HIGH",
+      "evidence_key": "q4_labor"
     },
     {
       "id": "Q5",
       "question": "Is the remaining ceiling about transportable information or about the model?",
-      "status": "NOT YET RUN",
-      "answer": "P2 is now bounded from income-modeling-eph's non-income feature contract, but the matched P0/P1-R/P2 comparison has not run.",
-      "confidence": "HIGH on status"
+      "status": "YES",
+      "answer": "P2 > P1-R > P0. Census-compatible information captures substantial signal, while richer EPH-only predictors retain additional signal.",
+      "confidence": "HIGH",
+      "evidence_key": "q5_p2"
     },
     {
       "id": "Q6",
       "question": "Is positive-amount prediction still the dominant error after richer information?",
-      "status": "PARTIALLY",
-      "answer": "Yes for the baseline: oracle presence helps materially, but the non-deployable observed-positive-amount upper bound is vastly stronger. Must be repeated after Q2/Q5 select the best information plane.",
-      "confidence": "HIGH for baseline; INCONCLUSIVE after richer information"
+      "status": "YES",
+      "answer": "After P2, oracle presence barely improves household R² (.373 to .376), while observed positive amounts raise it to .976. Positive-amount compression overwhelmingly dominates.",
+      "confidence": "VERY HIGH",
+      "evidence_key": "q6_error_reservoir"
     },
     {
       "id": "Q7",
       "question": "Does a predictive distribution solve something the point predictor fundamentally cannot?",
-      "status": "NOT YET RUN",
-      "answer": "The leakage-safe primitive exists, but no real threshold-grid evaluation on the selected mean model was found.",
-      "confidence": "HIGH on status"
+      "status": "FIRED",
+      "answer": "Run identical leakage-safe threshold-grid distribution experiments for the P2 scientific ceiling and P1-R deployable plane.",
+      "confidence": "HIGH",
+      "evidence_key": "q7_nested_predictive_distribution"
     },
     {
       "id": "Q8",
@@ -63,15 +69,15 @@
     {
       "id": "Q9",
       "question": "What did today's sprint establish?",
-      "status": "PARTIALLY",
-      "answer": "It established the baseline failure mode and completed the real semantic/data boundary. The central information-frontier experiment Q2 remains the missing scientific hinge.",
+      "status": "YES",
+      "answer": "Transportable information materially helps, richer EPH-only information adds signal, and positive-amount distribution is the dominant residual error reservoir.",
       "confidence": "HIGH"
     },
     {
       "id": "Q10",
       "question": "What next scientific decision is frozen?",
-      "status": "PARTIALLY",
-      "answer": "Run the paired P0 vs P1-R Gamma experiment first; subsequent science is conditional on that result.",
+      "status": "YES",
+      "answer": "Run Q7 with matched P2 ceiling and P1-R deployable arms; decide Census commissioning only from held-out threshold/prevalence performance.",
       "confidence": "HIGH"
     }
   ]

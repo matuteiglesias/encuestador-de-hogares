@@ -6,7 +6,7 @@ The semantic-infrastructure phase is complete enough for science. The exact real
 
 The strongest result that is already fully evidenced is Q1: **the current direct hurdle-Gamma model is primarily limited by positive-income magnitude, not by the zero/positive classifier.** Its conditional positive-amount prediction has R² 0.232 and only 0.465 observed dispersion. Household aggregation does not repair this: household dispersion is 0.543, with bottom-decile overprediction of about ARS 398k and top-decile underprediction of about ARS 1.424m. Household ordering is useful but far from exact (Spearman 0.618; mean absolute decile displacement 1.90 deciles).
 
-The central unanswered hinge is Q2. No immutable P1-R EPH run bundle was found in the accessible evidence surface. Therefore no claim is made yet about whether Census-compatible information repairs the conditional-income frontier.
+The Q2-Q6 frontier execution is now complete. P1-R materially improves ranking and dispersion in all five folds; P2 adds further signal; and the remaining error reservoir is overwhelmingly positive-amount compression. Q7 is fired with matched P2-ceiling and P1-R-deployable arms. Census scoring remains on hold.
 
 ## Question ledger
 

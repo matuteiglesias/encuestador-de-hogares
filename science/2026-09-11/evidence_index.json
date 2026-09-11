@@ -2,7 +2,7 @@
   "schema": "research.encuestador-science-evidence-index/v1",
   "date": "2026-09-11",
   "repository_heads": {
-    "encuestador-de-hogares": {"ref": "main", "sha": "d216cf3b8ff9b6c10880c51f00c3407e7e278efc", "note": "PR22 merged science diagnostics and nested predictive-distribution primitive; no P1-R run is on main."},
+    "encuestador-de-hogares": {"ref": "main", "sha": "9552d2f", "note": "Q2-Q6 bounded scientific execution and persisted frontier evidence are on main; Q7 is fired but not yet executed."},
     "eph-censo-aligner": {"ref": "main", "sha": "4e01f4bb2cceca039879969568f2370221c59dbc", "note": "Executable real feature-plane machinery merged; final successful local materialization is newer than current committed policy."},
     "income-modeling-eph": {"ref": "main", "sha": "774c290c8befccb4f7dc4c78fe6a47a334443a05", "note": "Governed EPH income-study cohort and explicit feature contract; used only to bound P2 features, not its historical target/cohort."},
     "microdatos-EPH-INDEC": {"ref": "master", "sha": "492bc92f44894239e58ce40859c5b2e6e7cb60f3", "note": "Source/acquisition authority for exact Q3-2024 release."}
@@ -77,5 +77,17 @@
     "p1_r_run_bundle": "No immutable P1-R EPH run/prediction bundle found in connected Library.",
     "p2_matched_run": "No matched P2 Gamma run found.",
     "predictive_distribution_real_threshold_run": "No real threshold-grid nested predictive-distribution result found."
+  },
+  "executed_frontier_2026_09_11": {
+    "git_sha": "9552d2f",
+    "fold_manifest_sha256": "7e1d7fa75684d6ebdeb694176a4dcb07363f77597425405e955b62dfaa84247d",
+    "cohort": {"full_persons": 47564, "eligible_persons": 41821, "complete_households": 12568},
+    "q2": {"status": "CLOSED", "classification": "P1-R materially improves information/ranking and amount dispersion", "evidence": "results/q2_p1r"},
+    "q3": {"status": "CLOSED", "answer": "education > labor/housing > demographics; composition redundant", "evidence": "results/q3_ablations"},
+    "q4": {"status": "CLOSED", "answer": "labor useful but tested reconstruction captures no oracle gain", "evidence": "results/q4_labor"},
+    "q5": {"status": "CLOSED_CASE_B", "answer": "P2 > P1-R > P0", "evidence": "results/q5_p2"},
+    "q6": {"status": "CLOSED_VERY_HIGH", "answer": "positive amount is dominant error reservoir", "evidence": "results/q6_error_reservoir"},
+    "q7": {"status": "FIRED", "arms": ["P2 scientific ceiling", "P1-R deployable plane"], "evidence": null},
+    "q8": {"status": "HOLD", "census_scoring": false}
   }
 }

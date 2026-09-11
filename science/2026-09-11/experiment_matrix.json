@@ -16,7 +16,7 @@
     {
       "id": "Q2_P0_vs_P1R",
       "priority": 1,
-      "status": "READY_FOR_LOCAL_EXECUTION",
+      "status": "COMPLETE",
       "question": "Does real Census-compatible information restore missing conditional-income information?",
       "arms": [
         {"id": "P0", "features": ["CH04", "CH06", "CH07", "CH09", "CH10", "CH12", "CH13", "CH15", "IX_TOT"], "source": "exact raw EPH release", "architecture": "direct"},
@@ -29,7 +29,7 @@
     {
       "id": "Q3_P1R_grouped_ablation",
       "priority": 2,
-      "status": "CONDITIONAL",
+      "status": "COMPLETE",
       "trigger": "Run only if Q2 shows a material scientific-regime gain.",
       "base": "P1-R",
       "design": "leave-one-family-out",
@@ -45,7 +45,7 @@
     {
       "id": "Q4_labor_oracle",
       "priority": 2,
-      "status": "CONDITIONAL_AFTER_Q2",
+      "status": "COMPLETE",
       "base_features": "P1-R minus CONDACT",
       "arms": [
         {"id": "A", "labor": "none"},
@@ -59,7 +59,7 @@
     {
       "id": "Q5_P2_information_ceiling",
       "priority": 2,
-      "status": "READY_TO_SPECIFY_FROM_UPSTREAM_CONTRACT",
+      "status": "COMPLETE",
       "p2_definition": {
         "source": "income-modeling-eph/configs/feature_contract.yaml",
         "include_blocks": ["demographic", "education", "labor", "housing_household", "household_pyramid"],
@@ -71,7 +71,7 @@
     {
       "id": "Q6_error_decomposition_best_plane",
       "priority": 3,
-      "status": "AFTER_Q2_Q5",
+      "status": "COMPLETE",
       "arms": ["normal hurdle prediction", "oracle presence: true zero/positive + fitted amount", "target-status-conditioned observed-positive-amount upper bound"],
       "warning": "Upper-bound arm is non-deployable and non-causal.",
       "question": "After richer information, does amount magnitude remain the dominant error reservoir?"
@@ -79,8 +79,8 @@
     {
       "id": "Q7_nested_predictive_distribution",
       "priority": 3,
-      "status": "AFTER_MEAN_FRONTIER",
-      "mean_model": "Best scientifically relevant mean model; prefer P1-R if competitive.",
+      "status": "FIRED",
+      "mean_model": "Run two matched arms: P2 scientific ceiling and P1-R deployable Census plane.",
       "leakage_contract": "outer train -> inner household OOF residual calibration; outer test -> evaluation only; no global OOF residual reuse.",
       "threshold_evaluation": ["observed prevalence", "point-predicted prevalence", "mean predicted probability", "Brier", "calibration error/bins", "AUC if useful", "absolute prevalence error"],
       "comparison": "1[predicted household income <= z] versus P(Y_household <= z | X) on a threshold grid"
