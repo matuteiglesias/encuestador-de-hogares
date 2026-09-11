@@ -1,0 +1,78 @@
+{
+  "schema": "research.encuestador-science-questions/v1",
+  "date": "2026-09-11",
+  "scope": "Scientific closure after real semantic-plane materialization; temporal reconstruction explicitly deferred.",
+  "questions": [
+    {
+      "id": "Q1",
+      "question": "What is actually broken in the current income model?",
+      "status": "YES",
+      "answer": "The dominant failure is conditional positive-income magnitude compression. Presence is comparatively strong; aggregation inherits and amplifies tail compression, while rank ordering remains useful but moderate.",
+      "confidence": "HIGH",
+      "evidence_key": "baseline_q1"
+    },
+    {
+      "id": "Q2",
+      "question": "Does real Census-compatible P1-R information repair the problem?",
+      "status": "NOT YET RUN",
+      "answer": "The exact 21-field plane is materialized locally, but no immutable P1-R run/prediction bundle was found in accessible evidence. The paired experiment is fully specified in experiment_matrix.json.",
+      "confidence": "HIGH on status; none on scientific effect"
+    },
+    {
+      "id": "Q3",
+      "question": "If P1-R helps, which information family does the work?",
+      "status": "NOT YET RUN",
+      "answer": "Gated on a material Q2 gain; no ablation should be run before that trigger.",
+      "confidence": "HIGH on status"
+    },
+    {
+      "id": "Q4",
+      "question": "Is labor state intrinsically useful, and can we reconstruct enough of it?",
+      "status": "PARTIALLY",
+      "answer": "Prior minimal-plane evidence says true ESTADO has useful downstream welfare signal, but the existing OOF reconstruction captured essentially none of the oracle gain. The P1-R-specific A/B/C labor experiment remains required.",
+      "confidence": "MEDIUM-HIGH"
+    },
+    {
+      "id": "Q5",
+      "question": "Is the remaining ceiling about transportable information or about the model?",
+      "status": "NOT YET RUN",
+      "answer": "P2 is now bounded from income-modeling-eph's non-income feature contract, but the matched P0/P1-R/P2 comparison has not run.",
+      "confidence": "HIGH on status"
+    },
+    {
+      "id": "Q6",
+      "question": "Is positive-amount prediction still the dominant error after richer information?",
+      "status": "PARTIALLY",
+      "answer": "Yes for the baseline: oracle presence helps materially, but the non-deployable observed-positive-amount upper bound is vastly stronger. Must be repeated after Q2/Q5 select the best information plane.",
+      "confidence": "HIGH for baseline; INCONCLUSIVE after richer information"
+    },
+    {
+      "id": "Q7",
+      "question": "Does a predictive distribution solve something the point predictor fundamentally cannot?",
+      "status": "NOT YET RUN",
+      "answer": "The leakage-safe primitive exists, but no real threshold-grid evaluation on the selected mean model was found.",
+      "confidence": "HIGH on status"
+    },
+    {
+      "id": "Q8",
+      "question": "Should we perform first Census commissioning?",
+      "status": "NOT YET RUN",
+      "answer": "Deliberately downstream of Q1-Q7 model/plane adjudication. Exact Census scoring matrix exists locally.",
+      "confidence": "HIGH on status"
+    },
+    {
+      "id": "Q9",
+      "question": "What did today's sprint establish?",
+      "status": "PARTIALLY",
+      "answer": "It established the baseline failure mode and completed the real semantic/data boundary. The central information-frontier experiment Q2 remains the missing scientific hinge.",
+      "confidence": "HIGH"
+    },
+    {
+      "id": "Q10",
+      "question": "What next scientific decision is frozen?",
+      "status": "PARTIALLY",
+      "answer": "Run the paired P0 vs P1-R Gamma experiment first; subsequent science is conditional on that result.",
+      "confidence": "HIGH"
+    }
+  ]
+}
