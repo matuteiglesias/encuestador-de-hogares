@@ -114,8 +114,8 @@ def _matrix(rows: Sequence[Mapping[str, Any]], columns: Sequence[str]) -> np.nda
         raise ExperimentRunError("feature_matrix_contains_missing_or_nonnumeric_value") from exc
     if matrix.ndim != 2 or matrix.shape != (len(rows), len(columns)):
         raise ExperimentRunError("feature_matrix_shape_invalid")
-    if not np.isfinite(matrix).all():
-        raise ExperimentRunError("feature_matrix_non_finite")
+    if np.isinf(matrix).any():
+        raise ExperimentRunError("feature_matrix_infinite")
     return matrix
 
 
@@ -513,6 +513,7 @@ def execute_experiment(
     welfare_context: WelfareContext | None = None,
     input_release_ids: Sequence[str] = (),
     run_id: str | None = None,
+    fold_manifest: FoldManifest | None = None,
 ) -> ExperimentExecutionResult:
     """Execute active direct or one-layer lean architecture from resolved config."""
     config = resolved.config
@@ -526,13 +527,16 @@ def execute_experiment(
     period_columns = tuple(str(value) for value in data.get("period_columns", ()))
     row_columns = (*person_columns, *period_columns)
     household_observation_columns = (*household_columns, *period_columns)
-    manifest = configured_fold_manifest(
+    manifest = fold_manifest or configured_fold_manifest(
         training_rows,
         person_id_columns=person_columns,
         household_group_columns=household_columns,
         period_columns=period_columns,
         n_splits=int(splits["n_splits"]),
     )
+    expected_rows = tuple(_identity(row, (*person_columns, *period_columns)) for row in training_rows)
+    if manifest.row_ids != expected_rows:
+        raise ExperimentRunError("imported_fold_manifest_row_identity_mismatch")
     x = _matrix(training_rows, feature_names)
     target_name = str(terminal["target"])
     raw_y = _raw_target(training_rows, target_name)

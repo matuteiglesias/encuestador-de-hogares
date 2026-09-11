@@ -1,0 +1,24 @@
+{
+  "positive": {
+    "r2": 0.27091477525292096,
+    "mae": 269206.1951969213,
+    "rmse": 494450.6431177621,
+    "observed_sd": 579073.6422103379,
+    "predicted_sd": 284069.62429364014,
+    "dispersion_ratio": 0.49055871928368144
+  },
+  "household": {
+    "r2": 0.3992258685313055,
+    "mae": 384904.5935742397,
+    "rmse": 689991.4440237766,
+    "observed_sd": 890201.0318328446,
+    "predicted_sd": 571870.7231550221,
+    "dispersion_ratio": 0.6424062685903557,
+    "spearman": 0.74956743384701,
+    "mean_decile_displacement": 1.4848075189906014,
+    "same_decile_share": 0.28247714690356635,
+    "within_one_decile_share": 0.6028711214110982,
+    "bottom_decile_bias": 174517.21960244013,
+    "top_decile_bias": -1176685.9905875751
+  }
+}

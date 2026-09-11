@@ -1,0 +1,43 @@
+experiment: {id: real_eph_2024q3_p1r_direct_hurdle_gamma_v1, seed: 42, status: real_eph_science_candidate}
+data:
+  id: eph_2024q3_official_release_v1
+  source_release: eph-2024-q3-3b6a7a15c4af
+  source_adapter: microdatos_eph_individual_household_join_v1
+  household_id_columns: [CODUSU, NRO_HOGAR]
+  person_id_columns: [CODUSU, NRO_HOGAR, COMPONENTE]
+  period_columns: [ANO4, TRIMESTRE]
+  weight_policy: {fit: null, calibration: null, evaluation: null}
+features:
+  id: eph-cpv2010-semantic-plane-2024q3-v1:P1-R
+  semantic_authority: eph-censo-aligner
+  columns:
+    IX_TOT: {dtype_role: continuous, allowed_as_external_input: true}
+    P02: {dtype_role: categorical, allowed_as_external_input: true}
+    P03: {dtype_role: continuous, allowed_as_external_input: true}
+    P05: {dtype_role: categorical, allowed_as_external_input: true}
+    P07: {dtype_role: categorical, allowed_as_external_input: true}
+    P08: {dtype_role: categorical, allowed_as_external_input: true}
+    P09: {dtype_role: categorical, allowed_as_external_input: true}
+    P10: {dtype_role: categorical, allowed_as_external_input: true}
+    CONDACT: {dtype_role: categorical, allowed_as_external_input: true}
+    V01: {dtype_role: categorical, allowed_as_external_input: true}
+    H05: {dtype_role: categorical, allowed_as_external_input: true}
+    H06: {dtype_role: categorical, allowed_as_external_input: true}
+    H07: {dtype_role: categorical, allowed_as_external_input: true}
+    H08: {dtype_role: categorical, allowed_as_external_input: true}
+    H09: {dtype_role: categorical, allowed_as_external_input: true}
+    H10: {dtype_role: categorical, allowed_as_external_input: true}
+    H12: {dtype_role: categorical, allowed_as_external_input: true}
+    H13: {dtype_role: categorical, allowed_as_external_input: true}
+    H14: {dtype_role: categorical, allowed_as_external_input: true}
+    H15: {dtype_role: continuous, allowed_as_external_input: true}
+    PROP: {dtype_role: categorical, allowed_as_external_input: true}
+architecture: {id: direct_v1, nodes: {}}
+terminal: {id: hurdle_gamma_p47t_v1, prediction_unit: person, target: P47T, formulation: hurdle_gamma, scale: linear, unavailable_codes: [-9]}
+estimators:
+  id: hgb_hurdle_primary_v1
+  roles:
+    terminal_presence: {family: hgb, task: classification, categorical_features: [P02,P05,P07,P08,P09,P10,CONDACT,V01,H05,H06,H07,H08,H09,H10,H12,H13,H14,PROP], params: {early_stopping: false, random_state: 42, max_iter: 60, max_leaf_nodes: 31, min_samples_leaf: 20, learning_rate: 0.08}}
+    terminal_positive: {family: hgb, task: regression, loss: gamma, categorical_features: [P02,P05,P07,P08,P09,P10,CONDACT,V01,H05,H06,H07,H08,H09,H10,H12,H13,H14,PROP], params: {early_stopping: false, random_state: 42, max_iter: 60, max_leaf_nodes: 31, min_samples_leaf: 20, learning_rate: 0.08}}
+splits: {id: household_grouped_5fold_v1, strategy: household_grouped_v1, n_splits: 5, seed: 42}
+evaluation: {household_truth_cohort: all_members_have_valid_terminal_income_v1}

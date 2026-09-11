@@ -1,0 +1,127 @@
+[
+  {
+    "fold": 0,
+    "positive": {
+      "r2": 0.2277115119216765,
+      "mae": 259257.79413846033,
+      "rmse": 527962.9510823254,
+      "observed_sd": 600777.5107708366,
+      "predicted_sd": 288422.01486838574,
+      "dispersion_ratio": 0.48008124421688414
+    },
+    "household": {
+      "r2": 0.3582815263063861,
+      "mae": 370330.8222274036,
+      "rmse": 722116.0480711199,
+      "observed_sd": 901435.6421531852,
+      "predicted_sd": 574927.4471006182,
+      "dispersion_ratio": 0.6377908973372034,
+      "spearman": 0.7548001210930473,
+      "mean_decile_displacement": 1.4745762711864407,
+      "same_decile_share": 0.2919020715630885,
+      "within_one_decile_share": 0.6048336472065285,
+      "bottom_decile_bias": 153177.573887772,
+      "top_decile_bias": -1048583.9684970265
+    }
+  },
+  {
+    "fold": 1,
+    "positive": {
+      "r2": 0.2762776010876782,
+      "mae": 270598.82269453286,
+      "rmse": 488595.9100059675,
+      "observed_sd": 574333.0654674832,
+      "predicted_sd": 280841.00609354174,
+      "dispersion_ratio": 0.4889863094769737
+    },
+    "household": {
+      "r2": 0.4191862196541648,
+      "mae": 384947.39089436876,
+      "rmse": 664075.1061089963,
+      "observed_sd": 871362.2566819537,
+      "predicted_sd": 561728.9062419664,
+      "dispersion_ratio": 0.6446559991948296,
+      "spearman": 0.7451423203205141,
+      "mean_decile_displacement": 1.5077021822849808,
+      "same_decile_share": 0.2766367137355584,
+      "within_one_decile_share": 0.5972400513478819,
+      "bottom_decile_bias": 182631.08672588825,
+      "top_decile_bias": -1188411.018626854
+    }
+  },
+  {
+    "fold": 2,
+    "positive": {
+      "r2": 0.29927724086470764,
+      "mae": 278618.2424373601,
+      "rmse": 489233.9014098528,
+      "observed_sd": 584444.710069295,
+      "predicted_sd": 289644.0582044468,
+      "dispersion_ratio": 0.49558846750465924
+    },
+    "household": {
+      "r2": 0.41799647056288003,
+      "mae": 401321.0774078426,
+      "rmse": 685976.1236481632,
+      "observed_sd": 899179.0725101993,
+      "predicted_sd": 586649.7295628197,
+      "dispersion_ratio": 0.6524281397309382,
+      "spearman": 0.7472692940838136,
+      "mean_decile_displacement": 1.5021056041464205,
+      "same_decile_share": 0.27113702623906705,
+      "within_one_decile_share": 0.6054421768707483,
+      "bottom_decile_bias": 210825.7735710438,
+      "top_decile_bias": -1293924.9963794902
+    }
+  },
+  {
+    "fold": 3,
+    "positive": {
+      "r2": 0.29115382952324864,
+      "mae": 265127.824395078,
+      "rmse": 460105.28437191405,
+      "observed_sd": 546488.7455966609,
+      "predicted_sd": 271223.0217259764,
+      "dispersion_ratio": 0.4963012027445375
+    },
+    "household": {
+      "r2": 0.4292984061511491,
+      "mae": 381619.55396950705,
+      "rmse": 655400.6616067678,
+      "observed_sd": 867565.6186521394,
+      "predicted_sd": 570026.1162834046,
+      "dispersion_ratio": 0.6570409246611273,
+      "spearman": 0.75469293179592,
+      "mean_decile_displacement": 1.4748933377092222,
+      "same_decile_share": 0.27404003938299965,
+      "within_one_decile_share": 0.608139153265507,
+      "bottom_decile_bias": 171522.29464939135,
+      "top_decile_bias": -1170233.4561264564
+    }
+  },
+  {
+    "fold": 4,
+    "positive": {
+      "r2": 0.26621581264527205,
+      "mae": 272599.837176644,
+      "rmse": 502551.44338648743,
+      "observed_sd": 586673.3361464308,
+      "predicted_sd": 289252.25310524,
+      "dispersion_ratio": 0.4930380081787866
+    },
+    "household": {
+      "r2": 0.37633012492752105,
+      "mae": 386722.0594047061,
+      "rmse": 718338.3252427479,
+      "observed_sd": 909602.5188548676,
+      "predicted_sd": 564979.5632052743,
+      "dispersion_ratio": 0.6211279668800259,
+      "spearman": 0.7460560675303287,
+      "mean_decile_displacement": 1.4848289218850872,
+      "same_decile_share": 0.2882504841833441,
+      "within_one_decile_share": 0.6026468689477082,
+      "bottom_decile_bias": 154309.85795434166,
+      "top_decile_bias": -1192320.9108529126
+    }
+  }
+]
