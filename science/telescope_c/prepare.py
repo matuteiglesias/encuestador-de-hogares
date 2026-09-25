@@ -66,8 +66,11 @@ def categorical_indices(features=FEATURES) -> list[int]:
 def _matrix(frame: pd.DataFrame, features=FEATURES) -> np.ndarray:
     require(frame, features, "feature frame")
     x = frame[list(features)].to_numpy(float)
-    if not np.isfinite(x).all():
-        raise TelescopeCUpstreamError("feature frame contains non-finite values")
+    # The frozen HistGradientBoosting P1-R/domain models natively route
+    # semantic missing values. Reject infinities, but preserve NaN category
+    # absence exactly as supplied by the governed semantic plane.
+    if np.isinf(x).any():
+        raise TelescopeCUpstreamError("feature frame contains infinite values")
     return x
 
 
@@ -131,12 +134,22 @@ def load_eph(
     require(p1, ["row_id", *FEATURES], "EPH P1")
     if p1.row_id.duplicated().any():
         raise TelescopeCUpstreamError("duplicate EPH P1 row_id")
-    out = p1.merge(
-        raw[["row_id", "household_id", "outer_fold", "y"]],
-        on="row_id",
-        how="inner",
-        validate="one_to_one",
-    )
+    # The governed semantic P1 already carries the canonical household_id.
+    # Join only transport metadata to avoid pandas' household_id_x/y suffixes;
+    # when present, verify that the semantic identity agrees with raw EPH.
+    if "household_id" in p1.columns:
+        identity = p1[["row_id", "household_id"]].merge(
+            raw[["row_id", "household_id"]], on="row_id", how="inner",
+            suffixes=("_p1", "_raw"), validate="one_to_one",
+        )
+        p1_households = identity.household_id_p1.astype(str).str.replace("\x1f", ":", regex=False)
+        raw_households = identity.household_id_raw.astype(str).str.replace("\x1f", ":", regex=False)
+        if not (p1_households == raw_households).all():
+            raise TelescopeCUpstreamError("EPH P1/raw household identity mismatch")
+        transport = raw[["row_id", "outer_fold", "y"]]
+    else:
+        transport = raw[["row_id", "household_id", "outer_fold", "y"]]
+    out = p1.merge(transport, on="row_id", how="inner", validate="one_to_one")
     if len(out) != len(raw):
         raise TelescopeCUpstreamError(
             f"eligible EPH/P1 identity mismatch: eligible={len(raw)} joined={len(out)}"
