@@ -114,7 +114,6 @@ jobs:
           ruff check --select E4,E7,E9,F
           science/2026-09-11/build_predictive_welfare_release.py
           science/telescope_c/prepare.py
-          science/telescope_c/prepare.py
           tests/test_telescope_c_transport.py
       - name: Compile integration-finisher boundary
         run: >-
@@ -138,6 +137,7 @@ jobs:
           src/encuestador/census_sample_intake.py
           src/encuestador/cli.py
           science/2026-09-11/build_predictive_welfare_release.py
+          science/telescope_c/prepare.py
       - name: Verify integration-finisher science path
         run: >-
           pytest -q
