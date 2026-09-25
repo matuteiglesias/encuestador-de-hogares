@@ -176,6 +176,8 @@ def matched_model_scores(
     eph: pd.DataFrame,
     census: pd.DataFrame,
     persisted_oof: pd.DataFrame,
+    *,
+    allow_reproduction_mismatch: bool = False,
 ) -> tuple[pd.DataFrame, pd.DataFrame, dict]:
     require(persisted_oof, ["row_id", "pred"], "persisted P1-R OOF")
     if persisted_oof.row_id.duplicated().any():
@@ -223,7 +225,7 @@ def matched_model_scores(
             "max_relative_delta_vs_persisted_oof": max_rel,
             "reproduced": reproduced,
         })
-        if not reproduced:
+        if not reproduced and not allow_reproduction_mismatch:
             raise TelescopeCUpstreamError(
                 f"outer model {fold} does not reproduce persisted P1-R OOF "
                 f"(max_abs={max_abs}, max_rel={max_rel})"
@@ -235,7 +237,11 @@ def matched_model_scores(
         raise TelescopeCUpstreamError("matched EPH scoring did not cover eligible source")
     if len(census_out) != 5 * len(census):
         raise TelescopeCUpstreamError("matched Census scoring did not produce five model copies")
-    return eph_out, census_out, {"folds": fold_diag, "all_reproduced": True}
+    return eph_out, census_out, {
+        "folds": fold_diag,
+        "all_reproduced": all(row["reproduced"] for row in fold_diag),
+        "override_used": bool(allow_reproduction_mismatch),
+    }
 
 
 def hard_support_weak(source: pd.DataFrame, target: pd.DataFrame) -> np.ndarray:
@@ -362,7 +368,8 @@ def run(args: argparse.Namespace) -> dict:
     persisted = pd.read_json(Path(args.person_oof).resolve(), lines=True)
 
     eph_scores, census_scores, reproduction = matched_model_scores(
-        eph, census, persisted
+        eph, census, persisted,
+        allow_reproduction_mismatch=args.allow_reproduction_mismatch,
     )
     eph_support, census_support, support = crossfit_domain_support(eph, census)
 
@@ -401,6 +408,11 @@ def run(args: argparse.Namespace) -> dict:
             "poverty lines/classification belong downstream",
         ],
     }
+    if args.allow_reproduction_mismatch and not reproduction["all_reproduced"]:
+        manifest["warnings"].append(
+            "explicit override: matched-model persisted OOF reproduction mismatch retained; "
+            "all persons remain in transport evidence"
+        )
     files = [
         "eph_matched_person_scores.parquet",
         "census_matched_person_scores.parquet",
@@ -426,6 +438,11 @@ def parser() -> argparse.ArgumentParser:
     p.add_argument("--person-oof", required=True)
     p.add_argument("--output", required=True)
     p.add_argument("--expected-fold-manifest-sha", default=DEFAULT_FOLD_SHA)
+    p.add_argument(
+        "--allow-reproduction-mismatch",
+        action="store_true",
+        help="retain all persons and continue with an explicit persisted-OOF mismatch warning",
+    )
     return p
 
 
