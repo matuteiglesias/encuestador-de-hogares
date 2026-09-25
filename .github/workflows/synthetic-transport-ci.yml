@@ -32,6 +32,7 @@ on:
       - src/encuestador/cli.py
       - scripts/synthetic_transport_smoke.py
       - science/2026-09-11/build_predictive_welfare_release.py
+      - science/telescope_c/**
       - tests/**
   push:
     branches: [main]
@@ -46,6 +47,7 @@ on:
       - tests/**
       - scripts/synthetic_transport_smoke.py
       - science/2026-09-11/build_predictive_welfare_release.py
+      - science/telescope_c/**
 
 permissions:
   contents: read
@@ -107,8 +109,13 @@ jobs:
           tests/test_eph_microdata.py
           tests/test_upstream_intake.py
           tests/test_census_sample_intake.py
-      - name: Correctness-lint predictive welfare research builder
-        run: ruff check --select E4,E7,E9,F science/2026-09-11/build_predictive_welfare_release.py
+      - name: Correctness-lint bounded science scripts
+        run: >-
+          ruff check --select E4,E7,E9,F
+          science/2026-09-11/build_predictive_welfare_release.py
+          science/telescope_c/prepare.py
+          science/telescope_c/prepare.py
+          tests/test_telescope_c_transport.py
       - name: Compile integration-finisher boundary
         run: >-
           python -m py_compile
@@ -151,7 +158,10 @@ jobs:
           tests/test_eph_microdata.py
           tests/test_upstream_intake.py
           tests/test_census_sample_intake.py
-      - name: Prove predictive welfare release CLI surface
-        run: python science/2026-09-11/build_predictive_welfare_release.py --help >/tmp/predictive-welfare-help.txt
+          tests/test_telescope_c_transport.py
+      - name: Prove bounded science CLI surfaces
+        run: |
+          python science/2026-09-11/build_predictive_welfare_release.py --help >/tmp/predictive-welfare-help.txt
+          python science/telescope_c/prepare.py --help >/tmp/telescope-c-help.txt
       - name: Execute legacy transport maturity smoke
         run: python scripts/synthetic_transport_smoke.py > /tmp/synthetic-proof.json
