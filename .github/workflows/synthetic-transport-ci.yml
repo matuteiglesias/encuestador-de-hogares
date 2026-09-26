@@ -117,9 +117,8 @@ jobs:
           science/2026-09-11/build_predictive_welfare_release.py
           science/telescope_c/prepare.py
           science/commissioning/run_eph_census_domain_check.py
-          tests/test_telescope_c_transport.py
-          tests/test_eph_census_domain_check.py
           science/commissioning/run_eph_census_domain_check.py
+          tests/test_telescope_c_transport.py
           tests/test_eph_census_domain_check.py
       - name: Compile integration-finisher boundary
         run: >-
@@ -165,6 +164,7 @@ jobs:
           tests/test_upstream_intake.py
           tests/test_census_sample_intake.py
           tests/test_telescope_c_transport.py
+          tests/test_eph_census_domain_check.py
       - name: Prove bounded science CLI surfaces
         run: |
           python science/2026-09-11/build_predictive_welfare_release.py --help >/tmp/predictive-welfare-help.txt
