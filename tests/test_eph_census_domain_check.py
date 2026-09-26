@@ -187,6 +187,7 @@ def test_thin_domain_check_materializes_oof_and_two_lenses(tmp_path: Path) -> No
         min_source_persons=10,
         folds=5,
         random_state=42,
+        max_classifier_persons_per_source=50000,
     )
 
     assert manifest["status"] == "diagnostic_only"
