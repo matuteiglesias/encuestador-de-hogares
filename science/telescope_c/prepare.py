@@ -33,7 +33,7 @@ DOMAIN_PARAMS = {
     "random_state": 42,
     "early_stopping": False,
 }
-DEFAULT_FOLD_SHA = "7e1d7fa75684d6ebdeb694176a4dcb07363f77597425405e955b62dfaa84247d"
+DEFAULT_FOLD_SHA = None
 
 
 class TelescopeCUpstreamError(ValueError):
@@ -179,10 +179,16 @@ def matched_model_scores(
     *,
     allow_reproduction_mismatch: bool = False,
 ) -> tuple[pd.DataFrame, pd.DataFrame, dict]:
-    require(persisted_oof, ["row_id", "pred"], "persisted P1-R OOF")
+    require(persisted_oof, ["row_id", "fold", "pred"], "P1-R OOF")
     if persisted_oof.row_id.duplicated().any():
         raise TelescopeCUpstreamError("duplicate persisted OOF row_id")
-    persisted = persisted_oof.set_index("row_id")["pred"].astype(float)
+    persisted_oof = persisted_oof.copy()
+    persisted_oof["fold"] = pd.to_numeric(persisted_oof["fold"], errors="coerce")
+    persisted_oof["pred"] = pd.to_numeric(persisted_oof["pred"], errors="coerce")
+    if persisted_oof[["fold", "pred"]].isna().any().any():
+        raise TelescopeCUpstreamError("P1-R OOF has invalid fold/pred")
+    persisted_oof["fold"] = persisted_oof["fold"].astype(int)
+    persisted = persisted_oof.set_index("row_id")[["fold", "pred"]]
 
     eph_rows: list[pd.DataFrame] = []
     census_rows: list[pd.DataFrame] = []
@@ -207,14 +213,19 @@ def matched_model_scores(
         census_rows.append(c[["row_id", "household_id", "outer_fold", "pred"]])
 
         expected = persisted.reindex(test.row_id)
-        if expected.isna().any():
-            raise TelescopeCUpstreamError(f"persisted P1-R OOF missing fold {fold} rows")
-        delta = eph_pred - expected.to_numpy(float)
-        scale = np.maximum(np.abs(expected.to_numpy(float)), 1.0)
+        if expected.isna().any().any():
+            raise TelescopeCUpstreamError(f"P1-R OOF missing fold {fold} rows")
+        if not (expected["fold"].astype(int).to_numpy() == fold).all():
+            raise TelescopeCUpstreamError(
+                f"B->C outer-fold identity mismatch at fold {fold}"
+            )
+        expected_pred = expected["pred"].to_numpy(float)
+        delta = eph_pred - expected_pred
+        scale = np.maximum(np.abs(expected_pred), 1.0)
         max_abs = float(np.max(np.abs(delta)))
         max_rel = float(np.max(np.abs(delta) / scale))
         reproduced = bool(np.allclose(
-            eph_pred, expected.to_numpy(float), rtol=1e-10, atol=1e-7
+            eph_pred, expected_pred, rtol=1e-10, atol=1e-7
         ))
         fold_diag.append({
             "outer_fold": fold,
@@ -223,11 +234,12 @@ def matched_model_scores(
             "census_persons": int(len(census)),
             "max_abs_delta_vs_persisted_oof": max_abs,
             "max_relative_delta_vs_persisted_oof": max_rel,
+            "b_to_c_fold_identity": True,
             "reproduced": reproduced,
         })
         if not reproduced and not allow_reproduction_mismatch:
             raise TelescopeCUpstreamError(
-                f"outer model {fold} does not reproduce persisted P1-R OOF "
+                f"outer model {fold} does not reproduce P1-R OOF "
                 f"(max_abs={max_abs}, max_rel={max_rel})"
             )
 
@@ -441,7 +453,7 @@ def parser() -> argparse.ArgumentParser:
     p.add_argument(
         "--allow-reproduction-mismatch",
         action="store_true",
-        help="retain all persons and continue with an explicit persisted-OOF mismatch warning",
+        help="retain all persons and continue with an explicit OOF mismatch warning",
     )
     return p
 
