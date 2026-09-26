@@ -171,11 +171,17 @@ def test_feature_tiers_follow_temporal_roles_without_duplicate_policy() -> None:
 def test_thin_domain_check_materializes_oof_and_two_lenses(tmp_path: Path) -> None:
     semantic, raw, handoff = _fixture(tmp_path)
     output = tmp_path / "out"
+    eph_semantic = pd.read_parquet(semantic / "eph_p1.parquet")
+    eligible = tmp_path / "eligible.parquet"
+    eph_semantic.groupby(eph_semantic["row_id"].str.slice(1, 3), group_keys=False).head(20)[
+        ["row_id"]
+    ].to_parquet(eligible, index=False)
     manifest = DOMAIN.run(
         semantic_plane=semantic,
         eph_individual=raw,
         census_geography_handoff=handoff,
         output=output,
+        eph_eligible_rows=eligible,
         numeric_fields={"P03"},
         exclude_fields=set(),
         min_source_persons=10,
@@ -194,7 +200,8 @@ def test_thin_domain_check_materializes_oof_and_two_lenses(tmp_path: Path) -> No
     inventory = pd.read_csv(output / "domain_inventory.csv", dtype={"domain": str})
     pooled = inventory.loc[inventory["domain"] == "EPH_TOTAL"].iloc[0]
     outside = inventory.loc[inventory["domain"] == "OUTSIDE_EPH_FRAME"].iloc[0]
-    assert int(pooled["eph_persons"]) == 60
+    assert int(pooled["eph_support_persons"]) == 40
+    assert int(pooled["eph_population_persons"]) == 60
     assert int(pooled["census_persons"]) == 80
     assert int(outside["census_persons"]) == 10
 
@@ -219,7 +226,7 @@ def test_thin_domain_check_materializes_oof_and_two_lenses(tmp_path: Path) -> No
         & (marginals["concept"] == "P02")
     ].iloc[0]
     assert float(pop["eph_weight_sum"]) == sum(1 + (i % 3) for i in range(30)) * 2
-    assert float(model["eph_weight_sum"]) == 60.0
+    assert float(model["eph_weight_sum"]) == 40.0
     # Census design inverse weights are deliberately ignored in both lenses.
     assert float(pop["census_weight_sum"]) == 80.0
     assert float(model["census_weight_sum"]) == 80.0
@@ -236,6 +243,7 @@ def test_eph_period_clock_fails_closed(tmp_path: Path) -> None:
             eph_individual=raw,
             census_geography_handoff=handoff,
             output=tmp_path / "out",
+            eph_eligible_rows=None,
             numeric_fields={"P03"},
             exclude_fields=set(),
             min_source_persons=10,
@@ -256,6 +264,7 @@ def test_current_g2_rejects_non_2010_donor(tmp_path: Path) -> None:
             eph_individual=raw,
             census_geography_handoff=handoff,
             output=tmp_path / "out",
+            eph_eligible_rows=None,
             numeric_fields={"P03"},
             exclude_fields=set(),
             min_source_persons=10,
