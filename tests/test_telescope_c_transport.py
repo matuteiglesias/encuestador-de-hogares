@@ -78,7 +78,15 @@ def test_matched_outer_models_reproduce_persisted_oof():
         train = source[source.outer_fold != fold]
         test = source[source.outer_fold == fold]
         pred = TC.fit_hurdle_predict(train, test)
-        expected.append(pd.DataFrame({"row_id": test.row_id.to_numpy(), "pred": pred}))
+        expected.append(
+            pd.DataFrame(
+                {
+                    "row_id": test.row_id.to_numpy(),
+                    "fold": np.full(len(test), fold, dtype=int),
+                    "pred": pred,
+                }
+            )
+        )
     persisted = pd.concat(expected, ignore_index=True)
     eph_scores, census_scores, diagnostic = TC.matched_model_scores(
         source, target, persisted
@@ -87,3 +95,32 @@ def test_matched_outer_models_reproduce_persisted_oof():
     assert len(eph_scores) == len(source)
     assert len(census_scores) == 5 * len(target)
     assert census_scores.groupby("row_id").outer_fold.nunique().eq(5).all()
+
+
+def test_matched_outer_models_reject_b_to_c_fold_mismatch():
+    source = frame(30)
+    target = frame(10, target=True)
+    expected = []
+    for fold in range(5):
+        train = source[source.outer_fold != fold]
+        test = source[source.outer_fold == fold]
+        pred = TC.fit_hurdle_predict(train, test)
+        expected.append(
+            pd.DataFrame(
+                {
+                    "row_id": test.row_id.to_numpy(),
+                    "fold": np.full(len(test), fold, dtype=int),
+                    "pred": pred,
+                }
+            )
+        )
+    persisted = pd.concat(expected, ignore_index=True)
+    persisted.loc[persisted.index[0], "fold"] = (
+        int(persisted.loc[persisted.index[0], "fold"]) + 1
+    ) % 5
+    try:
+        TC.matched_model_scores(source, target, persisted)
+    except TC.TelescopeCUpstreamError as exc:
+        assert "B->C outer-fold identity mismatch" in str(exc)
+    else:
+        raise AssertionError("expected B->C fold identity failure")
