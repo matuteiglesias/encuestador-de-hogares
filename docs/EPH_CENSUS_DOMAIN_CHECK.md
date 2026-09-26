@@ -55,12 +55,15 @@ may pass a different explicit exclusion set.
 ### Model-support lens
 
 ```text
-EPH    unit rows
-Census unit rows
+EPH    exact eligible training row_ids when supplied, unit weight
+Census unit scoring rows
 ```
 
-This asks whether Census scoring rows occupy support similar to the rows the model
-actually sees.
+`--eph-eligible-rows` accepts a CSV/Parquet with unique `row_id` values. If it
+is omitted, the runner uses all semantic EPH rows and records that fallback
+explicitly in the manifest. This asks whether Census scoring rows occupy support
+similar to the actual model-training universe without changing the separate
+population-composition universe.
 
 ### Population-composition lens
 
@@ -86,6 +89,11 @@ CENSUS:<household_id>
 
 The fit and evaluation weights balance EPH vs Census source mass only. They do
 not reweight demographic composition.
+
+For the classifier only, each source/domain is capped deterministically at a
+household-preserving number of persons (default 50,000) to keep the pooled
+diagnostic bounded. Marginal diagnostics always use the complete governed
+surfaces.
 
 Reported metrics are OOF:
 
@@ -146,7 +154,8 @@ python science/commissioning/run_eph_census_domain_check.py \
   --semantic-plane /path/to/eph-census-semantic-plane \
   --eph-individual /path/to/usu_individual_t324.txt \
   --census-geography-handoff /path/to/g2-handoff \
-  --output /path/to/domain-check
+  --output /path/to/domain-check \
+  --eph-eligible-rows /path/to/exact-model-eligible-row-ids.parquet
 ```
 
 Useful optional controls:
@@ -157,6 +166,7 @@ Useful optional controls:
 --min-source-persons 100
 --folds 5
 --random-state 42
+--max-classifier-persons-per-source 50000
 ```
 
 ## Non-goals
