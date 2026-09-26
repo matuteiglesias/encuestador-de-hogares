@@ -496,22 +496,42 @@ def _domain_subset(
     return frame.loc[frame["eph_agglomerate_id"].astype("string") == domain].copy()
 
 
-def build_inventory(eph: pd.DataFrame, census: pd.DataFrame) -> pd.DataFrame:
+def load_eligible_row_ids(path: Path) -> set[str]:
+    path = Path(path).expanduser().resolve()
+    frame = pd.read_parquet(path) if path.suffix.lower() == ".parquet" else pd.read_csv(path)
+    if "row_id" not in frame.columns:
+        raise DomainCheckError("eph_eligible_rows_missing_row_id")
+    ids = frame["row_id"].astype(str)
+    if ids.duplicated().any():
+        raise DomainCheckError("eph_eligible_rows_not_unique")
+    return set(ids)
+
+
+def build_inventory(
+    eph_support: pd.DataFrame,
+    eph_population: pd.DataFrame,
+    census: pd.DataFrame,
+) -> pd.DataFrame:
     mapped_census = census.loc[census["mapped_to_eph_frame"].astype(bool)]
     domains = sorted(
-        set(eph["eph_agglomerate_id"].dropna().astype(str))
+        set(eph_population["eph_agglomerate_id"].dropna().astype(str))
         | set(mapped_census["eph_agglomerate_id"].dropna().astype(str))
     )
     rows: list[dict[str, Any]] = []
     for domain in ["EPH_TOTAL", *domains]:
-        e = _domain_subset(eph, domain, census=False)
+        e_support = _domain_subset(eph_support, domain, census=False)
+        e_population = _domain_subset(eph_population, domain, census=False)
         c = _domain_subset(census, domain, census=True)
         rows.append(
             {
                 "domain": domain,
-                "eph_persons": int(len(e)),
-                "eph_households": int(e["household_id"].nunique()),
-                "eph_pondera_mass": float(e["PONDERA"].sum()),
+                "eph_support_persons": int(len(e_support)),
+                "eph_support_households": int(e_support["household_id"].nunique()),
+                "eph_population_persons": int(len(e_population)),
+                "eph_population_households": int(
+                    e_population["household_id"].nunique()
+                ),
+                "eph_pondera_mass": float(e_population["PONDERA"].sum()),
                 "census_persons": int(len(c)),
                 "census_households": int(c["household_id"].nunique()),
             }
@@ -519,8 +539,10 @@ def build_inventory(eph: pd.DataFrame, census: pd.DataFrame) -> pd.DataFrame:
     rows.append(
         {
             "domain": "OUTSIDE_EPH_FRAME",
-            "eph_persons": 0,
-            "eph_households": 0,
+            "eph_support_persons": 0,
+            "eph_support_households": 0,
+            "eph_population_persons": 0,
+            "eph_population_households": 0,
             "eph_pondera_mass": 0.0,
             "census_persons": int((~census["mapped_to_eph_frame"].astype(bool)).sum()),
             "census_households": int(
@@ -538,6 +560,7 @@ def run(
     eph_individual: Path,
     census_geography_handoff: Path,
     output: Path,
+    eph_eligible_rows: Path | None,
     numeric_fields: set[str],
     exclude_fields: set[str],
     min_source_persons: int,
@@ -555,7 +578,35 @@ def run(
     eph_semantic, census_semantic, semantic_manifest = load_semantic_plane(semantic_plane)
     clocks = dict(semantic_manifest.get("clocks") or {})
     parents = dict(semantic_manifest.get("parents") or {})
-    eph = attach_eph_metadata(eph_semantic, eph_individual, clocks)
+    eph_population = attach_eph_metadata(eph_semantic, eph_individual, clocks)
+    if eph_eligible_rows is None:
+        eph_support = eph_population.copy()
+        eligibility = {
+            "mode": "all_semantic_rows",
+            "path": None,
+            "sha256": None,
+            "rows": int(len(eph_support)),
+        }
+    else:
+        eligible_path = Path(eph_eligible_rows).expanduser().resolve()
+        eligible_ids = load_eligible_row_ids(eligible_path)
+        semantic_ids = set(eph_population["row_id"].astype(str))
+        extra = eligible_ids - semantic_ids
+        if extra:
+            raise DomainCheckError(
+                f"eph_eligible_rows_outside_semantic_plane:{len(extra)}"
+            )
+        eph_support = eph_population.loc[
+            eph_population["row_id"].astype(str).isin(eligible_ids)
+        ].copy()
+        if len(eph_support) != len(eligible_ids):
+            raise DomainCheckError("eph_eligible_rows_coverage_mismatch")
+        eligibility = {
+            "mode": "explicit_row_id_surface",
+            "path": str(eligible_path),
+            "sha256": sha256(eligible_path),
+            "rows": int(len(eph_support)),
+        }
     geography, geography_manifest = load_census_geography_handoff(
         census_geography_handoff,
         expected_sample_release=str(parents.get("census_sample_release_id") or ""),
@@ -570,7 +621,7 @@ def run(
     if missing_features:
         raise DomainCheckError(f"diagnostic_features_missing:{missing_features}")
 
-    inventory = build_inventory(eph, census)
+    inventory = build_inventory(eph_support, eph_population, census)
     inventory_path = output / "domain_inventory.csv"
     inventory.to_csv(inventory_path, index=False)
 
@@ -579,11 +630,11 @@ def run(
         str(row.domain)
         for row in inventory.itertuples()
         if row.domain != "OUTSIDE_EPH_FRAME"
-        and row.eph_persons >= min_source_persons
+        and row.eph_support_persons >= min_source_persons
         and row.census_persons >= min_source_persons
     ]
     for domain in eligible_domains:
-        e = _domain_subset(eph, domain, census=False)
+        e = _domain_subset(eph_support, domain, census=False)
         c = _domain_subset(census, domain, census=True)
         for tier, features in tiers.items():
             metrics = cross_fitted_domain_metrics(
@@ -614,14 +665,16 @@ def run(
     roles = (semantic_manifest.get("consumer_handoff") or {}).get("temporal_roles") or {}
     marginal_rows: list[dict[str, Any]] = []
     for domain in eligible_domains:
-        e = _domain_subset(eph, domain, census=False)
+        e_support = _domain_subset(eph_support, domain, census=False)
+        e_population = _domain_subset(eph_population, domain, census=False)
         c = _domain_subset(census, domain, census=True)
         for lens in ("model_support", "population_composition"):
-            ew = (
-                np.ones(len(e), dtype=float)
-                if lens == "model_support"
-                else e["PONDERA"].to_numpy(dtype=float)
-            )
+            if lens == "model_support":
+                e = e_support
+                ew = np.ones(len(e), dtype=float)
+            else:
+                e = e_population
+                ew = e["PONDERA"].to_numpy(dtype=float)
             # Census selected persons are the target-year sample surface.
             # Design inverse probabilities are intentionally not analysis weights.
             cw = np.ones(len(c), dtype=float)
@@ -679,8 +732,10 @@ def run(
         "feature_tiers": tiers,
         "excluded_fields": sorted(exclude_fields),
         "numeric_fields": sorted(numeric_fields & set(all_fields)),
+        "eph_model_support_eligibility": eligibility,
         "lenses": {
             "model_support": {
+                "eph_rows": "explicit eligible row_id surface when supplied; otherwise all semantic rows",
                 "eph_weight": "unit",
                 "census_weight": "unit",
             },
@@ -721,6 +776,15 @@ def parser() -> argparse.ArgumentParser:
     out.add_argument("--census-geography-handoff", type=Path, required=True)
     out.add_argument("--output", type=Path, required=True)
     out.add_argument(
+        "--eph-eligible-rows",
+        type=Path,
+        help=(
+            "Optional CSV/Parquet with unique row_id values defining the exact EPH "
+            "training/support universe. Population-composition diagnostics still "
+            "use the full semantic EPH plane with PONDERA."
+        ),
+    )
+    out.add_argument(
         "--numeric-fields",
         default=",".join(DEFAULT_NUMERIC_FIELDS),
         help="Comma-separated canonical numeric concepts.",
@@ -746,6 +810,7 @@ def main() -> int:
         eph_individual=args.eph_individual,
         census_geography_handoff=args.census_geography_handoff,
         output=args.output,
+        eph_eligible_rows=args.eph_eligible_rows,
         numeric_fields=set(parse_csv_list(args.numeric_fields)),
         exclude_fields=set(parse_csv_list(args.exclude_fields)),
         min_source_persons=args.min_source_persons,
