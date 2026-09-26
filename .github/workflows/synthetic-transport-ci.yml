@@ -33,6 +33,7 @@ on:
       - scripts/synthetic_transport_smoke.py
       - science/2026-09-11/build_predictive_welfare_release.py
       - science/telescope_c/**
+      - science/commissioning/**
       - tests/**
   push:
     branches: [main]
@@ -48,6 +49,7 @@ on:
       - scripts/synthetic_transport_smoke.py
       - science/2026-09-11/build_predictive_welfare_release.py
       - science/telescope_c/**
+      - science/commissioning/**
 
 permissions:
   contents: read
@@ -114,7 +116,11 @@ jobs:
           ruff check --select E4,E7,E9,F
           science/2026-09-11/build_predictive_welfare_release.py
           science/telescope_c/prepare.py
+          science/commissioning/run_eph_census_domain_check.py
           tests/test_telescope_c_transport.py
+          tests/test_eph_census_domain_check.py
+          science/commissioning/run_eph_census_domain_check.py
+          tests/test_eph_census_domain_check.py
       - name: Compile integration-finisher boundary
         run: >-
           python -m py_compile
@@ -163,5 +169,6 @@ jobs:
         run: |
           python science/2026-09-11/build_predictive_welfare_release.py --help >/tmp/predictive-welfare-help.txt
           python science/telescope_c/prepare.py --help >/tmp/telescope-c-help.txt
+          python science/commissioning/run_eph_census_domain_check.py --help >/tmp/domain-check-help.txt
       - name: Execute legacy transport maturity smoke
         run: python scripts/synthetic_transport_smoke.py > /tmp/synthetic-proof.json
