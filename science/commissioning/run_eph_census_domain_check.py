@@ -322,6 +322,28 @@ def _balanced_source_weights(y: np.ndarray) -> np.ndarray:
     return weights
 
 
+def bounded_household_sample(
+    frame: pd.DataFrame,
+    *,
+    max_persons: int | None,
+    random_state: int,
+) -> pd.DataFrame:
+    if max_persons is None or max_persons <= 0 or len(frame) <= max_persons:
+        return frame.copy()
+    counts = (
+        frame.groupby("household_id", sort=False)
+        .size()
+        .rename("persons")
+        .reset_index()
+    )
+    counts = counts.sample(frac=1.0, random_state=random_state).reset_index(drop=True)
+    counts["cumulative"] = counts["persons"].cumsum()
+    selected = counts.loc[counts["cumulative"] <= max_persons, "household_id"].astype(str)
+    if selected.empty:
+        selected = counts.head(1)["household_id"].astype(str)
+    return frame.loc[frame["household_id"].astype(str).isin(set(selected))].copy()
+
+
 def cross_fitted_domain_metrics(
     eph: pd.DataFrame,
     census: pd.DataFrame,
@@ -330,7 +352,18 @@ def cross_fitted_domain_metrics(
     numeric_fields: set[str],
     requested_folds: int,
     random_state: int,
+    max_persons_per_source: int | None,
 ) -> dict[str, Any]:
+    eph = bounded_household_sample(
+        eph,
+        max_persons=max_persons_per_source,
+        random_state=random_state,
+    )
+    census = bounded_household_sample(
+        census,
+        max_persons=max_persons_per_source,
+        random_state=random_state + 10_000,
+    )
     left = eph.loc[:, ["household_id", *features]].copy()
     left["source"] = 0
     left["group_id"] = "EPH:" + left["household_id"].astype(str)
@@ -386,6 +419,8 @@ def cross_fitted_domain_metrics(
     brier = float(np.average((oof - y) ** 2, weights=eval_weights))
     return {
         "n_splits": n_splits,
+        "classifier_eph_persons": int((y == 0).sum()),
+        "classifier_census_persons": int((y == 1).sum()),
         "auc_oof": float(roc_auc_score(y, oof, sample_weight=eval_weights)),
         "log_loss_oof": float(
             log_loss(y, oof, sample_weight=eval_weights, labels=[0, 1])
@@ -566,6 +601,7 @@ def run(
     min_source_persons: int,
     folds: int,
     random_state: int,
+    max_classifier_persons_per_source: int | None,
 ) -> dict[str, Any]:
     semantic_plane = Path(semantic_plane).expanduser().resolve()
     eph_individual = Path(eph_individual).expanduser().resolve()
@@ -616,7 +652,8 @@ def run(
 
     all_fields = list(dict.fromkeys(tiers["S+T+R"]))
     missing_features = sorted(
-        set(all_fields) - set(eph.columns) | set(all_fields) - set(census.columns)
+        (set(all_fields) - set(eph_population.columns))
+        | (set(all_fields) - set(census.columns))
     )
     if missing_features:
         raise DomainCheckError(f"diagnostic_features_missing:{missing_features}")
@@ -644,6 +681,7 @@ def run(
                 numeric_fields=numeric_fields,
                 requested_folds=folds,
                 random_state=random_state,
+                max_persons_per_source=max_classifier_persons_per_source,
             )
             classifier_rows.append(
                 {
@@ -752,6 +790,7 @@ def run(
             "evaluation_weighting": "source-balanced only",
             "requested_folds": folds,
             "random_state": random_state,
+            "max_persons_per_source_domain": max_classifier_persons_per_source,
             "minimum_persons_per_source_domain": min_source_persons,
         },
         "artifacts": {
@@ -800,6 +839,15 @@ def parser() -> argparse.ArgumentParser:
     out.add_argument("--min-source-persons", type=int, default=100)
     out.add_argument("--folds", type=int, default=5)
     out.add_argument("--random-state", type=int, default=42)
+    out.add_argument(
+        "--max-classifier-persons-per-source",
+        type=int,
+        default=50000,
+        help=(
+            "Household-preserving deterministic cap per source/domain for the "
+            "cross-fitted classifier only. Marginal diagnostics always use all rows."
+        ),
+    )
     return out
 
 
@@ -816,6 +864,7 @@ def main() -> int:
         min_source_persons=args.min_source_persons,
         folds=args.folds,
         random_state=args.random_state,
+        max_classifier_persons_per_source=args.max_classifier_persons_per_source,
     )
     print(
         json.dumps(
