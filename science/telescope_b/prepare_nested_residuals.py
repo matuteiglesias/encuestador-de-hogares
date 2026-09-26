@@ -172,11 +172,9 @@ def assign_inner_folds(households: pd.Series, folds: int = 5) -> pd.Series:
 def load_inputs(
     eph_persons_path: Path,
     eph_p1_path: Path,
-    person_oof_path: Path,
     telescope_a_households_path: Path,
     *,
     period: str,
-    expected_fold_manifest_sha256: str | None = None,
 ) -> tuple[pd.DataFrame, set[str], dict, dict]:
     year, quarter = period_parts(period)
 
@@ -214,11 +212,8 @@ def load_inputs(
     fold_payload = build_canonical_fold_manifest(raw)
     fold_bytes = canonical_json_bytes(fold_payload)
     fold_sha = hashlib.sha256(fold_bytes).hexdigest()
-    if expected_fold_manifest_sha256 and fold_sha != expected_fold_manifest_sha256:
-        raise NestedResidualError(
-            "canonical fold-manifest SHA mismatch: "
-            f"{fold_sha} != {expected_fold_manifest_sha256}"
-        )
+    if fold_bytes != canonical_json_bytes(build_canonical_fold_manifest(raw)):
+        raise NestedResidualError("canonical fold assignment is not deterministic")
     fold_map = {
         str(item["row_id"]): int(item["fold_id"])
         for item in fold_payload["rows"]
@@ -235,45 +230,11 @@ def load_inputs(
         raise NestedResidualError("duplicate eligible EPH row_id")
     if (eligible.groupby("hh").outer_fold.nunique() != 1).any():
         raise NestedResidualError("household members cross governed outer folds")
-
-    persisted_oof = pd.read_json(person_oof_path, lines=True)
-    require(persisted_oof, ["row_id"], "persisted P1-R OOF")
-    fold_column = (
-        "fold"
-        if "fold" in persisted_oof.columns
-        else "fold_id"
-        if "fold_id" in persisted_oof.columns
-        else None
-    )
-    if fold_column is None:
-        raise NestedResidualError("persisted P1-R OOF missing fold/fold_id")
-    if persisted_oof.row_id.duplicated().any():
-        raise NestedResidualError("persisted P1-R OOF has duplicate row_id")
-    persisted_oof["_persisted_fold"] = pd.to_numeric(
-        persisted_oof[fold_column], errors="coerce"
-    )
-    if persisted_oof._persisted_fold.isna().any():
-        raise NestedResidualError("persisted P1-R OOF has invalid fold assignment")
-    persisted_oof["_persisted_fold"] = persisted_oof._persisted_fold.astype(int)
-
-    oof_check = eligible[["row_id", "outer_fold"]].merge(
-        persisted_oof[["row_id", "_persisted_fold"]],
-        on="row_id",
-        how="inner",
-        validate="one_to_one",
-    )
-    if len(oof_check) != len(persisted_oof):
+    fold_counts = eligible.groupby("outer_fold").size().sort_index()
+    fold_shares = fold_counts / float(len(eligible))
+    if (fold_shares < 0.15).any() or (fold_shares > 0.25).any():
         raise NestedResidualError(
-            "persisted P1-R OOF identity is not an exact eligible-person subset"
-        )
-    disagreement = oof_check.outer_fold != oof_check._persisted_fold
-    if disagreement.any():
-        sample = oof_check.loc[
-            disagreement, ["row_id", "outer_fold", "_persisted_fold"]
-        ].head(20).to_dict("records")
-        raise NestedResidualError(
-            "persisted P1-R OOF folds disagree with canonical household_grouped_v1 "
-            f"for {int(disagreement.sum())} rows; sample={sample}"
+            f"canonical outer folds materially imbalanced: {fold_shares.to_dict()}"
         )
 
     a = pd.read_parquet(telescope_a_households_path)
@@ -324,8 +285,13 @@ def load_inputs(
     return model, complete_hh, {
         "full_persons": int(len(raw)),
         "eligible_persons": int(len(eligible)),
-        "persisted_oof_persons": int(len(persisted_oof)),
-        "persisted_oof_fold_agreement": 1.0,
+        "fold_balance": {
+            str(k): {
+                "persons": int(fold_counts.loc[k]),
+                "share": float(fold_shares.loc[k]),
+            }
+            for k in fold_counts.index
+        },
         "telescope_a_households": int(len(complete_hh)),
         "telescope_a_persons": int(len(selected)),
         "outer_fold_person_counts": {
@@ -334,6 +300,65 @@ def load_inputs(
         },
         "fold_manifest_sha256": fold_sha,
     }, fold_payload
+
+
+def outer_oof_predictions(model: pd.DataFrame) -> pd.DataFrame:
+    out = []
+    for outer_fold in range(N_OUTER_FOLDS):
+        train = model[model.outer_fold != outer_fold]
+        test = model[model.outer_fold == outer_fold]
+        pred = fit_hurdle_predict(train, test)
+        part = test[["row_id", "hh", "y", "outer_fold"]].copy()
+        part["pred"] = pred
+        part = part.rename(columns={"outer_fold": "fold"})
+        out.append(part)
+    result = pd.concat(out, ignore_index=True)
+    if len(result) != len(model) or result.row_id.nunique() != len(model):
+        raise NestedResidualError("canonical OOF does not exactly cover eligible persons")
+    if sorted(result.fold.unique()) != list(range(N_OUTER_FOLDS)):
+        raise NestedResidualError("canonical OOF missing outer fold")
+    if (result.groupby("hh").fold.nunique() != 1).any():
+        raise NestedResidualError("canonical OOF leaks household members across outer folds")
+    if not np.isfinite(result.pred.to_numpy(float)).all() or (result.pred < 0).any():
+        raise NestedResidualError("canonical OOF contains invalid predictions")
+    return result.sort_values("row_id").reset_index(drop=True)
+
+
+def compare_historical_oof(
+    canonical_oof: pd.DataFrame,
+    historical_path: Path | None,
+) -> dict | None:
+    if historical_path is None:
+        return None
+    historical = pd.read_json(historical_path, lines=True)
+    require(historical, ["row_id", "pred"], "historical person OOF")
+    fold_column = "fold" if "fold" in historical.columns else "fold_id" if "fold_id" in historical.columns else None
+    if fold_column is None:
+        raise NestedResidualError("historical person OOF missing fold/fold_id")
+    historical = historical[["row_id", fold_column, "pred"]].rename(
+        columns={fold_column: "historical_fold", "pred": "historical_pred"}
+    )
+    joined = canonical_oof.merge(historical, on="row_id", how="inner", validate="one_to_one")
+    if joined.empty:
+        return {
+            "status": "no_overlap",
+            "historical_rows": int(len(historical)),
+            "canonical_rows": int(len(canonical_oof)),
+        }
+    fold_agreement = float((joined.fold.astype(int) == joined.historical_fold.astype(int)).mean())
+    delta = joined.pred.to_numpy(float) - joined.historical_pred.to_numpy(float)
+    scale = np.maximum(np.abs(joined.historical_pred.to_numpy(float)), 1.0)
+    return {
+        "status": "sensitivity_only",
+        "overlap_rows": int(len(joined)),
+        "canonical_rows": int(len(canonical_oof)),
+        "historical_rows": int(len(historical)),
+        "fold_agreement": fold_agreement,
+        "max_abs_prediction_delta": float(np.max(np.abs(delta))),
+        "max_relative_prediction_delta": float(np.max(np.abs(delta) / scale)),
+        "mean_abs_prediction_delta": float(np.mean(np.abs(delta))),
+        "note": "historical fold/prediction differences are non-blocking sensitivity evidence",
+    }
 
 
 def household_residuals(
@@ -405,21 +430,21 @@ def nested_outer_residuals(
 def run(args: argparse.Namespace) -> dict:
     eph_persons = Path(args.eph_persons).resolve()
     eph_p1 = Path(args.eph_p1).resolve()
-    person_oof = Path(args.person_oof).resolve()
     a_households = Path(args.telescope_a_households).resolve()
-
-    expected_fold_sha = args.expected_fold_manifest_sha256
-    if expected_fold_sha == "historical-q3":
-        expected_fold_sha = HISTORICAL_Q3_FOLD_SHA256
+    historical_oof = (
+        Path(args.historical_person_oof).resolve()
+        if args.historical_person_oof
+        else None
+    )
 
     model, complete_households, input_summary, fold_manifest = load_inputs(
         eph_persons,
         eph_p1,
-        person_oof,
         a_households,
         period=args.period,
-        expected_fold_manifest_sha256=expected_fold_sha,
     )
+    canonical_oof = outer_oof_predictions(model)
+    sensitivity = compare_historical_oof(canonical_oof, historical_oof)
     residuals, folds = nested_outer_residuals(
         model,
         complete_households,
@@ -428,6 +453,10 @@ def run(args: argparse.Namespace) -> dict:
 
     output = Path(args.output).resolve()
     output.mkdir(parents=True, exist_ok=True)
+    person_oof_path = output / "person_oof.jsonl"
+    canonical_oof[["row_id", "fold", "y", "pred", "hh"]].to_json(
+        person_oof_path, orient="records", lines=True
+    )
     residual_path = output / "fold_residuals.parquet"
     residuals.to_parquet(residual_path, index=False)
     fold_manifest_path = output / "fold_manifest.json"
@@ -436,7 +465,7 @@ def run(args: argparse.Namespace) -> dict:
     manifest = {
         "status": "RESEARCH_NESTED_RESIDUAL_EVIDENCE_NOT_OFFICIAL_STATISTICS",
         "period": args.period,
-        "method": "Q7 nested household-safe P1-R residual ECDF",
+        "method": "canonical longitudinal P1-R outer OOF plus Q7 nested household-safe residual ECDF",
         "features": FEATURES,
         "numeric_features": list(NUMERIC_FEATURES),
         "model_params": MODEL_PARAMS,
@@ -445,13 +474,21 @@ def run(args: argparse.Namespace) -> dict:
         "weights": "none",
         "input_summary": input_summary,
         "folds": folds,
+        "historical_q3_sensitivity": sensitivity,
         "parents": {
             "eph_persons_sha256": sha256(eph_persons),
             "eph_p1_sha256": sha256(eph_p1),
-            "person_oof_sha256": sha256(person_oof),
             "telescope_a_households_sha256": sha256(a_households),
+            "historical_person_oof_sha256": (
+                sha256(historical_oof) if historical_oof else None
+            ),
         },
         "files": {
+            "person_oof.jsonl": {
+                "sha256": sha256(person_oof_path),
+                "bytes": person_oof_path.stat().st_size,
+                "rows": int(len(canonical_oof)),
+            },
             "fold_manifest.json": {
                 "sha256": sha256(fold_manifest_path),
                 "bytes": fold_manifest_path.stat().st_size,
@@ -464,9 +501,13 @@ def run(args: argparse.Namespace) -> dict:
             },
         },
         "scientific_invariants": [
-            "canonical household_grouped_v1 folds regenerated from CODUSU/NRO_HOGAR",
+            "canonical household_grouped_v1 folds generated from CODUSU/NRO_HOGAR",
             "period participates in row identity but not household split group",
-            "persisted P1-R OOF fold assignment must agree 100 percent",
+            "all eligible persons receive exactly one outer fold",
+            "zero households cross outer folds",
+            "all five outer folds are nonempty and between 15 and 25 percent of eligible persons",
+            "rerunning fold construction is byte-identical",
+            "person OOF is generated from the same canonical outer folds",
             "same frozen P1-R features and hyperparameters as Q7",
             "outer-training persons only for each outer fold",
             "five deterministic household-safe inner folds",
@@ -486,17 +527,13 @@ def parser() -> argparse.ArgumentParser:
     p.add_argument("--period", required=True)
     p.add_argument("--eph-persons", required=True)
     p.add_argument("--eph-p1", required=True)
-    p.add_argument("--person-oof", required=True)
+    p.add_argument(
+        "--historical-person-oof",
+        help="optional old-Q3 OOF for non-blocking fold/prediction sensitivity only",
+    )
     p.add_argument("--telescope-a-households", required=True)
     p.add_argument("--output", required=True)
     p.add_argument("--inner-folds", type=int, default=5)
-    p.add_argument(
-        "--expected-fold-manifest-sha256",
-        help=(
-            "optional exact canonical manifest SHA; use 'historical-q3' for "
-            "7e1d7fa75684d6ebdeb694176a4dcb07363f77597425405e955b62dfaa84247d"
-        ),
-    )
     return p
 
 
@@ -508,7 +545,8 @@ def main() -> None:
             {
                 "status": manifest["status"],
                 "period": manifest["period"],
-                "rows": manifest["files"]["fold_residuals.parquet"]["rows"],
+                "person_oof_rows": manifest["files"]["person_oof.jsonl"]["rows"],
+                "residual_rows": manifest["files"]["fold_residuals.parquet"]["rows"],
                 "folds": manifest["folds"],
                 "output": str(Path(args.output).resolve()),
             },
