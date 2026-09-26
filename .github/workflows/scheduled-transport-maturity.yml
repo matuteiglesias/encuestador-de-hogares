@@ -14,6 +14,7 @@ on:
       - src/encuestador/**
       - scripts/synthetic_transport_smoke.py
       - science/2026-09-11/build_predictive_welfare_release.py
+      - science/commissioning/**
       - tests/**
   schedule:
     - cron: "17 12 * * 3"
@@ -92,6 +93,13 @@ jobs:
               raise SystemExit(f"predictive-welfare contract markers missing: {missing}")
           print("Predictive-welfare release contract surface is present")
           PY
+
+      - name: Verify thin EPH Census domain-check surface
+        run: |
+          ruff check --select E4,E7,E9,F science/commissioning/run_eph_census_domain_check.py tests/test_eph_census_domain_check.py
+          python -m py_compile science/commissioning/run_eph_census_domain_check.py
+          pytest -q tests/test_eph_census_domain_check.py
+          python science/commissioning/run_eph_census_domain_check.py --help >/tmp/domain-check-help.txt
 
       - name: Summarize maturity state
         if: always()
