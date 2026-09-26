@@ -117,7 +117,6 @@ jobs:
           science/2026-09-11/build_predictive_welfare_release.py
           science/telescope_c/prepare.py
           science/commissioning/run_eph_census_domain_check.py
-          science/commissioning/run_eph_census_domain_check.py
           tests/test_telescope_c_transport.py
           tests/test_eph_census_domain_check.py
       - name: Compile integration-finisher boundary
@@ -143,6 +142,7 @@ jobs:
           src/encuestador/cli.py
           science/2026-09-11/build_predictive_welfare_release.py
           science/telescope_c/prepare.py
+          science/commissioning/run_eph_census_domain_check.py
       - name: Verify integration-finisher science path
         run: >-
           pytest -q
