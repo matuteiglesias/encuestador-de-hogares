@@ -601,7 +601,7 @@ def run(
     min_source_persons: int,
     folds: int,
     random_state: int,
-    max_classifier_persons_per_source: int | None,
+    max_classifier_persons_per_source: int | None = 50000,
 ) -> dict[str, Any]:
     semantic_plane = Path(semantic_plane).expanduser().resolve()
     eph_individual = Path(eph_individual).expanduser().resolve()
