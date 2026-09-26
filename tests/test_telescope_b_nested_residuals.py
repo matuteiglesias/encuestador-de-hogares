@@ -61,3 +61,60 @@ def test_model_contract_remains_frozen():
         "random_state": 42,
         "early_stopping": False,
     }
+
+
+def test_canonical_fold_policy_matches_repository_contract():
+    raw = pd.DataFrame(
+        [
+            {
+                "CODUSU": "hhA",
+                "NRO_HOGAR": "1",
+                "COMPONENTE": "1",
+                "ANO4": "2024",
+                "TRIMESTRE": "3",
+            },
+            {
+                "CODUSU": "hhA",
+                "NRO_HOGAR": "1",
+                "COMPONENTE": "2",
+                "ANO4": "2024",
+                "TRIMESTRE": "3",
+            },
+            {
+                "CODUSU": "hhB",
+                "NRO_HOGAR": "1",
+                "COMPONENTE": "1",
+                "ANO4": "2024",
+                "TRIMESTRE": "3",
+            },
+        ]
+    )
+    payload = NR.build_canonical_fold_manifest(raw)
+    assert payload["policy"] == "household_grouped_v1"
+    assert payload["n_splits"] == 5
+    rows = payload["rows"]
+    assert rows[0]["row_id"] == "hhA\x1f1\x1f1\x1f2024\x1f3"
+    assert rows[0]["household_group_id"] == "hhA\x1f1"
+    assert rows[0]["fold_id"] == rows[1]["fold_id"]
+    expected = int.from_bytes(
+        __import__("hashlib").sha256("hhA\x1f1".encode()).digest()[:8],
+        "big",
+    ) % 5
+    assert rows[0]["fold_id"] == expected
+
+
+def test_canonical_json_is_stable():
+    payload = {
+        "policy": "household_grouped_v1",
+        "n_splits": 5,
+        "rows": [
+            {
+                "row_id": "a\x1f1\x1f1\x1f2024\x1f3",
+                "household_group_id": "a\x1f1",
+                "fold_id": 2,
+            }
+        ],
+    }
+    encoded = NR.canonical_json_bytes(payload)
+    assert encoded.endswith(b"\n")
+    assert b" " not in encoded
