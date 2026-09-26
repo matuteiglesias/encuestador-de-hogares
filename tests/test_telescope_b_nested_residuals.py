@@ -3,6 +3,7 @@ from __future__ import annotations
 import importlib.util
 import sys
 from pathlib import Path
+from unittest.mock import patch
 
 import numpy as np
 import pandas as pd
@@ -118,3 +119,61 @@ def test_canonical_json_is_stable():
     encoded = NR.canonical_json_bytes(payload)
     assert encoded.endswith(b"\n")
     assert b" " not in encoded
+
+
+def test_outer_oof_uses_each_household_in_one_heldout_fold_and_covers_all_rows():
+    rows = []
+    for fold in range(5):
+        for household_index in range(2):
+            hh = f"h{fold}_{household_index}"
+            for person_index in range(2):
+                row = {
+                    "row_id": f"{hh}:{person_index}",
+                    "hh": hh,
+                    "y": float(10 + fold + person_index),
+                    "outer_fold": fold,
+                }
+                for feature in NR.FEATURES:
+                    row[feature] = float(person_index + 1)
+                rows.append(row)
+    model = pd.DataFrame(rows)
+
+    def fake_predict(train, test):
+        heldout = set(test.outer_fold.unique())
+        assert len(heldout) == 1
+        assert not set(train.outer_fold.unique()) & heldout
+        return np.full(len(test), 3.0)
+
+    with patch.object(NR, "fit_hurdle_predict", side_effect=fake_predict):
+        out = NR.outer_oof_predictions(model)
+
+    assert len(out) == len(model)
+    assert out.row_id.nunique() == len(model)
+    assert set(out.fold) == {0, 1, 2, 3, 4}
+    assert (out.groupby("hh").fold.nunique() == 1).all()
+    assert (out.pred == 3.0).all()
+
+
+def test_historical_comparison_is_non_blocking_sensitivity(tmp_path):
+    canonical = pd.DataFrame(
+        {
+            "row_id": ["a", "b"],
+            "hh": ["ha", "hb"],
+            "y": [1.0, 2.0],
+            "fold": [0, 1],
+            "pred": [1.5, 2.5],
+        }
+    )
+    historical = pd.DataFrame(
+        {
+            "row_id": ["a", "b"],
+            "fold": [4, 1],
+            "pred": [1.0, 3.0],
+        }
+    )
+    path = tmp_path / "old.jsonl"
+    historical.to_json(path, orient="records", lines=True)
+    summary = NR.compare_historical_oof(canonical, path)
+    assert summary["status"] == "sensitivity_only"
+    assert summary["fold_agreement"] == 0.5
+    assert summary["max_abs_prediction_delta"] == 0.5
