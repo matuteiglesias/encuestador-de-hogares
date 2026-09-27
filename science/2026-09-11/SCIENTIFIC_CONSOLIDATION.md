@@ -1,5 +1,7 @@
 # Scientific Consolidation — 2026-09-11
 
+> **Historical snapshot.** This document freezes the 2026-09-11 scientific sprint and is retained for provenance/regression evidence. It is not the current ecosystem work queue or commissioning authority. Current cross-ecosystem adjudication is maintained in `matuteiglesias/indice-pobreza-UBA/science/commissioning/registry.json`. In particular, the old Q8 global in-sample domain classifier is superseded for source-separation purposes by the later household-grouped OOF within-agglomerate diagnostic; dated Q1-Q8 evidence below must not be silently rewritten to match later science.
+
 ## Executive adjudication
 
 The semantic-infrastructure phase is complete enough for science. The exact real plane `eph-cpv2010-semantic-plane-2024q3-v1` has materialized locally over 47,564 EPH persons and 469,172 Census persons with a passing final support report. The active P1-R plane is the 21-field approved subset; `H11` and `H16` are rejected. Temporal reconstruction is explicitly deferred for this sprint.
