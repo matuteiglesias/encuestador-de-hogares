@@ -190,6 +190,17 @@ No real Census inference should run before a deterministic synthetic fixture pro
 - complete person→household accounting;
 - one linear `research.household-welfare@1` release.
 
+## Current commissioning status
+
+The thin 2024-Q3 / CPV-2010 source-separation surface (D-1) is closed as
+`diagnostic_only` after the categorical-canonicalization/missingness refresh. The
+stable/shared tier remains near-random source separation, while target-period and
+research-only tiers add systematic separation.
+
+This result does **not** promote a welfare transport model and does not create transport
+weights. Current cross-ecosystem adjudication and rerun triggers live in
+`matuteiglesias/indice-pobreza-UBA/science/commissioning/registry.json`.
+
 ## Current documents
 
 Start here:
