@@ -4,7 +4,24 @@ Status: **diagnostic commissioning only**
 
 ## Current adjudication boundary
 
-The 2024-Q3 / CPV-2010 OOF source-separation result is scientifically closed for the classifier surface: stable/shared features are near-random, target-period-state adds substantial separation, and research-only housing/tenure adds further separation. The later categorical-marginal canonicalization fix does not invalidate those OOF classifier metrics; it requires only one refresh of the marginal table and explicit missingness diagnostics.
+The corrected 2024-Q3 / CPV-2010 refresh is complete and D-1 is closed as
+`diagnostic_only`.
+
+The refreshed EPH_TOTAL household-grouped OOF classifier reports:
+
+```text
+S       AUC 0.514802  Brier 0.248665  log-loss 0.690428
+S+T     AUC 0.706180  Brier 0.212886  log-loss 0.605693
+S+T+R   AUC 0.811938  Brier 0.176371  log-loss 0.521190
+
+delta_T = +0.191379
+delta_R = +0.105758
+```
+
+The corrected semantic plane has zero hard violations; current support-only diagnostics are
+`IX_TOT`, `P03` and `H15`. The scientific interpretation is unchanged:
+stable/shared features are near-random for source separation, while target-period-state and
+research-only blocks add systematic separation.
 
 Cross-ecosystem status and rerun triggers are governed by `matuteiglesias/indice-pobreza-UBA/science/commissioning/registry.json`. This runner remains diagnostic-only and must not expand into joint-distribution, IPF/raking, density-ratio weighting, or a general transport subsystem without a new scientific question.
 
