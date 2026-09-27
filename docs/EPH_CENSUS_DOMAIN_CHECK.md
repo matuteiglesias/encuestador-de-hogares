@@ -109,11 +109,16 @@ not the primary diagnostic.
 
 For every domain, concept and lens:
 
-- categorical concepts: total-variation distance and Census unseen mass;
+- categorical concepts: total-variation distance and Census unseen mass after
+  representation-only numeric canonicalization (for example, category 1 and
+  1.0 are identical);
 - numeric concepts: source means, medians, standardized mean difference and
-  Census mass outside observed EPH support.
+  Census mass outside observed EPH support;
+- all concepts: EPH missing rate, Census missing rate and their difference.
 
-These are deliberately interpretable components, not one aggregate distance.
+Missingness remains visible as a separate source-difference diagnostic and is
+not folded into the categorical distribution itself. These are deliberately
+interpretable components, not one aggregate distance.
 
 ## Geography boundary
 
