@@ -34,7 +34,10 @@ reviewed monetary-reference utilities
             Poverty v2
 ```
 
-The current branch records this boundary and the candidate deployment DAG. It does **not** approve a real EPH/Census inference run or reactivate the old cron/training machinery.
+The current branch records this boundary and the candidate deployment DAG. A source-backed
+EPH 2024-Q3 ↔ CPV-2010 semantic plane is now approved upstream and has been consumed by
+the closed D-1 diagnostic. That does **not** approve a promoted real EPH→Census welfare
+inference run or reactivate the old cron/training machinery.
 
 ## What was scientifically valuable in the historical system
 
@@ -56,7 +59,10 @@ The historical four-wave grouping is preserved as evidence, not frozen as the fu
 
 ## Crosswalk evidence recovered
 
-The historical preprocessing and the current `eph-censo-aligner` agree on the following candidate naming plane. All mappings remain **pending real-vintage methodological review**; code resemblance is not semantic approval.
+The historical preprocessing and `eph-censo-aligner` recover the following candidate naming
+plane. This table is archaeology/reference, not the current real-policy authority. The exact
+EPH 2024-Q3 ↔ CPV-2010 reviewed concepts and roles live in the aligner's governed real review
+policy; code resemblance outside that policy is not semantic approval.
 
 | EPH source | Census-facing concept | Raw Census location | Important rule/status |
 |---|---|---|---|
@@ -178,7 +184,11 @@ The transport repo may consume a neutral versioned EPH artifact currently produc
 
 It explicitly does **not** establish statistical transport validity.
 
-The current aligner supports only synthetic `fixture-v1`; real EPH/Census vintages remain pending review. Therefore this repository may preserve the historical mapping as candidate evidence but must refuse a real promoted model until an exact alignment release is approved.
+The aligner now supports both synthetic `fixture-v1` and one exact source-backed real policy
+for EPH 2024-Q3 ↔ CPV-2010. That semantic approval is sufficient for the current diagnostic
+plane but does not establish statistical transport validity. CPV-2022 still requires its own
+source-backed semantic review policy. A promoted model must bind an exact approved alignment
+release and satisfy this repository's separate transport gates.
 
 ## Census frame boundary
 
