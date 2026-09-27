@@ -67,21 +67,20 @@ scientific_invariants:
 - monetary transforms and price references must be explicit and resolved through a versioned monetary-conversion release before welfare handoff
 - poverty consumes welfare semantics, never model-native latent/log prediction values
 verification:
-  status: design-characterized-runtime-pending
-  last_verified: '2026-08-27'
+  status: thin-domain-diagnostic-closed-transport-runtime-bounded
+  last_verified: '2026-09-27'
   evidence:
-  - historical four-wave Random Forest cascade in src/encuestador/entrenar_modelos.py
-  - historical EPH/Census renames and recodes in src/encuestador/preprocesar_datos.py
-  - historical quarterly notebook that adjusted Census CONDACT toward target-period unemployment before scoring
-  - current semantic-alignment vocabulary and pending real-vintage review in repo.eph-censo-aligner
-  - out-of-fold staged-training prototype currently recoverable from repo.income-modeling-eph
+  - source-backed EPH 2024-Q3 / CPV-2010 semantic feature plane is governed upstream and has zero hard semantic violations
+  - corrected D-1 household-grouped OOF source-separation diagnostic is closed diagnostic_only; stable/shared AUC is near random while target-period/research-only tiers add separation
+  - D-1 keeps unit model-support rows separate from the PONDERA population-composition lens and never uses Census design IPW as an analysis weight
+  - historical four-wave Random Forest cascade remains regression/archaeology evidence only
+  - out-of-fold staged-training prototype remains recoverable from repo.income-modeling-eph
   unknowns:
-  - no real EPH/Census vintage pair is yet approved for deployment
-  - exact current Census inference feature frame has not yet been materialized
-  - exact transport training population and EPH survey-weight policy remain unresolved
-  - transport-time role of real Census inputs remains pending variable-level review
+  - no promoted real Census welfare-transport model is authorized by D-1
+  - Census has no observed welfare outcome authority for target transport validation
+  - CPV-2022 requires its own source-backed semantic review and downstream transport qualification
   - historical fitted RFC1-RFC4 artifacts are not established as current releases
-  - exact target-period calibration policy, if any, is not approved
-  - final household welfare concept and aggregation rule require explicit scientific approval
+  - any future target-period calibration beyond explicitly commissioned mechanisms requires separate approval
+  - final promoted household-welfare transport contract remains a distinct scientific decision
 maintenance:
   cadence: active-development
