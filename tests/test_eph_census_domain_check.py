@@ -272,3 +272,36 @@ def test_current_g2_rejects_non_2010_donor(tmp_path: Path) -> None:
             folds=5,
             random_state=42,
         )
+
+
+def test_categorical_marginal_normalizes_int_float_representation() -> None:
+    metric = DOMAIN.marginal_metric(
+        pd.Series([1, 2, np.nan]),
+        pd.Series([1.0, 2.0, np.nan]),
+        eph_weights=np.ones(3),
+        census_weights=np.ones(3),
+        numeric=False,
+    )
+    assert metric["status"] == "ok"
+    assert metric["total_variation_distance"] == pytest.approx(0.0)
+    assert metric["census_unseen_mass"] == pytest.approx(0.0)
+    assert metric["eph_levels"] == 2
+    assert metric["census_levels"] == 2
+    assert metric["eph_missing_rate"] == pytest.approx(1 / 3)
+    assert metric["census_missing_rate"] == pytest.approx(1 / 3)
+    assert metric["missing_rate_difference"] == pytest.approx(0.0)
+
+
+def test_marginal_reports_source_missingness_without_folding_it_into_categories() -> None:
+    metric = DOMAIN.marginal_metric(
+        pd.Series([1, 1, 2, 2]),
+        pd.Series([1.0, np.nan, 2.0, np.nan]),
+        eph_weights=np.ones(4),
+        census_weights=np.ones(4),
+        numeric=False,
+    )
+    assert metric["total_variation_distance"] == pytest.approx(0.0)
+    assert metric["census_unseen_mass"] == pytest.approx(0.0)
+    assert metric["eph_missing_rate"] == pytest.approx(0.0)
+    assert metric["census_missing_rate"] == pytest.approx(0.5)
+    assert metric["missing_rate_difference"] == pytest.approx(0.5)
