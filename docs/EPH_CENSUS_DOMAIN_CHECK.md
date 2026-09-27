@@ -2,6 +2,12 @@
 
 Status: **diagnostic commissioning only**
 
+## Current adjudication boundary
+
+The 2024-Q3 / CPV-2010 OOF source-separation result is scientifically closed for the classifier surface: stable/shared features are near-random, target-period-state adds substantial separation, and research-only housing/tenure adds further separation. The later categorical-marginal canonicalization fix does not invalidate those OOF classifier metrics; it requires only one refresh of the marginal table and explicit missingness diagnostics.
+
+Cross-ecosystem status and rerun triggers are governed by `matuteiglesias/indice-pobreza-UBA/science/commissioning/registry.json`. This runner remains diagnostic-only and must not expand into joint-distribution, IPF/raking, density-ratio weighting, or a general transport subsystem without a new scientific question.
+
 This runner is the minimal executable bridge between the governed semantic plane,
 the governed EPH quarter, and the governed Census→EPH agglomerate handoff.
 
