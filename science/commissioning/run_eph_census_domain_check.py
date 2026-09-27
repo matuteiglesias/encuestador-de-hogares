@@ -450,6 +450,31 @@ def _weighted_quantile(values: np.ndarray, weights: np.ndarray, q: float) -> flo
     return float(values[np.searchsorted(cumulative, cutoff, side="left")])
 
 
+def _canonical_categorical_series(series: pd.Series) -> pd.Series:
+    """Normalize representation-only numeric differences without changing categories."""
+
+    def normalize(value: Any) -> Any:
+        if pd.isna(value):
+            return pd.NA
+        if isinstance(value, (int, np.integer)):
+            return str(int(value))
+        if isinstance(value, (float, np.floating)):
+            numeric = float(value)
+            if math.isfinite(numeric) and numeric.is_integer():
+                return str(int(numeric))
+            return str(numeric)
+        text = str(value).strip()
+        try:
+            numeric = float(text)
+        except ValueError:
+            return text
+        if math.isfinite(numeric) and numeric.is_integer():
+            return str(int(numeric))
+        return text
+
+    return series.map(normalize).astype("string")
+
+
 def marginal_metric(
     eph: pd.Series,
     census: pd.Series,
@@ -458,6 +483,10 @@ def marginal_metric(
     census_weights: np.ndarray,
     numeric: bool,
 ) -> dict[str, Any]:
+    eph_missing_rate = float(eph.isna().mean())
+    census_missing_rate = float(census.isna().mean())
+    missing_rate_difference = census_missing_rate - eph_missing_rate
+
     if numeric:
         e = pd.to_numeric(eph, errors="coerce").to_numpy(dtype=float)
         c = pd.to_numeric(census, errors="coerce").to_numpy(dtype=float)
@@ -466,7 +495,13 @@ def marginal_metric(
         e, ew = e[emask], eph_weights[emask]
         c, cw = c[cmask], census_weights[cmask]
         if len(e) == 0 or len(c) == 0:
-            return {"kind": "numeric", "status": "no_common_nonmissing_surface"}
+            return {
+                "kind": "numeric",
+                "status": "no_common_nonmissing_surface",
+                "eph_missing_rate": eph_missing_rate,
+                "census_missing_rate": census_missing_rate,
+                "missing_rate_difference": missing_rate_difference,
+            }
         emean = _weighted_mean(e, ew)
         cmean = _weighted_mean(c, cw)
         pooled_sd = math.sqrt(
@@ -486,16 +521,25 @@ def marginal_metric(
             "eph_median": _weighted_quantile(e, ew, 0.5),
             "census_median": _weighted_quantile(c, cw, 0.5),
             "census_outside_eph_support": outside,
+            "eph_missing_rate": eph_missing_rate,
+            "census_missing_rate": census_missing_rate,
+            "missing_rate_difference": missing_rate_difference,
         }
 
-    e = eph.astype("string")
-    c = census.astype("string")
+    e = _canonical_categorical_series(eph)
+    c = _canonical_categorical_series(census)
     emask = e.notna().to_numpy()
     cmask = c.notna().to_numpy()
     e, ew = e.loc[emask], eph_weights[emask]
     c, cw = c.loc[cmask], census_weights[cmask]
     if len(e) == 0 or len(c) == 0:
-        return {"kind": "categorical", "status": "no_common_nonmissing_surface"}
+        return {
+            "kind": "categorical",
+            "status": "no_common_nonmissing_surface",
+            "eph_missing_rate": eph_missing_rate,
+            "census_missing_rate": census_missing_rate,
+            "missing_rate_difference": missing_rate_difference,
+        }
 
     def distribution(values: pd.Series, weights: np.ndarray) -> dict[str, float]:
         frame = pd.DataFrame({"value": values.astype(str).to_numpy(), "weight": weights})
@@ -515,6 +559,9 @@ def marginal_metric(
         "census_unseen_mass": float(unseen),
         "eph_levels": len(ep),
         "census_levels": len(cp),
+        "eph_missing_rate": eph_missing_rate,
+        "census_missing_rate": census_missing_rate,
+        "missing_rate_difference": missing_rate_difference,
     }
 
 
