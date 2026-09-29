@@ -36,6 +36,33 @@ transport study specification
              Poverty v2
 ```
 
+## Longitudinal measurement mode — L10/L11/L12
+
+The active runtime now has a fixture-first longitudinal measurement path for
+observed EPH quarters `2017-Q1..2026-Q1`. It is **not** a forecasting or
+nowcasting surface.
+
+The centerline is a person-level hurdle over common-reference real `P47T`,
+with exact C1 labor context and an explicit year/quarter/shock correction.
+`2020-Q2`, `2024-Q1`, and `2024-Q2` remain measurable but are excluded
+from ordinary recurring seasonality and structural-year estimation.
+
+The arms are deliberately distinct:
+
+- **L10:** shared composition + current official aggregate labor context +
+  explicit time layer;
+- **L11:** L10 plus an actually earlier observed EPH labor state on supported
+  repeated-wave pairs;
+- **L12:** L10 plus leakage-safe OOF target-period labor probabilities learned
+  from stale state/panel evidence, with optional explicit KL/moment anchoring.
+
+Current EPH labor state is never copied and called stale donor state. Official
+regional labor rates are context, not row-level unemployment probabilities.
+Fixtures cannot promote L11/L12.
+
+See `contracts/longitudinal_runtime.yaml` and
+`docs/LONGITUDINAL_WELFARE_C4_IMPLEMENTATION.md`.
+
 ## What this repository owns
 
 - the transport training population and eligibility contract;
