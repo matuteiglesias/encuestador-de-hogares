@@ -673,6 +673,7 @@ class LongitudinalRunResult:
     transition_raw: PredictionArtifact | None = None
     transition_anchored: PredictionArtifact | None = None
     anchor_diagnostics: tuple[Mapping[str, Any], ...] = ()
+    matched_l10_oof: PredictionArtifact | None = None
 
 
 def _run_id(
@@ -733,6 +734,16 @@ def execute_longitudinal_arm(
 
     p_positive = np.full(len(rows), np.nan, dtype=float)
     positive_amount = np.full(len(rows), np.nan, dtype=float)
+    matched_l10_probability = (
+        np.full(len(rows), np.nan, dtype=float)
+        if config.arm in {"L11", "L12"}
+        else None
+    )
+    matched_l10_amount = (
+        np.full(len(rows), np.nan, dtype=float)
+        if config.arm in {"L11", "L12"}
+        else None
+    )
     transition_raw_values = (
         np.full((len(rows), 3), np.nan, dtype=float) if config.arm == "L12" else None
     )
@@ -868,7 +879,44 @@ def execute_longitudinal_arm(
         )
         p_positive[holdout] = corrected_p
         positive_amount[holdout] = corrected_amount
-        time_reports.append({"outer_fold": outer_fold, **time_fit.as_dict()})
+        time_reports.append(
+            {
+                "outer_fold": outer_fold,
+                "model_role": config.arm,
+                **time_fit.as_dict(),
+            }
+        )
+
+        if matched_l10_probability is not None and matched_l10_amount is not None:
+            baseline_estimator = _hurdle_estimator(
+                config,
+                base_feature_names,
+                include_stale=False,
+            )
+            baseline_estimator.fit(base_x[train], target[train])
+            baseline_train = baseline_estimator.predict_components(base_x[train])
+            baseline_holdout = baseline_estimator.predict_components(base_x[holdout])
+            baseline_time = fit_time_layer(
+                periods[train],
+                baseline_train.p_positive,
+                baseline_train.positive_amount,
+                target[train],
+                exception_policy=EXCEPTIONAL_PERIODS,
+            )
+            baseline_p, baseline_amount = baseline_time.apply(
+                periods[holdout],
+                baseline_holdout.p_positive,
+                baseline_holdout.positive_amount,
+            )
+            matched_l10_probability[holdout] = baseline_p
+            matched_l10_amount[holdout] = baseline_amount
+            time_reports.append(
+                {
+                    "outer_fold": outer_fold,
+                    "model_role": "matched_L10_baseline",
+                    **baseline_time.as_dict(),
+                }
+            )
 
     if not np.isfinite(p_positive).all() or not np.isfinite(positive_amount).all():
         raise LongitudinalRuntimeError("longitudinal_oof_prediction_incomplete")
@@ -953,6 +1001,58 @@ def execute_longitudinal_arm(
         "exceptional_periods": dict(EXCEPTIONAL_PERIODS),
     }
 
+    matched_l10_artifact = None
+    if matched_l10_probability is not None and matched_l10_amount is not None:
+        if (
+            not np.isfinite(matched_l10_probability).all()
+            or not np.isfinite(matched_l10_amount).all()
+        ):
+            raise LongitudinalRuntimeError("matched_l10_oof_prediction_incomplete")
+        matched_values = matched_l10_probability * matched_l10_amount
+        matched_l10_artifact = PredictionArtifact(
+            target=config.target_field,
+            kind="regression",
+            row_ids=manifest.row_ids,
+            values=matched_values,
+            source="oof",
+            fold_ids=manifest.fold_ids,
+            run_id=run_id,
+            metadata={
+                "arm": "L10",
+                "evaluation_role": f"matched_baseline_for_{config.arm}",
+                "same_rows_and_folds": True,
+            },
+        )
+        matched_person = distributional_regression_diagnostics(
+            eligibility.numeric[valid], matched_values[valid]
+        )
+        matched_household = _household_metrics(
+            rows, config, eligibility, matched_values
+        )
+        metrics["matched_l10_baseline"] = {
+            "person": matched_person,
+            "household": matched_household,
+            "delta": {
+                "person_mae_gain": (
+                    matched_person["point"]["mae"]
+                    - metrics["person"]["unconditional"]["point"]["mae"]
+                ),
+                "person_rmse_gain": (
+                    matched_person["point"]["rmse"]
+                    - metrics["person"]["unconditional"]["point"]["rmse"]
+                ),
+                "household_mae_gain": (
+                    matched_household["point"]["point"]["mae"]
+                    - metrics["household"]["point"]["point"]["mae"]
+                ),
+                "household_rmse_gain": (
+                    matched_household["point"]["point"]["rmse"]
+                    - metrics["household"]["point"]["point"]["rmse"]
+                ),
+            },
+            "promotion_authorized": False,
+        }
+
     transition_raw_artifact = None
     transition_anchored_artifact = None
     if config.arm == "L12":
@@ -1011,6 +1111,7 @@ def execute_longitudinal_arm(
         transition_raw=transition_raw_artifact,
         transition_anchored=transition_anchored_artifact,
         anchor_diagnostics=tuple(anchor_reports),
+        matched_l10_oof=matched_l10_artifact,
     )
 
 
@@ -1102,6 +1203,11 @@ def write_longitudinal_run_bundle(
                             ),
                             "unconditional_expected_income": float(
                                 result.hurdle.unconditional_expected_income.values[index]
+                            ),
+                            "matched_l10_expected_income": (
+                                float(result.matched_l10_oof.values[index])
+                                if result.matched_l10_oof is not None
+                                else None
                             ),
                         }
                     )
