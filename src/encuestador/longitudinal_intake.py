@@ -258,10 +258,12 @@ def exact_parent_metadata(
         "longitudinal_eph": {
             "contract": LONGITUDINAL_EPH_CONTRACT,
             "release_id": eph.release_id,
+            "manifest_sha256": sha256_file(eph.root / "manifest.json"),
         },
         "labor_context": {
             "contract": LABOR_CONTEXT_CONTRACT,
             "release_id": labor.release_id,
+            "manifest_sha256": sha256_file(labor.root / "manifest.json"),
         },
         "monetary_conversion": {
             "release_id": eph.monetary_release_id,
@@ -274,5 +276,8 @@ def exact_parent_metadata(
             "semantic_plane_release_id": donor.release_id,
             "donor_vintage": donor.donor_vintage,
             "contract": "research.eph-census-donor-labor-handoff/v1",
+            "manifest_sha256": sha256_file(
+                donor.root / "feature_plane_manifest.json"
+            ),
         }
     return output
