@@ -10,6 +10,7 @@ import tempfile
 from collections import Counter, defaultdict
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
+from itertools import pairwise
 from pathlib import Path
 from typing import Any
 
@@ -20,14 +21,22 @@ from .anchors import multiclass_kl_moment_projection
 from .cascade import _subset_manifest
 from .crossfit import crossfit_predict, fit_full_and_score
 from .estimators import HGBClassifierAdapter, HGBRegressorAdapter
-from .evaluation import classification_diagnostics, distributional_regression_diagnostics
+from .evaluation import (
+    classification_diagnostics,
+    distributional_regression_diagnostics,
+)
 from .scientific_primitives import FoldManifest, PredictionArtifact
 from .terminal import (
     HurdleEstimator,
     HurdlePredictionBundle,
     classify_income_target,
 )
-from .time_layer import EXCEPTIONAL_PERIODS, TimeLayerFit, fit_time_layer, parse_period
+from .time_layer import (
+    EXCEPTIONAL_PERIODS,
+    TimeLayerFit,
+    fit_time_layer,
+    parse_period,
+)
 
 LABOR_INDICATORS = ("activity_rate", "unemployment_rate", "subemployment_rate")
 LABOR_CONTEXT_FIELDS = (
@@ -290,8 +299,7 @@ def attach_labor_context(
 
 def _labor_state(value: Any, field: str) -> str:
     text = str(value).strip()
-    if text.endswith(".0"):
-        text = text[:-2]
+    text = text.removesuffix(".0")
     if text not in {"1", "2", "3"}:
         raise LongitudinalRuntimeError(
             f"labor_state_outside_reviewed_classes:{field}:{text}"
@@ -353,7 +361,7 @@ def build_panel_pairs(
             raise LongitudinalRuntimeError(
                 f"panel_candidate_duplicate_period:{candidate}"
             )
-        for earlier, later in zip(ordered, ordered[1:], strict=False):
+        for earlier, later in pairwise(ordered):
             earlier_period = str(earlier[config.period_field])
             later_period = str(later[config.period_field])
             gap = _period_index(later_period) - _period_index(earlier_period)
