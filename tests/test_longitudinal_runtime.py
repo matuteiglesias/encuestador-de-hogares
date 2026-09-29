@@ -293,6 +293,8 @@ def test_l11_and_l12_execute_without_current_state_copy_and_anchor_is_l12_only()
     )
     assert "stale_labor_state" in result_l11.feature_names
     assert result_l11.panel_diagnostics["supported_elapsed_quarters"] == [1]
+    assert result_l11.matched_l10_oof is not None
+    assert result_l11.metrics["matched_l10_baseline"]["promotion_authorized"] is False
 
     l12 = load_longitudinal_config(CONFIG / "l12.yaml")
     result_l12 = execute_longitudinal_arm(
@@ -301,6 +303,7 @@ def test_l11_and_l12_execute_without_current_state_copy_and_anchor_is_l12_only()
     assert "stale_labor_state" not in result_l12.feature_names
     assert result_l12.transition_raw is not None
     assert result_l12.transition_raw.source == "oof"
+    assert result_l12.matched_l10_oof is not None
 
     anchored = load_longitudinal_config(CONFIG / "l12_anchored.yaml")
     anchor = LaborMomentAnchor(
@@ -333,6 +336,15 @@ def test_l11_and_l12_execute_without_current_state_copy_and_anchor_is_l12_only()
             fold_manifest=shared_manifest,
             anchors=(anchor,),
         )
+
+
+def test_panel_builder_skips_reviewed_unavailable_labor_states() -> None:
+    config = load_longitudinal_config(CONFIG / "l11.yaml")
+    source = _panel_source_rows()
+    source[0]["ESTADO"] = 4
+    pairs = build_panel_pairs(source, config)
+    excluded_group = source[0]["panel_household_id"]
+    assert all(pair["panel_household_id"] != excluded_group for pair in pairs)
 
 
 def test_artifact_consumers_bind_exact_c1_c2_c3_parents(tmp_path: Path) -> None:
