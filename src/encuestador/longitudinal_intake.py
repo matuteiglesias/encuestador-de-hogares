@@ -165,12 +165,31 @@ def load_labor_context_release(root: Path) -> LaborContextRelease:
     files = manifest.get("files")
     if not isinstance(files, dict):
         raise LongitudinalIntakeError("labor_context_files_missing")
-    expected = files.get("labor_state.csv")
-    if not isinstance(expected, str):
-        raise LongitudinalIntakeError("labor_context_data_hash_missing")
+    required_files = {
+        "labor_state.csv",
+        "coverage.csv",
+        "geographies.json",
+        "indicators.json",
+    }
+    missing = sorted(required_files - set(files))
+    if missing:
+        raise LongitudinalIntakeError(
+            "labor_context_required_files_missing:" + ",".join(missing)
+        )
+    for filename, expected in files.items():
+        if Path(filename).name != filename:
+            raise LongitudinalIntakeError("labor_context_artifact_name_unsafe")
+        path = root / filename
+        if (
+            not isinstance(expected, str)
+            or len(expected) != 64
+            or not path.is_file()
+            or sha256_file(path) != expected
+        ):
+            raise LongitudinalIntakeError(
+                f"labor_context_artifact_hash_mismatch:{filename}"
+            )
     observations_path = root / "labor_state.csv"
-    if not observations_path.is_file() or sha256_file(observations_path) != expected:
-        raise LongitudinalIntakeError("labor_context_data_hash_mismatch")
     return LaborContextRelease(
         root=root,
         release_id=release_id,
