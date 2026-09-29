@@ -1,0 +1,92 @@
+schema: research.encuestador-longitudinal-runtime-contract/v1
+mode: measurement
+forecasting_authorized: false
+observed_window:
+  start: 2017-Q1
+  end: 2026-Q1
+terminal:
+  unit: person
+  target: P47T_real
+  formulation: hurdle_gamma
+  presence: P(P47T_real > 0)
+  positive_amount: E(P47T_real | P47T_real > 0)
+  monetary_reference: inherited_exactly_from_longitudinal_eph_parent
+parents:
+  longitudinal_eph:
+    contract: research.eph-longitudinal-analysis-frame/v1
+    producer: matuteiglesias/income-modeling-eph
+  labor_context:
+    contract: publicdata.indec-eph-labor-state/v1
+    producer: matuteiglesias/empleoARG
+  donor_labor:
+    contract: research.eph-census-donor-labor-handoff/v1
+    producer: matuteiglesias/eph-censo-aligner
+    required_for: Census donor scoring handoff, not L10
+labor_context:
+  interpretation: aggregate contextual covariates, never individual labor probabilities
+  features:
+    - national activity rate
+    - national unemployment rate
+    - national subemployment rate
+    - regional minus national activity rate
+    - regional minus national unemployment rate
+    - regional minus national subemployment rate
+time_layer:
+  presence: additive logit correction
+  positive_amount: multiplicative exponential correction
+  ordinary_components:
+    - year
+    - quarter
+  exceptional_periods:
+    2020-Q2: pandemic_fieldwork_regime
+    2024-Q1: 2024_h1_macroeconomic_shock
+    2024-Q2: 2024_h1_macroeconomic_shock
+  rules:
+    - exceptional observations remain measurable
+    - exceptional observations do not estimate ordinary year effects
+    - exceptional observations do not estimate recurring quarter effects
+    - dedicated exceptional-period corrections may use observed training-fold evidence
+    - partial-year support is persisted and is not a forecast
+arms:
+  L10:
+    inputs:
+      - approved shared composition
+      - current official aggregate labor context
+      - explicit measurement time layer
+    donor_person_state: absent
+    aggregate_anchor: forbidden
+  L11:
+    base: L10
+    adds: actually earlier observed EPH labor state on supported repeated-wave pairs
+    current_state_copy_as_stale: forbidden
+    long_horizon_identification: false
+    aggregate_anchor: forbidden
+  L12:
+    base: L10
+    adds:
+      - OOF donor-informed target-period labor-state probabilities
+      - elapsed-quarter gap on supported repeated-wave pairs
+    raw_and_anchored_probabilities_preserved: true
+    aggregate_anchor:
+      optional: true
+      projection: categorical_kl_exponential_tilt_v1
+      requires_explicit_universe_contract: true
+folds:
+  grouping: panel_household_id
+  repeated_household_waves_may_cross_folds: false
+  transition_and_terminal_outer_holdout_isolation: required
+panel_pairs:
+  stale_clock: strictly earlier observed EPH wave
+  target_clock: later observed EPH wave
+  default_supported_gaps_quarters: [1, 3]
+  donor_2010_to_2026_persistence_claim: forbidden
+promotion:
+  fixture_winner_authorized: false
+  evidence_required: matched real commissioning
+local_handoff:
+  gate_order:
+    - Gate A: L10 real longitudinal commissioning
+    - Gate B: repeated-wave labor persistence evidence
+    - Gate C: L11 supported-gap sensitivity
+    - Gate D: L12 raw versus anchored latent labor
+    - Gate E: exact Census research scoring
