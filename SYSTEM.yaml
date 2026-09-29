@@ -32,6 +32,9 @@ interfaces:
   consumes:
   # Transitional EPH input. Target boundary is a source-backed neutral EPH observation/analysis frame.
   - artifact:research.eph-annual-preprocessed@1
+  - artifact:research.eph-longitudinal-analysis-frame/v1
+  - artifact:publicdata.indec-eph-labor-state/v1
+  - artifact:research.eph-census-donor-labor-handoff/v1
   # Historical artifact id retained by the aligner; semantically this is variable alignment, not a geographic crosswalk.
   - artifact:research.eph-census-crosswalk@1
   - artifact:research.census-sample@1
@@ -41,6 +44,7 @@ interfaces:
   - artifact:research.household-welfare@1
 upstream:
 - repo.income-modeling-eph
+- repo.empleo-arg
 - repo.eph-censo-aligner
 - repo.sampler-censo-arg
 - repo.ipc-argentina
@@ -50,6 +54,7 @@ canonical_design:
   functional_interface: contracts/functional_interface.yaml
   functional_note: docs/FUNCTIONAL_CONTRACT.md
   deployment_dag: contracts/deployment_dag.yaml
+  longitudinal_runtime: contracts/longitudinal_runtime.yaml
   boundary_note: docs/EPH_CENSUS_TRANSPORT_BOUNDARY.md
 scientific_invariants:
 - external Census inputs must be approved shared_observable or derived_shared features from an exact alignment release
@@ -66,15 +71,22 @@ scientific_invariants:
 - EPH survey weights, Census selection probabilities and downstream poverty analysis weights are distinct semantics
 - monetary transforms and price references must be explicit and resolved through a versioned monetary-conversion release before welfare handoff
 - poverty consumes welfare semantics, never model-native latent/log prediction values
+- longitudinal L10/L11/L12 are measurement-mode only; forecasting and nowcasting are unauthorized
+- official aggregate labor rates are contextual covariates, never individual labor probabilities
+- exceptional 2020-Q2 and 2024-Q1/Q2 observations remain measurable but do not estimate ordinary year/quarter effects
+- L11 stale labor must come from an actually earlier observed EPH wave
+- L12 terminal training may consume only OOF transition probabilities, never observed current labor labels for the predicted row
+- short-gap EPH persistence evidence must not be extrapolated to CPV-2010 long horizons as identified
 verification:
   status: thin-domain-diagnostic-closed-transport-runtime-bounded
-  last_verified: '2026-09-27'
+  last_verified: '2026-09-29'
   evidence:
   - source-backed EPH 2024-Q3 / CPV-2010 semantic feature plane is governed upstream and has zero hard semantic violations
   - corrected D-1 household-grouped OOF source-separation diagnostic is closed diagnostic_only; stable/shared AUC is near random while target-period/research-only tiers add separation
   - D-1 keeps unit model-support rows separate from the PONDERA population-composition lens and never uses Census design IPW as an analysis weight
   - historical four-wave Random Forest cascade remains regression/archaeology evidence only
   - out-of-fold staged-training prototype remains recoverable from repo.income-modeling-eph
+  - C1/C2/C3 implementation contracts are merged; longitudinal C4 runtime is fixture-first pending local real Gate A-E commissioning
   unknowns:
   - no promoted real Census welfare-transport model is authorized by D-1
   - Census has no observed welfare outcome authority for target transport validation
