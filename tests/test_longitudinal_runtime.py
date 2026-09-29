@@ -158,6 +158,9 @@ def test_labor_context_join_is_exact_period_region_context_not_person_probabilit
                     "indicator_id": indicator,
                     "value": str(value),
                     "value_status": "observed",
+                    "source_id": "indec-fixture",
+                    "source_snapshot_sha256": "a" * 64,
+                    "source_cell_identity": f"{geography_id}:{indicator}:2024-Q3",
                 }
             )
     joined = attach_labor_context(
@@ -169,6 +172,11 @@ def test_labor_context_join_is_exact_period_region_context_not_person_probabilit
     assert (
         joined[0]["labor_context_semantics"]
         == "aggregate_context_not_individual_probability"
+    )
+    assert len(joined[0]["labor_context_source_cells"]) == 6
+    assert all(
+        cell["source_id"] == "indec-fixture"
+        for cell in joined[0]["labor_context_source_cells"]
     )
     broken = [row for row in observations if row["indicator_id"] != "subemployment_rate"]
     with pytest.raises(LongitudinalRuntimeError, match="labor_context_join_incomplete"):
@@ -376,6 +384,20 @@ def test_artifact_consumers_bind_exact_c1_c2_c3_parents(tmp_path: Path) -> None:
         "2017-Q1,total_31,total_31_agglomerates,activity_rate,48,observed\n",
         encoding="utf-8",
     )
+    (labor_root / "coverage.csv").write_text(
+        "period,coverage_status\n2017-Q1,present\n", encoding="utf-8"
+    )
+    (labor_root / "geographies.json").write_text("[]\n", encoding="utf-8")
+    (labor_root / "indicators.json").write_text("[]\n", encoding="utf-8")
+    labor_files = {
+        name: _sha(labor_root / name)
+        for name in (
+            "labor_state.csv",
+            "coverage.csv",
+            "geographies.json",
+            "indicators.json",
+        )
+    }
     (labor_root / "manifest.json").write_text(
         json.dumps(
             {
@@ -384,7 +406,7 @@ def test_artifact_consumers_bind_exact_c1_c2_c3_parents(tmp_path: Path) -> None:
                 "period_min": "2017-Q1",
                 "period_max": "2026-Q2",
                 "required_coverage_complete": True,
-                "files": {"labor_state.csv": _sha(labor_root / "labor_state.csv")},
+                "files": labor_files,
             }
         ),
         encoding="utf-8",
