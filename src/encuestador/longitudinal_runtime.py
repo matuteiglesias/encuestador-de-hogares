@@ -269,29 +269,40 @@ def _labor_state(value: Any, field: str) -> str:
     if text.endswith(".0"):
         text = text[:-2]
     if text not in {"1", "2", "3"}:
-        raise LongitudinalRuntimeError(f"labor_state_outside_reviewed_classes:{field}:{text}")
+        raise LongitudinalRuntimeError(
+            f"labor_state_outside_reviewed_classes:{field}:{text}"
+        )
     return text
 
 
 def _observed_labor_state(
     row: Mapping[str, Any],
     config: LongitudinalConfig,
-) -> str:
-    observed: list[tuple[str, str]] = []
+) -> str | None:
+    valid: list[tuple[str, str]] = []
+    special: list[tuple[str, str]] = []
     for field in config.observed_labor_fields:
         value = row.get(field)
         if value is None or str(value).strip() == "":
             continue
-        observed.append((field, _labor_state(value, field)))
-    if not observed:
+        text = str(value).strip()
+        if text.endswith(".0"):
+            text = text[:-2]
+        if text in {"0", "4"}:
+            special.append((field, text))
+            continue
+        valid.append((field, _labor_state(text, field)))
+    if not valid:
+        if special:
+            return None
         raise LongitudinalRuntimeError(
             "observed_labor_state_missing:" + "|".join(config.observed_labor_fields)
         )
-    distinct = {value for _, value in observed}
+    distinct = {value for _, value in valid}
     if len(distinct) != 1:
-        detail = ",".join(f"{field}={value}" for field, value in observed)
+        detail = ",".join(f"{field}={value}" for field, value in valid)
         raise LongitudinalRuntimeError(f"observed_labor_state_disagreement:{detail}")
-    return observed[0][1]
+    return valid[0][1]
 
 
 def build_panel_pairs(
@@ -337,6 +348,10 @@ def build_panel_pairs(
             if not earlier_household or earlier_household != later_household:
                 raise LongitudinalRuntimeError("panel_pair_household_identity_changed")
 
+            stale_state = _observed_labor_state(earlier, config)
+            current_state = _observed_labor_state(later, config)
+            if stale_state is None or current_state is None:
+                continue
             paired = dict(later)
             paired["pair_id"] = f"{earlier_id}->{later_id}"
             paired["stale_observation_row_id"] = earlier_id
@@ -344,8 +359,8 @@ def build_panel_pairs(
             paired["stale_period"] = earlier_period
             paired["target_period"] = later_period
             paired[config.elapsed_quarters_field] = gap
-            paired[config.stale_labor_field] = _observed_labor_state(earlier, config)
-            paired[config.current_labor_field] = _observed_labor_state(later, config)
+            paired[config.stale_labor_field] = stale_state
+            paired[config.current_labor_field] = current_state
             if paired["stale_period"] == paired["target_period"]:
                 raise LongitudinalRuntimeError("stale_state_not_earlier_than_target")
             output.append(paired)
