@@ -16,6 +16,21 @@ from .eph_microdata import (
     read_eph_person_observation_frame,
 )
 from .experiments import ResolvedExperiment, resolve_experiment
+from .longitudinal_intake import (
+    exact_parent_metadata,
+    load_donor_labor_release,
+    load_labor_context_release,
+    load_longitudinal_eph_release,
+)
+from .longitudinal_runtime import (
+    LaborMomentAnchor,
+    attach_labor_context,
+    build_panel_pairs,
+    compare_longitudinal_runs,
+    execute_longitudinal_arm,
+    load_longitudinal_config,
+    write_longitudinal_run_bundle,
+)
 from .run_bundle import package_run, validate_run_bundle
 from .runner import WelfareContext, execute_experiment
 from .runtime_model import fit_deployable_hurdle_model
@@ -414,6 +429,168 @@ def _command_report(args: argparse.Namespace) -> int:
     raise CLIError("report_target_not_found")
 
 
+def _load_labor_anchors(path: Path | None) -> tuple[LaborMomentAnchor, ...]:
+    if path is None:
+        return ()
+    try:
+        value = json.loads(Path(path).read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise CLIError("longitudinal_anchor_json_invalid") from exc
+    if (
+        not isinstance(value, dict)
+        or value.get("schema") != "research.encuestador-labor-moment-anchors/v1"
+        or not isinstance(value.get("anchors"), list)
+    ):
+        raise CLIError("longitudinal_anchor_contract_invalid")
+    output = []
+    for record in value["anchors"]:
+        if not isinstance(record, dict):
+            raise CLIError("longitudinal_anchor_record_invalid")
+        shares = record.get("class_shares")
+        if not isinstance(shares, dict):
+            raise CLIError("longitudinal_anchor_class_shares_missing")
+        output.append(
+            LaborMomentAnchor(
+                period=str(record.get("period") or ""),
+                region_id=str(record.get("region_id") or ""),
+                class_shares={str(key): float(number) for key, number in shares.items()},
+                release_id=str(record.get("release_id") or ""),
+                universe_contract=str(record.get("universe_contract") or ""),
+            )
+        )
+    return tuple(output)
+
+
+def _command_longitudinal_validate(args: argparse.Namespace) -> int:
+    config = load_longitudinal_config(Path(args.config))
+    sys.stdout.write(
+        _canonical_json(
+            {
+                "status": "valid",
+                "contract": "research.encuestador-longitudinal-config/v1",
+                "arm": config.arm,
+                "config_digest": config.digest,
+                "target": config.target_field,
+                "base_features": list(config.base_feature_names),
+                "anchor_enabled": config.anchor_enabled,
+                "measurement_mode": True,
+                "forecasting_authorized": False,
+            }
+        )
+    )
+    return 0
+
+
+def _command_longitudinal_run(args: argparse.Namespace) -> int:
+    config = load_longitudinal_config(Path(args.config))
+    eph = load_longitudinal_eph_release(Path(args.eph_release_root))
+    labor = load_labor_context_release(Path(args.labor_release_root))
+    donor = (
+        load_donor_labor_release(Path(args.donor_labor_root))
+        if args.donor_labor_root
+        else None
+    )
+    anchors = _load_labor_anchors(
+        Path(args.anchor_json) if args.anchor_json else None
+    )
+    if config.anchor_enabled and not anchors:
+        raise CLIError("anchored_l12_requires_anchor_json")
+    if not config.anchor_enabled and anchors:
+        raise CLIError("anchor_json_requires_anchored_l12_config")
+
+    rows = attach_labor_context(
+        eph.read_persons(),
+        labor.read_observations(),
+        period_field=config.period_field,
+        region_field=config.region_field,
+    )
+    if config.arm in {"L11", "L12"}:
+        rows = build_panel_pairs(rows, config)
+
+    anchor_ids = tuple(sorted({anchor.release_id for anchor in anchors}))
+    parents = exact_parent_metadata(
+        eph,
+        labor,
+        donor=donor,
+        anchor_release_ids=anchor_ids,
+    )
+    result = execute_longitudinal_arm(
+        rows,
+        config,
+        parent_metadata=parents,
+        anchors=anchors,
+    )
+    root = write_longitudinal_run_bundle(
+        Path(args.output_root),
+        result,
+        config,
+        rows,
+    )
+    sys.stdout.write(
+        _canonical_json(
+            {
+                "status": "complete",
+                "run_id": result.run_id,
+                "run_root": str(root),
+                "arm": result.arm,
+                "rows": len(rows),
+                "parents": parents,
+                "measurement_mode": True,
+                "forecasting_authorized": False,
+            }
+        )
+    )
+    return 0
+
+
+def _command_longitudinal_compare(args: argparse.Namespace) -> int:
+    comparison = compare_longitudinal_runs(
+        [Path(value).expanduser().resolve() for value in args.runs]
+    )
+    if args.output:
+        path = Path(args.output).expanduser().resolve()
+        if path.exists():
+            raise CLIError(f"immutable_longitudinal_comparison_exists:{path}")
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(_canonical_json(comparison), encoding="utf-8")
+        comparison["output"] = str(path)
+    sys.stdout.write(_canonical_json(comparison))
+    return 0
+
+
+def _command_longitudinal_report(args: argparse.Namespace) -> int:
+    root = Path(args.run_root).expanduser().resolve()
+    try:
+        manifest = json.loads(
+            (root / "run_manifest.json").read_text(encoding="utf-8")
+        )
+        metrics = json.loads((root / "metrics.json").read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise CLIError("longitudinal_run_bundle_unreadable") from exc
+    if manifest.get("contract") != "research.encuestador-longitudinal-run/v1":
+        raise CLIError("unexpected_longitudinal_run_contract")
+    person = metrics["person"]["unconditional"]
+    household = metrics["household"]["point"]
+    lines = [
+        f"# {manifest['run_id']}",
+        "",
+        f"- Arm: {manifest['arm']}",
+        f"- Target: {manifest['target']}",
+        f"- Measurement mode: {manifest['measurement_mode']}",
+        f"- Forecasting authorized: {manifest['forecasting_authorized']}",
+        f"- Person MAE: {person['point']['mae']:.6g}",
+        f"- Person R2: {person['point']['r2']:.6g}",
+        f"- Household MAE: {household['point']['mae']:.6g}",
+        f"- Household R2: {household['point']['r2']:.6g}",
+        f"- Anchor enabled: {manifest['anchor_enabled']}",
+        "",
+        "No arm is promoted by this report; promotion requires matched real commissioning.",
+        "",
+    ]
+    sys.stdout.write("\n".join(lines))
+    return 0
+
+
 def _parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(prog="encuestador")
     sub = parser.add_subparsers(dest="command", required=True)
@@ -442,6 +619,28 @@ def _parser() -> argparse.ArgumentParser:
     report = sub.add_parser("report")
     report.add_argument("run_or_comparison")
     report.set_defaults(handler=_command_report)
+
+    longitudinal_validate = sub.add_parser("longitudinal-validate")
+    longitudinal_validate.add_argument("config")
+    longitudinal_validate.set_defaults(handler=_command_longitudinal_validate)
+
+    longitudinal_run = sub.add_parser("longitudinal-run")
+    longitudinal_run.add_argument("config")
+    longitudinal_run.add_argument("--eph-release-root", required=True)
+    longitudinal_run.add_argument("--labor-release-root", required=True)
+    longitudinal_run.add_argument("--donor-labor-root")
+    longitudinal_run.add_argument("--anchor-json")
+    longitudinal_run.add_argument("--output-root", default="runs/longitudinal")
+    longitudinal_run.set_defaults(handler=_command_longitudinal_run)
+
+    longitudinal_compare = sub.add_parser("longitudinal-compare")
+    longitudinal_compare.add_argument("runs", nargs="+")
+    longitudinal_compare.add_argument("--output")
+    longitudinal_compare.set_defaults(handler=_command_longitudinal_compare)
+
+    longitudinal_report = sub.add_parser("longitudinal-report")
+    longitudinal_report.add_argument("run_root")
+    longitudinal_report.set_defaults(handler=_command_longitudinal_report)
     return parser
 
 
