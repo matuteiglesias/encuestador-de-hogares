@@ -15,13 +15,13 @@ from encuestador.longitudinal_intake import (
     load_longitudinal_eph_release,
 )
 from encuestador.longitudinal_runtime import (
+    LaborMomentAnchor,
+    LongitudinalRuntimeError,
     attach_labor_context,
     build_longitudinal_fold_manifest,
     build_panel_pairs,
     execute_longitudinal_arm,
-    LaborMomentAnchor,
     load_longitudinal_config,
-    LongitudinalRuntimeError,
 )
 from encuestador.time_layer import fit_time_layer
 
