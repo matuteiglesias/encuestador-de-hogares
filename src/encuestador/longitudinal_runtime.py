@@ -647,9 +647,16 @@ def _household_metrics(
         predicted.append(float(prediction[indices].sum()))
     if not truth:
         raise LongitudinalRuntimeError("longitudinal_household_evaluation_empty")
+    full_household_claim = config.arm == "L10"
     return {
-        "complete_households": len(truth),
-        "unavailable_households": unavailable,
+        "group_count": len(truth),
+        "groups_excluded_for_invalid_target": unavailable,
+        "aggregation_scope": (
+            "complete_observed_household"
+            if full_household_claim
+            else "eligible_panel_pair_members_within_target_household"
+        ),
+        "full_household_welfare_claim": full_household_claim,
         "point": distributional_regression_diagnostics(
             np.asarray(truth), np.asarray(predicted)
         ),
@@ -971,6 +978,9 @@ def execute_longitudinal_arm(
     valid = eligibility.valid
     positive = eligibility.positive
     presence_artifact = _subset_probability_artifact(hurdle.p_positive, valid)
+    group_metrics = _household_metrics(
+        rows, config, eligibility, unconditional
+    )
     metrics: dict[str, Any] = {
         "person": {
             "unconditional": distributional_regression_diagnostics(
@@ -987,9 +997,9 @@ def execute_longitudinal_arm(
                 else None
             ),
         },
-        "household": _household_metrics(
-            rows, config, eligibility, unconditional
-        ),
+        (
+            "household" if config.arm == "L10" else "panel_household_group"
+        ): group_metrics,
         "fold_counts": {
             str(fold): int((fold_array == fold).sum())
             for fold in range(manifest.n_splits)
@@ -1039,13 +1049,13 @@ def execute_longitudinal_arm(
                     matched_person["point"]["rmse"]
                     - metrics["person"]["unconditional"]["point"]["rmse"]
                 ),
-                "household_mae_gain": (
+                "panel_group_mae_gain": (
                     matched_household["point"]["point"]["mae"]
-                    - metrics["household"]["point"]["point"]["mae"]
+                    - metrics["panel_household_group"]["point"]["point"]["mae"]
                 ),
-                "household_rmse_gain": (
+                "panel_group_rmse_gain": (
                     matched_household["point"]["point"]["rmse"]
-                    - metrics["household"]["point"]["point"]["rmse"]
+                    - metrics["panel_household_group"]["point"]["point"]["rmse"]
                 ),
             },
             "promotion_authorized": False,
@@ -1289,15 +1299,21 @@ def compare_longitudinal_runs(roots: Sequence[Path]) -> dict[str, Any]:
     output = []
     for manifest, metrics in records:
         point = metrics["person"]["unconditional"]["point"]
-        household = metrics["household"]["point"]["point"]
+        group_key = (
+            "household"
+            if "household" in metrics
+            else "panel_household_group"
+        )
+        grouped = metrics[group_key]["point"]["point"]
         output.append(
             {
                 "run_id": manifest["run_id"],
                 "arm": manifest["arm"],
                 "person_mae": point["mae"],
                 "person_rmse": point["rmse"],
-                "household_mae": household["mae"],
-                "household_rmse": household["rmse"],
+                "aggregation_scope": metrics[group_key]["aggregation_scope"],
+                "group_mae": grouped["mae"],
+                "group_rmse": grouped["rmse"],
             }
         )
     return {
