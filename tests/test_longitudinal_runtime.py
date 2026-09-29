@@ -25,7 +25,6 @@ from encuestador.longitudinal_runtime import (
 )
 from encuestador.time_layer import fit_time_layer
 
-
 ROOT = Path(__file__).resolve().parents[1]
 CONFIG = ROOT / "configs" / "longitudinal"
 
