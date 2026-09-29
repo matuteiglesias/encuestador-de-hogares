@@ -1195,6 +1195,12 @@ def write_longitudinal_run_bundle(
                     _canonical_json(
                         {
                             "row_id": row_id,
+                            "target_observation_row_id": str(
+                                rows[index].get(
+                                    "target_observation_row_id",
+                                    rows[index].get("row_id", row_id),
+                                )
+                            ),
                             "fold_id": result.fold_manifest.fold_ids[index],
                             "period": rows[index][config.period_field],
                             "region_id": rows[index][config.region_field],
@@ -1253,6 +1259,33 @@ def write_longitudinal_run_bundle(
             for path in sorted(staging.iterdir())
             if path.is_file()
         }
+        target_observation_ids = sorted(
+            str(
+                row.get(
+                    "target_observation_row_id",
+                    row.get("row_id", ""),
+                )
+            )
+            for row in rows
+        )
+        if any(not value for value in target_observation_ids):
+            raise LongitudinalRuntimeError("target_observation_identity_missing")
+        target_cohort_sha256 = hashlib.sha256(
+            "\n".join(target_observation_ids).encode()
+        ).hexdigest()
+        group_assignment = sorted(
+            {
+                (group, fold)
+                for group, fold in zip(
+                    result.fold_manifest.household_ids,
+                    result.fold_manifest.fold_ids,
+                    strict=True,
+                )
+            }
+        )
+        panel_group_fold_sha256 = hashlib.sha256(
+            _canonical_json(group_assignment).encode()
+        ).hexdigest()
         manifest = {
             "contract": "research.encuestador-longitudinal-run/v1",
             "run_id": result.run_id,
@@ -1265,6 +1298,9 @@ def write_longitudinal_run_bundle(
             "time_layer": "explicit_year_quarter_exception_v1",
             "exceptional_periods": dict(EXCEPTIONAL_PERIODS),
             "panel_grouping": result.fold_manifest.policy,
+            "target_observation_count": len(target_observation_ids),
+            "target_observation_cohort_sha256": target_cohort_sha256,
+            "panel_group_fold_sha256": panel_group_fold_sha256,
             "anchor_enabled": config.anchor_enabled,
             "measurement_mode": True,
             "forecasting_authorized": False,
@@ -1291,11 +1327,32 @@ def compare_longitudinal_runs(roots: Sequence[Path]) -> dict[str, Any]:
         if manifest.get("contract") != "research.encuestador-longitudinal-run/v1":
             raise LongitudinalRuntimeError("longitudinal_compare_contract_invalid")
         records.append((manifest, metrics))
-    parent_signatures = {
-        _canonical_json(record[0].get("parents")) for record in records
+    core_parent_signatures = {
+        _canonical_json(
+            {
+                key: (record[0].get("parents") or {}).get(key)
+                for key in (
+                    "longitudinal_eph",
+                    "labor_context",
+                    "monetary_conversion",
+                )
+            }
+        )
+        for record in records
     }
-    if len(parent_signatures) != 1:
-        raise LongitudinalRuntimeError("longitudinal_compare_parent_mismatch")
+    if len(core_parent_signatures) != 1:
+        raise LongitudinalRuntimeError("longitudinal_compare_core_parent_mismatch")
+    cohort_signatures = {
+        record[0].get("target_observation_cohort_sha256")
+        for record in records
+    }
+    if len(cohort_signatures) != 1 or None in cohort_signatures:
+        raise LongitudinalRuntimeError("longitudinal_compare_cohort_mismatch")
+    fold_signatures = {
+        record[0].get("panel_group_fold_sha256") for record in records
+    }
+    if len(fold_signatures) != 1 or None in fold_signatures:
+        raise LongitudinalRuntimeError("longitudinal_compare_fold_mismatch")
     output = []
     for manifest, metrics in records:
         point = metrics["person"]["unconditional"]["point"]
@@ -1319,6 +1376,8 @@ def compare_longitudinal_runs(roots: Sequence[Path]) -> dict[str, Any]:
     return {
         "contract": "research.encuestador-longitudinal-comparison/v1",
         "status": "descriptive_no_fixture_promotion",
+        "matched_target_cohort": True,
+        "matched_panel_group_folds": True,
         "runs": output,
         "promotion_authorized": False,
     }
