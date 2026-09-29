@@ -187,9 +187,9 @@ def _rate(value: str, key: tuple[str, str, str]) -> float:
 
 def labor_context_index(
     observations: Sequence[Mapping[str, Any]],
-) -> dict[tuple[str, str, str], float]:
+) -> dict[tuple[str, str, str], dict[str, Any]]:
     """Index exact official cells without interpolation or person-state interpretation."""
-    index: dict[tuple[str, str, str], float] = {}
+    index: dict[tuple[str, str, str], dict[str, Any]] = {}
     for row in observations:
         indicator = str(row.get("indicator_id") or "")
         geography = str(row.get("geography_id") or "")
@@ -203,7 +203,14 @@ def labor_context_index(
             raise LongitudinalRuntimeError(f"duplicate_labor_context_cell:{key}")
         if row.get("value_status") != "observed":
             raise LongitudinalRuntimeError(f"labor_context_cell_not_observed:{key}")
-        index[key] = _rate(str(row.get("value") or ""), key)
+        index[key] = {
+            "value": _rate(str(row.get("value") or ""), key),
+            "source_id": str(row.get("source_id") or ""),
+            "source_snapshot_sha256": str(
+                row.get("source_snapshot_sha256") or ""
+            ),
+            "source_cell_identity": str(row.get("source_cell_identity") or ""),
+        }
     if not index:
         raise LongitudinalRuntimeError("labor_context_index_empty")
     return index
@@ -239,7 +246,7 @@ def attach_labor_context(
         region = str(row.get(region_field) or "")
         if not period or not region:
             raise LongitudinalRuntimeError("labor_context_join_keys_missing")
-        source_cells: list[str] = []
+        source_cells: list[dict[str, str]] = []
         for indicator in LABOR_INDICATORS:
             national_key = (period, "total_31_agglomerates", indicator)
             regional_key = (period, region, indicator)
@@ -247,19 +254,36 @@ def attach_labor_context(
                 raise LongitudinalRuntimeError(
                     f"labor_context_join_incomplete:{period}:{region}:{indicator}"
                 )
-            national = index[national_key]
-            regional = index[regional_key]
+            national_record = index[national_key]
+            regional_record = index[regional_key]
+            national = float(national_record["value"])
+            regional = float(regional_record["value"])
             national_field, deviation_field = field_by_indicator[indicator]
             row[national_field] = national
             row[deviation_field] = regional - national
-            source_cells.extend(
-                [
-                    "|".join(national_key),
-                    "|".join(regional_key),
-                ]
-            )
-        row["labor_context_semantics"] = "aggregate_context_not_individual_probability"
-        row["labor_context_cell_keys"] = tuple(source_cells)
+            for role, key, record in (
+                ("national", national_key, national_record),
+                ("regional", regional_key, regional_record),
+            ):
+                source_cells.append(
+                    {
+                        "role": role,
+                        "period": key[0],
+                        "geography_id": key[1],
+                        "indicator_id": key[2],
+                        "source_id": str(record["source_id"]),
+                        "source_snapshot_sha256": str(
+                            record["source_snapshot_sha256"]
+                        ),
+                        "source_cell_identity": str(
+                            record["source_cell_identity"]
+                        ),
+                    }
+                )
+        row["labor_context_semantics"] = (
+            "aggregate_context_not_individual_probability"
+        )
+        row["labor_context_source_cells"] = tuple(source_cells)
         output.append(row)
     return output
 
