@@ -317,9 +317,7 @@ def _observed_labor_state(
         value = row.get(field)
         if value is None or str(value).strip() == "":
             continue
-        text = str(value).strip()
-        if text.endswith(".0"):
-            text = text[:-2]
+        text = str(value).strip().removesuffix(".0")
         if text in {"0", "4"}:
             special.append((field, text))
             continue
