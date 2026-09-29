@@ -1,8 +1,9 @@
 """Leakage-safe explicit year/quarter/exception time correction for welfare hurdles."""
 from __future__ import annotations
 
+from collections.abc import Sequence
 from dataclasses import dataclass
-from typing import Any, Sequence
+from typing import Any
 
 import numpy as np
 
