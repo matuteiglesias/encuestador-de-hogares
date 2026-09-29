@@ -101,7 +101,7 @@ def _l10_rows() -> list[dict]:
 def _panel_source_rows() -> list[dict]:
     rows: list[dict] = []
     index = 0
-    for fold, groups in _groups_by_fold(9).items():
+    for groups in _groups_by_fold(9).values():
         for within, group in enumerate(groups):
             stale = 1 + (within % 3)
             current = 1 + ((within + 1) % 3)
