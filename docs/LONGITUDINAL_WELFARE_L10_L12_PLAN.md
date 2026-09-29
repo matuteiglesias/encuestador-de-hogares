@@ -115,18 +115,20 @@ quarters_observed_for_year = 1
 
 is legitimate because 2026-Q1 is observed. Persist its partial-year support explicitly. It updates when later observed EPH quarters arrive.
 
-## 2020-Q2
+## Exceptional shock periods
 
-2020-Q2 must be visible in the actual historical measurement, but it must not teach the system that COVID is ordinary Q2 seasonality.
+2020-Q2, 2024-Q1 and 2024-Q2 must remain visible in the actual historical measurement, but they must not teach the system that their shocks are ordinary seasonality or ordinary time levels.
 
 Default:
 
-- keep 2020-Q2 rows and observed target;
-- flag `pandemic_fieldwork_regime`;
-- exclude 2020-Q2 from estimation of recurring quarter seasonality;
-- exclude it from normal-period structural sensitivities;
-- permit a dedicated 2020-Q2 period/shock correction estimated from its observed EPH evidence;
-- always publish with/without-2020-Q2 structural sensitivity diagnostics.
+- keep all three quarters and their observed targets;
+- flag `2020-Q2` as `pandemic_fieldwork_regime`;
+- flag `2024-Q1` and `2024-Q2` as `2024_h1_macroeconomic_shock`;
+- exclude all three from estimation of recurring quarter seasonality;
+- exclude all three from estimation of the ordinary/structural time level;
+- permit dedicated period/shock corrections estimated from their observed EPH evidence so the realized 2020-Q2 and 2024-H1 dips remain in measurement outputs;
+- estimate the ordinary 2024 year effect from non-exceptional 2024 quarters where available, rather than allowing Q1/Q2 to drag the ordinary level;
+- always publish structural-fit diagnostics with and without exceptional-quarter participation in the ordinary-time component.
 
 ## L10 / L11 / L12 arms
 
@@ -234,7 +236,7 @@ Also run:
 
 - leave-period / blocked-period diagnostics where scientifically interpretable;
 - partial-year year-effect reconstruction, e.g. estimate a year's level using only Q1 then compare after Q2-Q4 become available for historical years;
-- with/without 2020-Q2 structural fit;
+- with/without exceptional-period participation in the ordinary structural fit;
 - labor-context family ablation;
 - L10 vs L11 vs L12 under matched folds.
 
@@ -249,7 +251,7 @@ Deliver:
 1. artifact consumers for longitudinal EPH frame and official labor-state release;
 2. deterministic period × region labor-feature join;
 3. explicit time-layer abstraction;
-4. 2020-Q2 exceptional-period policy;
+4. exceptional-period policy for 2020-Q2 and 2024-Q1/Q2;
 5. L10 config/runtime;
 6. panel-pair builder + L11 stale-proxy diagnostics;
 7. L12 transition-model interface;
@@ -271,7 +273,7 @@ After upstream real artifacts and C4 are green:
 - verify labor context coverage;
 - run pooled hurdle model;
 - fit/diagnose year + quarter time layer;
-- produce 2020-Q2 special measurement and structural sensitivity;
+- produce special measurements and structural sensitivities for 2020-Q2 and 2024-Q1/Q2;
 - persist OOF person/household evidence.
 
 This gate does not wait for L11/L12.
@@ -369,7 +371,7 @@ Do not add predictive-model implementation to the poverty repo.
 1. official labor context exists through the latest official quarter;
 2. longitudinal EPH evidence exists 2017-Q1..2026-Q1;
 3. L10 is fully commissioned under household-safe OOF;
-4. 2020-Q2 is measured but isolated from ordinary seasonal learning;
+4. 2020-Q2 and 2024-Q1/Q2 are measured but isolated from ordinary seasonal/time-level learning;
 5. donor labor is explicitly vintage-qualified;
 6. L11/L12 are adjudicated using honest panel evidence rather than copied current labels;
 7. the selected arm can score an exact Census sample and emit an auditable household-welfare release;
