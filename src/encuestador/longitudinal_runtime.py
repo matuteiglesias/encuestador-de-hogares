@@ -706,6 +706,8 @@ def execute_longitudinal_arm(
     """Run L10, L11, or L12 under one household/panel-safe OOF engine."""
     if not rows:
         raise LongitudinalRuntimeError("longitudinal_run_requires_rows")
+    if anchors and config.arm != "L12":
+        raise LongitudinalRuntimeError("aggregate_anchor_only_allowed_in_L12")
     if config.arm in {"L11", "L12"}:
         for row in rows:
             stale_period = str(row.get("stale_period") or "")
