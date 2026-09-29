@@ -16,14 +16,13 @@ from typing import Any
 import numpy as np
 import yaml
 
-from .anchors import AnchorDiagnostics, multiclass_kl_moment_projection
+from .anchors import multiclass_kl_moment_projection
 from .cascade import _subset_manifest
 from .crossfit import crossfit_predict, fit_full_and_score
 from .estimators import HGBClassifierAdapter, HGBRegressorAdapter
 from .evaluation import classification_diagnostics, distributional_regression_diagnostics
 from .scientific_primitives import FoldManifest, PredictionArtifact
 from .terminal import (
-    HurdleComponents,
     HurdleEstimator,
     HurdlePredictionBundle,
     classify_income_target,
@@ -81,7 +80,7 @@ class LongitudinalConfig:
     group_field: str
     household_observation_field: str
     panel_person_field: str
-    observed_labor_field: str
+    observed_labor_fields: tuple[str, ...]
     stale_labor_field: str
     current_labor_field: str
     elapsed_quarters_field: str
@@ -158,7 +157,10 @@ def load_longitudinal_config(path: Path) -> LongitudinalConfig:
             identity.get("household_observation_field") or "household_observation_id"
         ),
         panel_person_field=str(panel.get("person_candidate_field") or "person_linkage_candidate_id"),
-        observed_labor_field=str(panel.get("observed_labor_field") or "ESTADO"),
+        observed_labor_fields=tuple(
+            str(value)
+            for value in panel.get("observed_labor_fields", ("ESTADO", "CONDACT"))
+        ),
         stale_labor_field=str(panel.get("stale_labor_field") or "stale_labor_state"),
         current_labor_field=str(panel.get("current_labor_field") or "target_current_labor_state"),
         elapsed_quarters_field=str(panel.get("elapsed_quarters_field") or "elapsed_quarters"),
@@ -271,6 +273,27 @@ def _labor_state(value: Any, field: str) -> str:
     return text
 
 
+def _observed_labor_state(
+    row: Mapping[str, Any],
+    config: LongitudinalConfig,
+) -> str:
+    observed: list[tuple[str, str]] = []
+    for field in config.observed_labor_fields:
+        value = row.get(field)
+        if value is None or str(value).strip() == "":
+            continue
+        observed.append((field, _labor_state(value, field)))
+    if not observed:
+        raise LongitudinalRuntimeError(
+            "observed_labor_state_missing:" + "|".join(config.observed_labor_fields)
+        )
+    distinct = {value for _, value in observed}
+    if len(distinct) != 1:
+        detail = ",".join(f"{field}={value}" for field, value in observed)
+        raise LongitudinalRuntimeError(f"observed_labor_state_disagreement:{detail}")
+    return observed[0][1]
+
+
 def build_panel_pairs(
     rows: Sequence[Mapping[str, Any]],
     config: LongitudinalConfig,
@@ -321,14 +344,8 @@ def build_panel_pairs(
             paired["stale_period"] = earlier_period
             paired["target_period"] = later_period
             paired[config.elapsed_quarters_field] = gap
-            paired[config.stale_labor_field] = _labor_state(
-                earlier.get(config.observed_labor_field),
-                config.observed_labor_field,
-            )
-            paired[config.current_labor_field] = _labor_state(
-                later.get(config.observed_labor_field),
-                config.observed_labor_field,
-            )
+            paired[config.stale_labor_field] = _observed_labor_state(earlier, config)
+            paired[config.current_labor_field] = _observed_labor_state(later, config)
             if paired["stale_period"] == paired["target_period"]:
                 raise LongitudinalRuntimeError("stale_state_not_earlier_than_target")
             output.append(paired)
@@ -537,61 +554,6 @@ def labor_class_shares_from_official_rates(
         "2": activity * unemployment,
         "3": 1.0 - activity,
     }
-
-
-def _make_hurdle_bundle(
-    config: LongitudinalConfig,
-    manifest: FoldManifest,
-    p_positive: np.ndarray,
-    positive_amount: np.ndarray,
-    *,
-    run_id: str,
-) -> HurdlePredictionBundle:
-    unconditional = p_positive * positive_amount
-    base_metadata = {
-        "arm": config.arm,
-        "time_layer": "explicit_year_quarter_exception_v1",
-        "measurement_mode": True,
-        "forecasting_authorized": False,
-    }
-    return HurdlePredictionBundle(
-        p_positive=PredictionArtifact(
-            target=f"{config.target_field}__positive",
-            kind="probability",
-            row_ids=manifest.row_ids,
-            values=np.column_stack([1.0 - p_positive, p_positive]),
-            source="oof",
-            class_labels=("0", "1"),
-            fold_ids=manifest.fold_ids,
-            run_id=run_id,
-            metadata={**base_metadata, "component": "p_positive"},
-        ),
-        positive_amount_prediction=PredictionArtifact(
-            target=f"{config.target_field}__positive_amount",
-            kind="regression",
-            row_ids=manifest.row_ids,
-            values=positive_amount,
-            source="oof",
-            fold_ids=manifest.fold_ids,
-            run_id=run_id,
-            metadata={**base_metadata, "component": "positive_amount_prediction"},
-        ),
-        unconditional_expected_income=PredictionArtifact(
-            target=config.target_field,
-            kind="regression",
-            row_ids=manifest.row_ids,
-            values=unconditional,
-            source="oof",
-            fold_ids=manifest.fold_ids,
-            run_id=run_id,
-            metadata={**base_metadata, "component": "unconditional_expected_income"},
-        ),
-        target_eligibility=classify_income_target(
-            [row for row in ()]
-        ).counts if False else {},
-        formulation="gamma",
-        retransformation="linear_identity_v1",
-    )
 
 
 def _subset_probability_artifact(
