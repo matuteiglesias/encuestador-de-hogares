@@ -570,7 +570,12 @@ def _command_longitudinal_report(args: argparse.Namespace) -> int:
     if manifest.get("contract") != "research.encuestador-longitudinal-run/v1":
         raise CLIError("unexpected_longitudinal_run_contract")
     person = metrics["person"]["unconditional"]
-    household = metrics["household"]["point"]
+    group_key = (
+        "household"
+        if "household" in metrics
+        else "panel_household_group"
+    )
+    grouped = metrics[group_key]
     lines = [
         f"# {manifest['run_id']}",
         "",
@@ -580,8 +585,9 @@ def _command_longitudinal_report(args: argparse.Namespace) -> int:
         f"- Forecasting authorized: {manifest['forecasting_authorized']}",
         f"- Person MAE: {person['point']['mae']:.6g}",
         f"- Person R2: {person['point']['r2']:.6g}",
-        f"- Household MAE: {household['point']['mae']:.6g}",
-        f"- Household R2: {household['point']['r2']:.6g}",
+        f"- Aggregation scope: {grouped['aggregation_scope']}",
+        f"- Group MAE: {grouped['point']['point']['mae']:.6g}",
+        f"- Group R2: {grouped['point']['point']['r2']:.6g}",
         f"- Anchor enabled: {manifest['anchor_enabled']}",
         "",
         "No arm is promoted by this report; promotion requires matched real commissioning.",
