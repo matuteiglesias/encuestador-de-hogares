@@ -81,15 +81,20 @@ scientific_invariants:
 - L12 terminal training may consume only OOF transition probabilities, never observed current labor labels for the predicted row
 - short-gap EPH persistence evidence must not be extrapolated to CPV-2010 long horizons as identified
 verification:
-  status: thin-domain-diagnostic-closed-transport-runtime-bounded
-  last_verified: '2026-09-29'
+  status: real-longitudinal-prerequisites-green-l4-blocked-resource
+  last_verified: '2026-09-30'
   evidence:
   - source-backed EPH 2024-Q3 / CPV-2010 semantic feature plane is governed upstream and has zero hard semantic violations
   - corrected D-1 household-grouped OOF source-separation diagnostic is closed diagnostic_only; stable/shared AUC is near random while target-period/research-only tiers add separation
   - D-1 keeps unit model-support rows separate from the PONDERA population-composition lens and never uses Census design IPW as an analysis weight
   - historical four-wave Random Forest cascade remains regression/archaeology evidence only
   - out-of-fold staged-training prototype remains recoverable from repo.income-modeling-eph
-  - C1/C2/C3 implementation contracts are merged; longitudinal C4 runtime is fixture-first pending local real Gate A-E commissioning
+  - real L1 official labor parent and explicit L1B completion overlay are consumable with exact lineage
+  - real L2 longitudinal EPH parent spans 37 quarters and 1,869,620 person-period rows
+  - real L3B P0_LONG and P1R_NOLAB_LONG composition parents preserve exact C2 identity across all 37 periods
+  - real L3A CPV-2010 donor-labor handoff preserves donor vintage 2010 and makes no current-state claim
+  - C4/C4B scientific runtime, canonical composition custody and nested-OOF time-layer semantics are merged and tested
+  - first full real L10 execution reached the real-scale runtime but terminated under memory pressure before emitting a run bundle
   unknowns:
   - no promoted real Census welfare-transport model is authorized by D-1
   - Census has no observed welfare outcome authority for target transport validation
@@ -97,5 +102,7 @@ verification:
   - historical fitted RFC1-RFC4 artifacts are not established as current releases
   - any future target-period calibration beyond explicitly commissioned mechanisms requires separate approval
   - final promoted household-welfare transport contract remains a distinct scientific decision
+  - L4 Gate A/B/C/D/E scientific results remain uncommissioned until a resource-safe execution plane can run the reviewed semantics at 1.87M-row scale
+  - current runtime list-of-dict materialization must be replaced or bounded without changing fold/time/composition semantics
 maintenance:
   cadence: active-development
