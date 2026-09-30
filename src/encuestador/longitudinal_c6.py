@@ -99,6 +99,17 @@ def _current_rss_gib() -> float | None:
     return None
 
 
+def _current_swap_gib() -> float | None:
+    try:
+        for line in Path("/proc/self/status").read_text(encoding="utf-8").splitlines():
+            if line.startswith("VmSwap:"):
+                kib = float(line.split()[1])
+                return kib / (1024.0**2)
+    except (OSError, ValueError, IndexError):
+        return None
+    return None
+
+
 def _count_csv_rows(path: Path) -> int:
     try:
         with Path(path).open("r", encoding="utf-8", newline="") as stream:
@@ -464,6 +475,7 @@ def materialize_longitudinal_model_plane(
             "build_resource": {
                 "peak_rss_gib": _peak_rss_gib(),
                 "current_rss_gib": _current_rss_gib(),
+                "current_process_swap_gib": _current_swap_gib(),
             },
             "artifacts": artifacts,
         }
@@ -1027,6 +1039,7 @@ def _finalize_l10(
     resource_record = {
         "peak_rss_gib": _peak_rss_gib(),
         "current_rss_gib": _current_rss_gib(),
+        "current_process_swap_gib": _current_swap_gib(),
         "checkpoint_resources": checkpoint_records,
         "acceptance_target_peak_rss_gib": 10.0,
         "acceptance_target_no_swap_thrashing": True,
