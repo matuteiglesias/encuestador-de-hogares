@@ -17,7 +17,11 @@ from .eph_microdata import (
 )
 from .experiments import ResolvedExperiment, resolve_experiment
 from .longitudinal_intake import (
+    canonical_composition_parent_metadata,
     exact_parent_metadata,
+    fixture_composition_parent_metadata,
+    join_composition_profile,
+    load_composition_plane_profile,
     load_donor_labor_release,
     load_labor_context_release,
     load_longitudinal_eph_release,
@@ -29,6 +33,7 @@ from .longitudinal_runtime import (
     compare_longitudinal_runs,
     execute_longitudinal_arm,
     load_longitudinal_config,
+    resolve_composition_profile,
     write_longitudinal_run_bundle,
 )
 from .run_bundle import package_run, validate_run_bundle
@@ -471,7 +476,18 @@ def _command_longitudinal_validate(args: argparse.Namespace) -> int:
                 "arm": config.arm,
                 "config_digest": config.digest,
                 "target": config.target_field,
-                "base_features": list(config.base_feature_names),
+                "composition_source": config.composition_source,
+                "composition_parent_contract": config.composition_parent_contract,
+                "feature_profile_id": config.feature_profile_id,
+                "composition_fixture_only": (
+                    config.composition_source == "raw_c2_fixture"
+                ),
+                "composition_resolved": bool(config.composition_features),
+                "base_features": (
+                    list(config.base_feature_names)
+                    if config.composition_features
+                    else None
+                ),
                 "anchor_enabled": config.anchor_enabled,
                 "measurement_mode": True,
                 "forecasting_authorized": False,
@@ -498,8 +514,36 @@ def _command_longitudinal_run(args: argparse.Namespace) -> int:
     if not config.anchor_enabled and anchors:
         raise CLIError("anchor_json_requires_anchored_l12_config")
 
+    rows = eph.read_persons()
+    if config.composition_source == "canonical_parent":
+        if not args.composition_release_root:
+            raise CLIError("canonical_composition_release_root_required")
+        if args.allow_fixture_composition:
+            raise CLIError(
+                "allow_fixture_composition_invalid_for_canonical_parent"
+            )
+        composition_profile = load_composition_plane_profile(
+            Path(args.composition_release_root),
+            config.feature_profile_id,
+        )
+        config = resolve_composition_profile(config, composition_profile)
+        rows = join_composition_profile(rows, composition_profile)
+        composition_metadata = canonical_composition_parent_metadata(
+            composition_profile
+        )
+    else:
+        if args.composition_release_root:
+            raise CLIError(
+                "fixture_composition_must_not_supply_canonical_parent"
+            )
+        if not args.allow_fixture_composition:
+            raise CLIError(
+                "raw_c2_fixture_requires_explicit_allow_fixture_composition"
+            )
+        composition_metadata = fixture_composition_parent_metadata()
+
     rows = attach_labor_context(
-        eph.read_persons(),
+        rows,
         labor.read_observations(),
         period_field=config.period_field,
         region_field=config.region_field,
@@ -511,6 +555,7 @@ def _command_longitudinal_run(args: argparse.Namespace) -> int:
     parents = exact_parent_metadata(
         eph,
         labor,
+        composition_metadata=composition_metadata,
         donor=donor,
         anchor_release_ids=anchor_ids,
     )
@@ -634,6 +679,12 @@ def _parser() -> argparse.ArgumentParser:
     longitudinal_run.add_argument("config")
     longitudinal_run.add_argument("--eph-release-root", required=True)
     longitudinal_run.add_argument("--labor-release-root", required=True)
+    longitudinal_run.add_argument("--composition-release-root")
+    longitudinal_run.add_argument(
+        "--allow-fixture-composition",
+        action="store_true",
+        help="explicitly authorize the raw-C2 8-variable test fixture profile",
+    )
     longitudinal_run.add_argument("--donor-labor-root")
     longitudinal_run.add_argument("--anchor-json")
     longitudinal_run.add_argument("--output-root", default="runs/longitudinal")
