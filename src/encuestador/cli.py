@@ -500,7 +500,10 @@ def _command_longitudinal_validate(args: argparse.Namespace) -> int:
 def _command_longitudinal_run(args: argparse.Namespace) -> int:
     config = load_longitudinal_config(Path(args.config))
     eph = load_longitudinal_eph_release(Path(args.eph_release_root))
-    labor = load_labor_context_release(Path(args.labor_release_root))
+    labor = load_labor_context_release(
+        Path(args.labor_release_root),
+        Path(args.labor_completion_root) if args.labor_completion_root else None,
+    )
     donor = (
         load_donor_labor_release(Path(args.donor_labor_root))
         if args.donor_labor_root
@@ -679,6 +682,10 @@ def _parser() -> argparse.ArgumentParser:
     longitudinal_run.add_argument("config")
     longitudinal_run.add_argument("--eph-release-root", required=True)
     longitudinal_run.add_argument("--labor-release-root", required=True)
+    longitudinal_run.add_argument(
+        "--labor-completion-root",
+        help="explicit bounded L1B completion overlay; required for an incomplete official parent",
+    )
     longitudinal_run.add_argument("--composition-release-root")
     longitudinal_run.add_argument(
         "--allow-fixture-composition",

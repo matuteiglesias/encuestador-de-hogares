@@ -340,7 +340,7 @@ def labor_context_index(
         key = (period, geography, indicator)
         if key in index:
             raise LongitudinalRuntimeError(f"duplicate_labor_context_cell:{key}")
-        if row.get("value_status") != "observed":
+        if row.get("value_status") not in {"observed", "derived_bfill", "derived_ffill"}:
             raise LongitudinalRuntimeError(f"labor_context_cell_not_observed:{key}")
         index[key] = {
             "value": _rate(str(row.get("value") or ""), key),
@@ -349,6 +349,12 @@ def labor_context_index(
                 row.get("source_snapshot_sha256") or ""
             ),
             "source_cell_identity": str(row.get("source_cell_identity") or ""),
+            "value_status": str(row.get("value_status") or ""),
+            "completion_release_id": str(row.get("completion_release_id") or ""),
+            "completion_manifest_sha256": str(row.get("completion_manifest_sha256") or ""),
+            "fill_method": str(row.get("fill_method") or ""),
+            "fill_source_period": str(row.get("fill_source_period") or ""),
+            "fill_distance_quarters": str(row.get("fill_distance_quarters") or ""),
         }
     if not index:
         raise LongitudinalRuntimeError("labor_context_index_empty")
@@ -417,6 +423,12 @@ def attach_labor_context(
                         "source_cell_identity": str(
                             record["source_cell_identity"]
                         ),
+                        "value_status": record["value_status"],
+                        "completion_release_id": record["completion_release_id"],
+                        "completion_manifest_sha256": record["completion_manifest_sha256"],
+                        "fill_method": record["fill_method"],
+                        "fill_source_period": record["fill_source_period"],
+                        "fill_distance_quarters": record["fill_distance_quarters"],
                     }
                 )
         row["labor_context_semantics"] = (

@@ -339,12 +339,101 @@ class LaborContextRelease:
     release_id: str
     observations_path: Path
     manifest: dict[str, Any]
+    completion: "LaborContextCompletion | None" = None
 
     def read_observations(self) -> list[dict[str, str]]:
-        return _read_csv(self.observations_path)
+        rows = _read_csv(self.observations_path)
+        if self.completion is None:
+            return rows
+        # Synthetic rows deliberately carry no official source/quality
+        # metadata. Their provenance is the overlay's source identity.
+        for row in self.completion.rows:
+            rows.append({
+                "period": row["period"],
+                "geography_level": row["geography_level"],
+                "geography_id": row["geography_id"],
+                "indicator_id": row["indicator_id"],
+                "value": row["value"],
+                "value_status": row["value_status"],
+                "source_id": "",
+                "source_snapshot_sha256": "",
+                "source_cell_identity": "derived_from:" + row["source_observation_identity"],
+                "completion_release_id": self.completion.release_id,
+                "completion_manifest_sha256": self.completion.manifest_sha256,
+                "fill_method": row["fill_method"],
+                "fill_source_period": row["fill_source_period"],
+                "fill_distance_quarters": row["fill_distance_quarters"],
+            })
+        return rows
 
 
-def load_labor_context_release(root: Path) -> LaborContextRelease:
+@dataclass(frozen=True)
+class LaborContextCompletion:
+    root: Path
+    release_id: str
+    manifest_sha256: str
+    rows: list[dict[str, str]]
+
+
+def _completion_period_offset(period: str, delta: int) -> str:
+    year, quarter = int(period[:4]), int(period[-1])
+    index = year * 4 + quarter - 1 + delta
+    return f"{index // 4:04d}-Q{index % 4 + 1}"
+
+
+def load_labor_completion_overlay(
+    official_root: Path,
+    overlay_root: Path,
+    official_manifest: dict[str, Any],
+) -> LaborContextCompletion:
+    overlay_root = Path(overlay_root).expanduser().resolve()
+    manifest_path = overlay_root / "manifest.json"
+    manifest = _json(manifest_path, "labor_completion_manifest_invalid")
+    if manifest.get("contract") != "research.indec-eph-labor-context-completion/v1":
+        raise LongitudinalIntakeError("unexpected_labor_completion_contract")
+    if manifest.get("official_parent_release_id") != official_manifest.get("release_id"):
+        raise LongitudinalIntakeError("labor_completion_parent_release_mismatch")
+    parent_hash = sha256_file(Path(official_root) / "manifest.json")
+    if manifest.get("official_parent_manifest_sha256") != parent_hash:
+        raise LongitudinalIntakeError("labor_completion_parent_hash_mismatch")
+    completion_path = overlay_root / "completion.csv"
+    expected = (manifest.get("files") or {}).get("completion.csv")
+    if not completion_path.is_file() or sha256_file(completion_path) != expected:
+        raise LongitudinalIntakeError("labor_completion_artifact_hash_mismatch")
+    rows = _read_csv(completion_path)
+    official_rows = _read_csv(Path(official_root) / "labor_state.csv")
+    official = {(r["period"], r["geography_level"], r["geography_id"], r["indicator_id"]): r for r in official_rows}
+    coverage = _read_csv(Path(official_root) / "coverage.csv")
+    missing = {(r["period"], r["geography_level"], r["geography_id"], r["indicator_id"])
+               for r in coverage if r["coverage_status"] != "present"}
+    seen = set()
+    for row in rows:
+        key = (row.get("period", ""), row.get("geography_level", ""), row.get("geography_id", ""), row.get("indicator_id", ""))
+        if key in seen or key in official or key not in missing:
+            raise LongitudinalIntakeError("labor_completion_not_missing_or_duplicate")
+        seen.add(key)
+        status = row.get("value_status")
+        delta = 1 if status == "derived_bfill" else -1 if status == "derived_ffill" else 0
+        if delta == 0 or row.get("fill_distance_quarters") != "1":
+            raise LongitudinalIntakeError("labor_completion_bounds_invalid")
+        if row.get("fill_source_period") != _completion_period_offset(row["period"], delta):
+            raise LongitudinalIntakeError("labor_completion_source_period_invalid")
+        source = official.get((row["fill_source_period"], row["geography_level"], row["geography_id"], row["indicator_id"]))
+        if source is None or source.get("value_status") != "observed" or source.get("value") != row.get("value"):
+            raise LongitudinalIntakeError("labor_completion_source_not_observed")
+        if not row.get("source_observation_identity"):
+            raise LongitudinalIntakeError("labor_completion_source_identity_missing")
+        if any(field in row for field in ("cv", "ci90_low", "ci90_high", "quality_status")):
+            raise LongitudinalIntakeError("labor_completion_quality_metadata_forbidden")
+    if seen != missing:
+        raise LongitudinalIntakeError("labor_completion_required_grid_incomplete")
+    return LaborContextCompletion(
+        root=overlay_root, release_id=str(manifest["release_id"]),
+        manifest_sha256=sha256_file(manifest_path), rows=rows,
+    )
+
+
+def load_labor_context_release(root: Path, completion_root: Path | None = None) -> LaborContextRelease:
     root = Path(root).expanduser().resolve()
     manifest = _json(root / "manifest.json", "labor_context_manifest_invalid")
     if manifest.get("contract_id") != LABOR_CONTEXT_CONTRACT:
@@ -352,7 +441,8 @@ def load_labor_context_release(root: Path) -> LaborContextRelease:
     release_id = str(manifest.get("release_id") or "")
     if not release_id or root.name != release_id:
         raise LongitudinalIntakeError("labor_context_release_directory_mismatch")
-    if manifest.get("required_coverage_complete") is not True:
+    completion = None
+    if manifest.get("required_coverage_complete") is not True and completion_root is None:
         raise LongitudinalIntakeError("labor_context_required_coverage_incomplete")
     if str(manifest.get("period_min")) > "2017-Q1" or str(manifest.get("period_max")) < "2026-Q1":
         raise LongitudinalIntakeError("labor_context_period_coverage_insufficient")
@@ -384,11 +474,16 @@ def load_labor_context_release(root: Path) -> LaborContextRelease:
                 f"labor_context_artifact_hash_mismatch:{filename}"
             )
     observations_path = root / "labor_state.csv"
+    if completion_root is not None:
+        if manifest.get("required_coverage_complete") is True:
+            raise LongitudinalIntakeError("labor_completion_unnecessary_for_complete_parent")
+        completion = load_labor_completion_overlay(root, completion_root, manifest)
     return LaborContextRelease(
         root=root,
         release_id=release_id,
         observations_path=observations_path,
         manifest=manifest,
+        completion=completion,
     )
 
 
@@ -486,6 +581,12 @@ def exact_parent_metadata(
         "composition": dict(composition_metadata),
         "anchors": list(anchor_release_ids),
     }
+    if labor.completion is not None:
+        output["labor_context_completion"] = {
+            "contract": "research.indec-eph-labor-context-completion/v1",
+            "release_id": labor.completion.release_id,
+            "manifest_sha256": labor.completion.manifest_sha256,
+        }
     if donor is not None:
         output["donor_labor"] = {
             "semantic_plane_release_id": donor.release_id,
