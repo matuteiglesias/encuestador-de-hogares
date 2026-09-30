@@ -301,7 +301,7 @@ def materialize_longitudinal_model_plane(
     feature_matrix = np.lib.format.open_memmap(
         staging / "features.npy",
         mode="w+",
-        dtype=np.float32,
+        dtype=np.float64,
         shape=(eph_rows, len(feature_names)),
     )
     target = np.lib.format.open_memmap(
@@ -353,7 +353,7 @@ def materialize_longitudinal_model_plane(
                     )
                 labor_values = _labor_values(labor_index, period, region)
                 feature_matrix[index, len(profile.features) :] = np.asarray(
-                    labor_values, dtype=np.float32
+                    labor_values, dtype=np.float64
                 )
                 target[index] = _target_value(eph_row.get(config.target_field))
                 period_codes[index] = PERIOD_TO_CODE[period]
@@ -448,7 +448,7 @@ def materialize_longitudinal_model_plane(
             "household_group_count": len(household_code_by_id),
             "derived_labor_context_person_rows": derived_context_rows,
             "storage": {
-                "features": "float32_c_order_npy",
+                "features": "float64_c_order_npy",
                 "target": "float64_npy",
                 "period_codes": "int16_npy",
                 "fold_ids": "uint8_npy",
