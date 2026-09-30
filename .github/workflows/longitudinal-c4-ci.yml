@@ -10,10 +10,14 @@ on:
       - docs/LONGITUDINAL_WELFARE_C4_IMPLEMENTATION.md
       - src/encuestador/anchors.py
       - src/encuestador/longitudinal_intake.py
+      - src/encuestador/longitudinal_c6.py
       - src/encuestador/longitudinal_runtime.py
       - src/encuestador/time_layer.py
       - src/encuestador/cli.py
       - tests/test_longitudinal_runtime.py
+      - tests/test_longitudinal_c6.py
+      - tests/test_longitudinal_c6.py
+      - docs/C6_RESOURCE_SAFE_LONGITUDINAL_EXECUTION.md
       - README.md
       - SYSTEM.yaml
   push:
@@ -23,6 +27,7 @@ on:
       - configs/longitudinal/**
       - src/encuestador/anchors.py
       - src/encuestador/longitudinal_intake.py
+      - src/encuestador/longitudinal_c6.py
       - src/encuestador/longitudinal_runtime.py
       - src/encuestador/time_layer.py
       - src/encuestador/cli.py
@@ -52,16 +57,19 @@ jobs:
           ruff check
           src/encuestador/anchors.py
           src/encuestador/longitudinal_intake.py
+          src/encuestador/longitudinal_c6.py
           src/encuestador/longitudinal_runtime.py
           src/encuestador/time_layer.py
           src/encuestador/cli.py
           tests/test_longitudinal_runtime.py
+          tests/test_longitudinal_c6.py
 
       - name: Compile C4 boundary
         run: >-
           python -m py_compile
           src/encuestador/anchors.py
           src/encuestador/longitudinal_intake.py
+          src/encuestador/longitudinal_c6.py
           src/encuestador/longitudinal_runtime.py
           src/encuestador/time_layer.py
           src/encuestador/cli.py
@@ -73,8 +81,8 @@ jobs:
           encuestador longitudinal-validate configs/longitudinal/l12.yaml
           encuestador longitudinal-validate configs/longitudinal/l12_anchored.yaml
 
-      - name: Run C4 scientific fixture tests
-        run: pytest -q tests/test_longitudinal_runtime.py
+      - name: Run C4/C6 scientific fixture tests
+        run: pytest -q tests/test_longitudinal_runtime.py tests/test_longitudinal_c6.py
 
       - name: Run full repository regression suite
         run: pytest -q
