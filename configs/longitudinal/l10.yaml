@@ -1,5 +1,8 @@
 arm: L10
 schema: research.encuestador-longitudinal-config/v1
+composition_source: raw_c2_fixture
+composition_parent_contract: fixture.raw-c2-composition-inline/v1
+feature_profile_id: RAW_C2_8VAR_TEST_FIXTURE_V1
 features:
   composition: [CH04, CH06, CH09, CH10, CH12, CH13, CH15, IX_TOT]
   categorical: [CH04, CH09, CH10, CH12, CH13, CH15]
