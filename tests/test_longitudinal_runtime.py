@@ -6,10 +6,16 @@ from pathlib import Path
 
 import numpy as np
 import pytest
+import yaml
 
+from encuestador import longitudinal_runtime as longitudinal
 from encuestador.anchors import multiclass_kl_moment_projection
 from encuestador.longitudinal_intake import (
+    canonical_composition_parent_metadata,
     exact_parent_metadata,
+    fixture_composition_parent_metadata,
+    join_composition_profile,
+    load_composition_plane_profile,
     load_donor_labor_release,
     load_labor_context_release,
     load_longitudinal_eph_release,
@@ -22,6 +28,8 @@ from encuestador.longitudinal_runtime import (
     build_panel_pairs,
     execute_longitudinal_arm,
     load_longitudinal_config,
+    resolve_composition_profile,
+    write_longitudinal_run_bundle,
 )
 from encuestador.time_layer import fit_time_layer
 
@@ -31,6 +39,73 @@ CONFIG = ROOT / "configs" / "longitudinal"
 
 def _sha(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def _fixture_parents() -> dict:
+    return {
+        "longitudinal_eph": {"release_id": "eph-longitudinal-fixture"},
+        "labor_context": {"release_id": "labor-context-fixture"},
+        "monetary_conversion": {
+            "release_id": "money-fixture",
+            "reference_period": "2025-11-01",
+        },
+        "composition": fixture_composition_parent_metadata(),
+    }
+
+
+def _canonical_l10_config(tmp_path: Path, profile_id: str = "P0_LONG"):
+    value = yaml.safe_load((CONFIG / "l10.yaml").read_text(encoding="utf-8"))
+    value["composition_source"] = "canonical_parent"
+    value["composition_parent_contract"] = (
+        "research.eph-longitudinal-composition-plane/v1"
+    )
+    value["feature_profile_id"] = profile_id
+    value["features"]["composition"] = []
+    value["features"]["categorical"] = []
+    path = tmp_path / "canonical-l10.yaml"
+    path.write_text(yaml.safe_dump(value, sort_keys=False), encoding="utf-8")
+    return load_longitudinal_config(path)
+
+
+def _write_composition_fixture(
+    tmp_path: Path,
+    rows: list[dict],
+    *,
+    profile_id: str = "P0_LONG",
+) -> Path:
+    release_id = "composition-plane-fixture"
+    root = tmp_path / release_id
+    root.mkdir()
+    data_path = root / "composition.csv"
+    lines = ["row_id,comp_age,comp_household_size"]
+    for index, row in enumerate(rows):
+        lines.append(
+            f"{row['row_id']},{20 + index % 50},{1 + index % 5}"
+        )
+    data_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    manifest = {
+        "contract": "research.eph-longitudinal-composition-plane/v1",
+        "release_id": release_id,
+        "row_id_field": "row_id",
+        "profiles": {
+            profile_id: {
+                "features": ["comp_age", "comp_household_size"],
+                "categorical_features": [],
+                "artifact": "composition.csv",
+            }
+        },
+        "artifacts": {
+            "composition.csv": {
+                "sha256": _sha(data_path),
+                "rows": len(rows),
+            }
+        },
+    }
+    (root / "manifest.json").write_text(
+        json.dumps(manifest, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    return root
 
 
 def _groups_by_fold(n_per_fold: int = 9, n_splits: int = 5) -> dict[int, list[str]]:
@@ -244,14 +319,7 @@ def test_l10_holdout_predictions_do_not_depend_on_holdout_targets() -> None:
     config = load_longitudinal_config(CONFIG / "l10.yaml")
     rows = _l10_rows()
     manifest = build_longitudinal_fold_manifest(rows, config)
-    parents = {
-        "longitudinal_eph": {"release_id": "eph-longitudinal-fixture"},
-        "labor_context": {"release_id": "labor-context-fixture"},
-        "monetary_conversion": {
-            "release_id": "money-fixture",
-            "reference_period": "2025-11-01",
-        },
-    }
+    parents = _fixture_parents()
     first = execute_longitudinal_arm(
         rows, config, parent_metadata=parents, fold_manifest=manifest
     )
@@ -268,23 +336,32 @@ def test_l10_holdout_predictions_do_not_depend_on_holdout_targets() -> None:
         first.hurdle.unconditional_expected_income.values[mask],
         second.hurdle.unconditional_expected_income.values[mask],
     )
+    first_time = next(
+        row
+        for row in first.time_layers
+        if row["outer_fold"] == 0 and row["model_role"] == "L10"
+    )
+    second_time = next(
+        row
+        for row in second.time_layers
+        if row["outer_fold"] == 0 and row["model_role"] == "L10"
+    )
+    assert first_time == second_time
+    evidence = first_time["base_prediction_evidence"]
+    assert evidence["source"] == "inner_household_safe_oof"
+    assert evidence["in_sample_base_predictions_used"] is False
+    assert evidence["outer_holdout_rows_used"] == 0
+    assert all(row["group_overlap"] == 0 for row in evidence["folds"])
 
 
 def test_l11_and_l12_execute_without_current_state_copy_and_anchor_is_l12_only() -> None:
     source = _panel_source_rows()
     l11 = load_longitudinal_config(CONFIG / "l11.yaml")
     pairs = build_panel_pairs(source, l11)
-    parents = {
-        "longitudinal_eph": {"release_id": "eph-longitudinal-fixture"},
-        "labor_context": {"release_id": "labor-context-fixture"},
-        "monetary_conversion": {
-            "release_id": "money-fixture",
-            "reference_period": "2025-11-01",
-        },
-        "donor_labor": {
-            "semantic_plane_release_id": "semantic-fixture",
-            "donor_vintage": 2010,
-        },
+    parents = _fixture_parents()
+    parents["donor_labor"] = {
+        "semantic_plane_release_id": "semantic-fixture",
+        "donor_vintage": 2010,
     }
     shared_manifest = build_longitudinal_fold_manifest(pairs, l11)
     result_l11 = execute_longitudinal_arm(
@@ -294,6 +371,11 @@ def test_l11_and_l12_execute_without_current_state_copy_and_anchor_is_l12_only()
     assert result_l11.panel_diagnostics["supported_elapsed_quarters"] == [1]
     assert result_l11.matched_l10_oof is not None
     assert result_l11.metrics["matched_l10_baseline"]["promotion_authorized"] is False
+    assert all(
+        row["base_prediction_evidence"]["source"]
+        == "inner_household_safe_oof"
+        for row in result_l11.time_layers
+    )
 
     l12 = load_longitudinal_config(CONFIG / "l12.yaml")
     result_l12 = execute_longitudinal_arm(
@@ -303,6 +385,11 @@ def test_l11_and_l12_execute_without_current_state_copy_and_anchor_is_l12_only()
     assert result_l12.transition_raw is not None
     assert result_l12.transition_raw.source == "oof"
     assert result_l12.matched_l10_oof is not None
+    assert all(
+        row["base_prediction_evidence"]["source"]
+        == "inner_household_safe_oof"
+        for row in result_l12.time_layers
+    )
 
     anchored = load_longitudinal_config(CONFIG / "l12_anchored.yaml")
     anchor = LaborMomentAnchor(
@@ -334,6 +421,119 @@ def test_l11_and_l12_execute_without_current_state_copy_and_anchor_is_l12_only()
             parent_metadata=parents,
             fold_manifest=shared_manifest,
             anchors=(anchor,),
+        )
+
+
+def test_inner_hurdle_time_evidence_is_household_safe_oof(monkeypatch) -> None:
+    config = load_longitudinal_config(CONFIG / "l10.yaml")
+    rows = _l10_rows()
+    manifest = build_longitudinal_fold_manifest(rows, config)
+    x = np.arange(len(rows), dtype=float).reshape(-1, 1)
+    target = np.asarray([row["P47T_real"] for row in rows], dtype=object)
+    calls = []
+
+    class TrackingEstimator:
+        def fit(self, features, y):
+            self.fit_ids = set(np.asarray(features)[:, 0].astype(int).tolist())
+            return self
+
+        def predict_components(self, features):
+            score_ids = set(np.asarray(features)[:, 0].astype(int).tolist())
+            assert not self.fit_ids & score_ids
+            calls.append((set(self.fit_ids), score_ids))
+            count = len(features)
+            return type(
+                "Components",
+                (),
+                {
+                    "p_positive": np.full(count, 0.6),
+                    "positive_amount": np.full(count, 1000.0),
+                },
+            )()
+
+    monkeypatch.setattr(
+        longitudinal,
+        "_hurdle_estimator",
+        lambda *args, **kwargs: TrackingEstimator(),
+    )
+    probability, amount, evidence = (
+        longitudinal._inner_oof_hurdle_base_predictions(
+            x,
+            target,
+            manifest,
+            config,
+            ("synthetic_identity_feature",),
+            include_stale=False,
+        )
+    )
+    assert len(calls) == manifest.n_splits
+    assert np.isfinite(probability).all()
+    assert np.isfinite(amount).all()
+    assert evidence["source"] == "inner_household_safe_oof"
+    assert evidence["in_sample_base_predictions_used"] is False
+    assert all(row["group_overlap"] == 0 for row in evidence["folds"])
+
+
+def test_canonical_composition_parent_join_and_manifest_identity(tmp_path: Path) -> None:
+    rows = _l10_rows()
+    composition_root = _write_composition_fixture(tmp_path, rows)
+    profile = load_composition_plane_profile(composition_root, "P0_LONG")
+    config = resolve_composition_profile(
+        _canonical_l10_config(tmp_path),
+        profile,
+    )
+    joined = join_composition_profile(rows, profile)
+    assert [row["row_id"] for row in joined] == [row["row_id"] for row in rows]
+    assert config.composition_features == ("comp_age", "comp_household_size")
+    assert all(row["composition_profile_id"] == "P0_LONG" for row in joined)
+
+    parents = _fixture_parents()
+    parents["composition"] = canonical_composition_parent_metadata(profile)
+    manifest = build_longitudinal_fold_manifest(joined, config)
+    result = execute_longitudinal_arm(
+        joined,
+        config,
+        parent_metadata=parents,
+        fold_manifest=manifest,
+    )
+    output = write_longitudinal_run_bundle(
+        tmp_path / "runs",
+        result,
+        config,
+        joined,
+    )
+    run_manifest = json.loads(
+        (output / "run_manifest.json").read_text(encoding="utf-8")
+    )
+    composition = run_manifest["parents"]["composition"]
+    assert composition["release_id"] == "composition-plane-fixture"
+    assert composition["profile_id"] == "P0_LONG"
+    assert composition["manifest_sha256"] == _sha(
+        composition_root / "manifest.json"
+    )
+    assert composition["fixture_only"] is False
+
+
+def test_composition_fixture_cannot_masquerade_as_canonical_parent() -> None:
+    config = load_longitudinal_config(CONFIG / "l10.yaml")
+    rows = _l10_rows()
+    manifest = build_longitudinal_fold_manifest(rows, config)
+    forged = _fixture_parents()
+    forged["composition"] = {
+        **forged["composition"],
+        "source": "canonical_parent",
+        "contract": "research.eph-longitudinal-composition-plane/v1",
+        "fixture_only": False,
+    }
+    with pytest.raises(
+        LongitudinalRuntimeError,
+        match="composition_source_parent_mismatch",
+    ):
+        execute_longitudinal_arm(
+            rows,
+            config,
+            parent_metadata=forged,
+            fold_manifest=manifest,
         )
 
 
@@ -458,8 +658,15 @@ def test_artifact_consumers_bind_exact_c1_c2_c3_parents(tmp_path: Path) -> None:
     eph = load_longitudinal_eph_release(eph_root)
     labor = load_labor_context_release(labor_root)
     donor = load_donor_labor_release(donor_root)
-    parents = exact_parent_metadata(eph, labor, donor=donor)
+    parents = exact_parent_metadata(
+        eph,
+        labor,
+        composition_metadata=fixture_composition_parent_metadata(),
+        donor=donor,
+    )
     assert parents["longitudinal_eph"]["release_id"] == eph_id
     assert parents["labor_context"]["release_id"] == labor_id
     assert parents["monetary_conversion"]["release_id"] == "money-release-fixture"
+    assert parents["composition"]["profile_id"] == "RAW_C2_8VAR_TEST_FIXTURE_V1"
+    assert parents["composition"]["fixture_only"] is True
     assert parents["donor_labor"]["donor_vintage"] == 2010
