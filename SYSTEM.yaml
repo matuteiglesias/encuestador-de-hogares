@@ -81,7 +81,7 @@ scientific_invariants:
 - L12 terminal training may consume only OOF transition probabilities, never observed current labor labels for the predicted row
 - short-gap EPH persistence evidence must not be extrapolated to CPV-2010 long horizons as identified
 verification:
-  status: real-longitudinal-prerequisites-green-l4-blocked-resource
+  status: c6-resource-safe-runtime-merged-real-l10-acceptance-pending
   last_verified: '2026-09-30'
   evidence:
   - source-backed EPH 2024-Q3 / CPV-2010 semantic feature plane is governed upstream and has zero hard semantic violations
@@ -94,7 +94,9 @@ verification:
   - real L3B P0_LONG and P1R_NOLAB_LONG composition parents preserve exact C2 identity across all 37 periods
   - real L3A CPV-2010 donor-labor handoff preserves donor vintage 2010 and makes no current-state claim
   - C4/C4B scientific runtime, canonical composition custody and nested-OOF time-layer semantics are merged and tested
-  - first full real L10 execution reached the real-scale runtime but terminated under memory pressure before emitting a run bundle
+  - first full real L10 execution on the pre-C6 runtime terminated under memory pressure before emitting a run bundle
+  - C6 resource-safe execution plane merged at ca3fe0fbf93d89a85a1d10b4498ff28366a890b2 after hosted numerical parity, restartability, longitudinal-regression and full-suite gates passed
+  - C6 streams C2/C5 into an exact typed model plane and executes outer folds sequentially with persistent fold identity and atomic checkpoints
   unknowns:
   - no promoted real Census welfare-transport model is authorized by D-1
   - Census has no observed welfare outcome authority for target transport validation
@@ -102,7 +104,7 @@ verification:
   - historical fitted RFC1-RFC4 artifacts are not established as current releases
   - any future target-period calibration beyond explicitly commissioned mechanisms requires separate approval
   - final promoted household-welfare transport contract remains a distinct scientific decision
-  - L4 Gate A/B/C/D/E scientific results remain uncommissioned until a resource-safe execution plane can run the reviewed semantics at 1.87M-row scale
-  - current runtime list-of-dict materialization must be replaced or bounded without changing fold/time/composition semantics
+  - L4 Gate A/B/C/D/E scientific results remain uncommissioned until the merged C6 path passes the real 1.87M-row resource/restartability gate
+  - any real-scale C6 repair must remain an execution/data-representation change and preserve the reviewed C4B fold/time/composition semantics
 maintenance:
   cadence: active-development
