@@ -15,7 +15,8 @@ Cloud/scientific runtime:
 - C3 — explicit donor-vintage labor semantics;
 - B0 — Telescope-B five-fold fixture repair;
 - C4/C4B — L10/L11/L12 runtime, explicit composition custody and nested-OOF time layer;
-- C5 — named canonical longitudinal composition profiles.
+- C5 — named canonical longitudinal composition profiles;
+- C6 cloud implementation — streamed/typed model plane, persistent folds, sequential restartable L10 execution; merged at `ca3fe0fb` with hosted synthetic C4B parity and full-regression CI green.
 
 Real/local gates:
 
@@ -66,8 +67,8 @@ No L10/L11/L12 scientific result has yet been produced by the longitudinal progr
 
                     CURRENT
 
-        resource-safe execution plane (C6)
-        columnar / bounded / restartable
+        C6 real local acceptance
+    1.87M rows / RSS / swap / resume
                      |
                      v
               L4 Gate A — L10
@@ -95,7 +96,7 @@ No L10/L11/L12 scientific result has yet been produced by the longitudinal progr
              indice-pobreza-UBA
 ```
 
-## Execution rule before C6
+## Execution rule during C6 real acceptance
 
 Do not:
 
@@ -105,7 +106,7 @@ Do not:
 - promote the candidate monetary parent to approved status implicitly;
 - claim a longitudinal L10/L11/L12 result from preflight alone.
 
-C6 should change the **data/execution representation**, not the scientific estimand.
+The merged C6 path changes the **data/execution representation**, not the scientific estimand. Local fixes are permitted only within that same computational boundary.
 
 ## Program completion
 
