@@ -16,6 +16,13 @@ from .eph_microdata import (
     read_eph_person_observation_frame,
 )
 from .experiments import ResolvedExperiment, resolve_experiment
+from .longitudinal_c6 import (
+    compare_c6_runs,
+    load_longitudinal_model_plane,
+    materialize_longitudinal_model_plane,
+    resolve_config_for_model_plane,
+    run_resource_safe_l10,
+)
 from .longitudinal_intake import (
     canonical_composition_parent_metadata,
     exact_parent_metadata,
@@ -25,13 +32,6 @@ from .longitudinal_intake import (
     load_donor_labor_release,
     load_labor_context_release,
     load_longitudinal_eph_release,
-)
-from .longitudinal_c6 import (
-    compare_c6_runs,
-    load_longitudinal_model_plane,
-    materialize_longitudinal_model_plane,
-    resolve_config_for_model_plane,
-    run_resource_safe_l10,
 )
 from .longitudinal_runtime import (
     LaborMomentAnchor,
