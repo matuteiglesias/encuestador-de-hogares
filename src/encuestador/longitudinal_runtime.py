@@ -645,6 +645,87 @@ def _hurdle_estimator(
     )
 
 
+def _inner_oof_hurdle_base_predictions(
+    features: np.ndarray,
+    target: np.ndarray,
+    manifest: FoldManifest,
+    config: LongitudinalConfig,
+    feature_names: Sequence[str],
+    *,
+    include_stale: bool,
+) -> tuple[np.ndarray, np.ndarray, dict[str, Any]]:
+    """Build training-side base predictions without in-sample residual evidence."""
+    x = np.asarray(features, dtype=float)
+    y = np.asarray(target, dtype=object)
+    if x.ndim != 2 or y.ndim != 1 or len(x) != len(y):
+        raise LongitudinalRuntimeError("inner_oof_hurdle_shape_invalid")
+    if len(x) != len(manifest.row_ids):
+        raise LongitudinalRuntimeError("inner_oof_hurdle_manifest_mismatch")
+
+    fold_ids = manifest.as_array()
+    probability = np.full(len(x), np.nan, dtype=float)
+    amount = np.full(len(x), np.nan, dtype=float)
+    fold_reports: list[dict[str, Any]] = []
+
+    for inner_fold in range(manifest.n_splits):
+        fit_mask = fold_ids != inner_fold
+        holdout_mask = fold_ids == inner_fold
+        if not np.any(fit_mask) or not np.any(holdout_mask):
+            raise LongitudinalRuntimeError(
+                f"inner_oof_hurdle_partition_invalid:{inner_fold}"
+            )
+        fit_groups = {
+            group
+            for group, keep in zip(
+                manifest.household_ids, fit_mask, strict=True
+            )
+            if keep
+        }
+        holdout_groups = {
+            group
+            for group, keep in zip(
+                manifest.household_ids, holdout_mask, strict=True
+            )
+            if keep
+        }
+        if fit_groups & holdout_groups:
+            raise LongitudinalRuntimeError(
+                f"inner_oof_hurdle_group_leakage:{inner_fold}"
+            )
+
+        estimator = _hurdle_estimator(
+            config,
+            feature_names,
+            include_stale=include_stale,
+        )
+        estimator.fit(x[fit_mask], y[fit_mask])
+        components = estimator.predict_components(x[holdout_mask])
+        probability[holdout_mask] = components.p_positive
+        amount[holdout_mask] = components.positive_amount
+        fold_reports.append(
+            {
+                "inner_fold": inner_fold,
+                "fit_rows": int(fit_mask.sum()),
+                "holdout_rows": int(holdout_mask.sum()),
+                "fit_groups": len(fit_groups),
+                "holdout_groups": len(holdout_groups),
+                "group_overlap": 0,
+            }
+        )
+
+    if not np.isfinite(probability).all() or not np.isfinite(amount).all():
+        raise LongitudinalRuntimeError("inner_oof_hurdle_prediction_incomplete")
+    return probability, amount, {
+        "source": "inner_household_safe_oof",
+        "policy": manifest.policy,
+        "n_splits": manifest.n_splits,
+        "row_count": len(x),
+        "in_sample_base_predictions_used": False,
+        "outer_holdout_rows_used": 0,
+        "folds": fold_reports,
+    }
+
+
 def _transition_factory(
     config: LongitudinalConfig,
     feature_names: Sequence[str],
@@ -897,6 +978,7 @@ def execute_longitudinal_arm(
         holdout = fold_array == outer_fold
         if not np.any(train) or not np.any(holdout):
             raise LongitudinalRuntimeError(f"longitudinal_fold_partition_invalid:{outer_fold}")
+        inner_manifest = _subset_manifest(manifest, train)
 
         if config.arm == "L12":
             transition_feature_names = (
@@ -924,7 +1006,6 @@ def execute_longitudinal_arm(
                 raise LongitudinalRuntimeError(
                     "l12_transition_requires_all_three_labor_classes"
                 )
-            inner_manifest = _subset_manifest(manifest, train)
             factory = _transition_factory(config, transition_feature_names)
             nested = crossfit_predict(
                 transition_x[train],
@@ -1000,16 +1081,26 @@ def execute_longitudinal_arm(
                 include_stale=config.arm == "L11",
             )
 
-        estimator.fit(terminal_train_x, target[train])
-        train_components = estimator.predict_components(terminal_train_x)
-        holdout_components = estimator.predict_components(terminal_holdout_x)
+        time_oof_p, time_oof_amount, time_evidence = (
+            _inner_oof_hurdle_base_predictions(
+                terminal_train_x,
+                target[train],
+                inner_manifest,
+                config,
+                terminal_feature_names,
+                include_stale=config.arm == "L11",
+            )
+        )
         time_fit: TimeLayerFit = fit_time_layer(
             periods[train],
-            train_components.p_positive,
-            train_components.positive_amount,
+            time_oof_p,
+            time_oof_amount,
             target[train],
             exception_policy=EXCEPTIONAL_PERIODS,
         )
+
+        estimator.fit(terminal_train_x, target[train])
+        holdout_components = estimator.predict_components(terminal_holdout_x)
         corrected_p, corrected_amount = time_fit.apply(
             periods[holdout],
             holdout_components.p_positive,
@@ -1021,26 +1112,36 @@ def execute_longitudinal_arm(
             {
                 "outer_fold": outer_fold,
                 "model_role": config.arm,
+                "base_prediction_evidence": time_evidence,
                 **time_fit.as_dict(),
             }
         )
 
         if matched_l10_probability is not None and matched_l10_amount is not None:
+            baseline_time_p, baseline_time_amount, baseline_evidence = (
+                _inner_oof_hurdle_base_predictions(
+                    base_x[train],
+                    target[train],
+                    inner_manifest,
+                    config,
+                    base_feature_names,
+                    include_stale=False,
+                )
+            )
+            baseline_time = fit_time_layer(
+                periods[train],
+                baseline_time_p,
+                baseline_time_amount,
+                target[train],
+                exception_policy=EXCEPTIONAL_PERIODS,
+            )
             baseline_estimator = _hurdle_estimator(
                 config,
                 base_feature_names,
                 include_stale=False,
             )
             baseline_estimator.fit(base_x[train], target[train])
-            baseline_train = baseline_estimator.predict_components(base_x[train])
             baseline_holdout = baseline_estimator.predict_components(base_x[holdout])
-            baseline_time = fit_time_layer(
-                periods[train],
-                baseline_train.p_positive,
-                baseline_train.positive_amount,
-                target[train],
-                exception_policy=EXCEPTIONAL_PERIODS,
-            )
             baseline_p, baseline_amount = baseline_time.apply(
                 periods[holdout],
                 baseline_holdout.p_positive,
@@ -1052,6 +1153,7 @@ def execute_longitudinal_arm(
                 {
                     "outer_fold": outer_fold,
                     "model_role": "matched_L10_baseline",
+                    "base_prediction_evidence": baseline_evidence,
                     **baseline_time.as_dict(),
                 }
             )
