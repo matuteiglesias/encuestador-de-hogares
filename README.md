@@ -38,8 +38,9 @@ transport study specification
 
 ## Longitudinal measurement mode — L10/L11/L12
 
-The active runtime now has a fixture-first longitudinal measurement path for
-observed EPH quarters `2017-Q1..2026-Q1`. It is **not** a forecasting or
+The active runtime now has a real-parent longitudinal measurement path for
+observed EPH quarters `2017-Q1..2026-Q1`. Its scientific contracts are proven
+against materialized L1/L1B/L2/L3A/L3B parents; it is **not** a forecasting or
 nowcasting surface.
 
 The centerline is a person-level hurdle over common-reference real `P47T`,
@@ -59,6 +60,34 @@ The arms are deliberately distinct:
 Current EPH labor state is never copied and called stale donor state. Official
 regional labor rates are context, not row-level unemployment probabilities.
 Fixtures cannot promote L11/L12.
+
+### Current real commissioning state
+
+All upstream real-data/semantic prerequisites for L4 Gate A are now available:
+
+- official aggregate labor parent + explicit bounded 2019-Q3 NEA completion overlay;
+- real 37-quarter EPH frame with 1,869,620 person-period rows;
+- real `P0_LONG` and `P1R_NOLAB_LONG` canonical composition releases over all 37 quarters;
+- explicit CPV-2010 donor-labor handoff for later donor-aware research;
+- canonical real L10 configs and nested household-safe OOF time-layer semantics.
+
+The first full real L10 attempt did **not** emit a scientific result bundle. It was
+terminated by practical memory pressure because the current data plane materializes the
+full EPH and composition surfaces as Python `list[dict]` objects before fold execution.
+
+Current status:
+
+```text
+L1/L1B/L2/L3A/L3B     complete
+C4/C4B scientific runtime  complete
+L4 preflight               green
+L4 Gate A result           not yet produced
+development blocker        resource-safe execution architecture
+```
+
+The next development frontier is therefore computational C6-style hardening
+(columnar/chunk-safe/restartable execution) while preserving the already-reviewed C4B
+scientific semantics. See `docs/LABOR_UPGRADE_CURRENT_STATE_2026-09-30.md`.
 
 See `contracts/longitudinal_runtime.yaml` and
 `docs/LONGITUDINAL_WELFARE_C4_IMPLEMENTATION.md`.
@@ -232,6 +261,8 @@ weights. Current cross-ecosystem adjudication and rerun triggers live in
 
 Start here:
 
+- [`docs/LABOR_UPGRADE_CURRENT_STATE_2026-09-30.md`](docs/LABOR_UPGRADE_CURRENT_STATE_2026-09-30.md) — current real longitudinal program state and blocker;
+- [`docs/LABOR_UPGRADE_EXECUTION_DAG.md`](docs/LABOR_UPGRADE_EXECUTION_DAG.md) — current execution/dependency frontier;
 - [`docs/FUNCTIONAL_CONTRACT.md`](docs/FUNCTIONAL_CONTRACT.md) — what the system asks for, does, evaluates and returns;
 - [`contracts/functional_interface.yaml`](contracts/functional_interface.yaml) — machine-readable target interface;
 - [`contracts/deployment_dag.yaml`](contracts/deployment_dag.yaml) — recovered variable/stage archaeology and candidate deployment DAG;
