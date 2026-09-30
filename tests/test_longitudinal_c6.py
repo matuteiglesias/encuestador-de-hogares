@@ -17,7 +17,6 @@ from encuestador.longitudinal_c6 import (
     run_resource_safe_l10,
 )
 from encuestador.longitudinal_intake import (
-    CompositionPlaneProfile,
     LaborContextRelease,
     LongitudinalEPHRelease,
     canonical_composition_parent_metadata,
