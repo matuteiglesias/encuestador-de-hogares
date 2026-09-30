@@ -20,7 +20,7 @@ import os
 import resource
 import shutil
 import tempfile
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from itertools import zip_longest
 from pathlib import Path
 from typing import Any, Mapping, Sequence
@@ -237,6 +237,26 @@ class LongitudinalModelPlane:
 
     def selected_feature_names(self, labor_mode: str) -> tuple[str, ...]:
         return tuple(self.feature_names[index] for index in self.feature_indices(labor_mode))
+
+
+def resolve_config_for_model_plane(
+    config: LongitudinalConfig,
+    plane: LongitudinalModelPlane,
+) -> LongitudinalConfig:
+    """Bind a canonical config to the exact feature profile stored in a C6 plane."""
+    if config.arm != "L10":
+        raise C6ExecutionError("c6_first_executor_supports_l10_only")
+    if config.composition_source != "canonical_parent":
+        raise C6ExecutionError("c6_requires_canonical_composition_parent")
+    if config.feature_profile_id != plane.manifest.get("profile_id"):
+        raise C6ExecutionError("c6_run_profile_mismatch")
+    if config.n_splits != plane.n_splits:
+        raise C6ExecutionError("c6_run_fold_count_mismatch")
+    return replace(
+        config,
+        composition_features=plane.composition_features,
+        categorical_features=plane.categorical_features,
+    )
 
 
 def _artifact_rows_from_profile(profile: CompositionPlaneProfile) -> int:
