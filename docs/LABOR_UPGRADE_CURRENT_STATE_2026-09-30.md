@@ -46,3 +46,35 @@ published implementation state; it does not claim approved-mode welfare science.
 - The first full real L10 attempt terminated under practical memory pressure before emitting a run bundle because the runtime materializes the full C2 person and composition surfaces as Python lists.
 - Current status is `BLOCKED_RESOURCE`; no L10/L11/L12 scientific result bundle exists.
 - Local receipt: `/home/matias/data/L4_RECEIPT.json`.
+
+
+## Frozen baseline
+
+Unless new evidence specifically breaks one of these contracts, the next execution work
+should treat the following as settled:
+
+1. observed EPH measurement window is `2017-Q1..2026-Q1`;
+2. `empleoARG` owns current official aggregate labor context; official observations and completion overlays remain distinct artifacts;
+3. `eph-censo-aligner` owns canonical longitudinal composition and EPH↔Census semantic recodes;
+4. `P1R_NOLAB_LONG` is the richer centerline composition candidate and `P0_LONG` is the matched baseline;
+5. L10 never consumes current person `CONDACT`;
+6. donor labor has an explicit observation clock/vintage;
+7. repeated EPH evidence supports short-gap labor research, not CPV-2010→current identification;
+8. explicit time corrections use nested household-safe OOF evidence;
+9. 2020-Q2 and 2024-Q1/Q2 remain measured but do not estimate ordinary year/quarter structure;
+10. KL projection is an L12-only sensitivity under an explicit compatible universe;
+11. longitudinal runtime is measurement-mode, not forecast/nowcast;
+12. reviewed historical survey-special values may become feature-level canonical nulls without dropping C2 rows.
+
+## Next development frontier
+
+Do not reopen upstream data/semantic architecture merely to address the current failure.
+The only active development blocker is the real-scale data plane:
+
+```text
+full C2 + C5 rows -> Python list[dict] materialization -> RAM/swap exhaustion
+```
+
+The next implementation packet should make execution columnar/bounded/restartable while
+preserving the exact C4B scientific semantics. No real L10 scientific conclusion exists
+until that execution path succeeds.
