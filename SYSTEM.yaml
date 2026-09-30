@@ -34,6 +34,7 @@ interfaces:
   - artifact:research.eph-annual-preprocessed@1
   - artifact:research.eph-longitudinal-analysis-frame/v1
   - artifact:publicdata.indec-eph-labor-state/v1
+  - artifact:research.eph-longitudinal-composition-plane/v1
   - artifact:research.eph-census-donor-labor-handoff/v1
   # Historical artifact id retained by the aligner; semantically this is variable alignment, not a geographic crosswalk.
   - artifact:research.eph-census-crosswalk@1
@@ -73,6 +74,8 @@ scientific_invariants:
 - poverty consumes welfare semantics, never model-native latent/log prediction values
 - longitudinal L10/L11/L12 are measurement-mode only; forecasting and nowcasting are unauthorized
 - official aggregate labor rates are contextual covariates, never individual labor probabilities
+- scientific longitudinal composition must come from an explicit governed profile release joined one-to-one by row_id; the raw eight-variable C2 list is fixture-only
+- explicit longitudinal time corrections are fitted from inner household-safe OOF base predictions within outer training, never from in-sample base predictions
 - exceptional 2020-Q2 and 2024-Q1/Q2 observations remain measurable but do not estimate ordinary year/quarter effects
 - L11 stale labor must come from an actually earlier observed EPH wave
 - L12 terminal training may consume only OOF transition probabilities, never observed current labor labels for the predicted row
