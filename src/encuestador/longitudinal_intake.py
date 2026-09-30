@@ -39,18 +39,41 @@ def _json(path: Path, reason: str) -> dict[str, Any]:
     return value
 
 
-def _read_csv(path: Path) -> list[dict[str, str]]:
+def _iter_csv(path: Path):
+    """Yield normalized CSV rows without materializing the whole artifact."""
     try:
         with Path(path).open("r", encoding="utf-8", newline="") as stream:
-            rows = [
-                {key: (value or "").strip() for key, value in row.items()}
-                for row in csv.DictReader(stream)
-            ]
+            reader = csv.DictReader(stream)
+            if not reader.fieldnames:
+                raise LongitudinalIntakeError(f"csv_header_missing:{path.name}")
+            seen = False
+            for row in reader:
+                seen = True
+                yield {key: (value or "").strip() for key, value in row.items()}
+            if not seen:
+                raise LongitudinalIntakeError(f"csv_empty:{path.name}")
     except OSError as exc:
         raise LongitudinalIntakeError(f"csv_unreadable:{path.name}") from exc
-    if not rows:
+
+
+def _read_csv(path: Path) -> list[dict[str, str]]:
+    return list(_iter_csv(path))
+
+
+def _csv_header_and_count(path: Path) -> tuple[tuple[str, ...], int]:
+    """Validate one CSV structurally while keeping peak memory independent of rows."""
+    try:
+        with Path(path).open("r", encoding="utf-8", newline="") as stream:
+            reader = csv.DictReader(stream)
+            header = tuple(reader.fieldnames or ())
+            if not header:
+                raise LongitudinalIntakeError(f"csv_header_missing:{path.name}")
+            count = sum(1 for _ in reader)
+    except OSError as exc:
+        raise LongitudinalIntakeError(f"csv_unreadable:{path.name}") from exc
+    if count == 0:
         raise LongitudinalIntakeError(f"csv_empty:{path.name}")
-    return rows
+    return header, count
 
 
 def _verify_artifact(
@@ -85,8 +108,12 @@ class LongitudinalEPHRelease:
     monetary_release_id: str
     monetary_reference_period: str
 
+    def iter_persons(self):
+        return _iter_csv(self.persons_path)
+
     def read_persons(self) -> list[dict[str, str]]:
-        return _read_csv(self.persons_path)
+        """Compatibility helper for bounded fixtures; real C6 execution streams."""
+        return list(self.iter_persons())
 
 
 def load_longitudinal_eph_release(root: Path) -> LongitudinalEPHRelease:
@@ -155,8 +182,12 @@ class CompositionPlaneProfile:
     manifest_sha256: str
     profile_sha256: str
 
+    def iter_rows(self):
+        return _iter_csv(self.rows_path)
+
     def read_rows(self) -> list[dict[str, str]]:
-        return _read_csv(self.rows_path)
+        """Compatibility helper for bounded fixtures; real C6 execution streams."""
+        return list(self.iter_rows())
 
 
 def load_composition_plane_profile(
@@ -216,12 +247,12 @@ def load_composition_plane_profile(
     if not isinstance(artifact, dict):
         raise LongitudinalIntakeError("composition_profile_artifact_record_missing")
     rows_path = _verify_artifact(root, artifact, artifact_name)
-    rows = _read_csv(rows_path)
+    header, row_count = _csv_header_and_count(rows_path)
     declared_rows = artifact.get("rows")
-    if declared_rows is not None and int(declared_rows) != len(rows):
+    if declared_rows is not None and int(declared_rows) != row_count:
         raise LongitudinalIntakeError("composition_profile_row_count_mismatch")
     required_columns = {"row_id", *features}
-    missing_columns = sorted(required_columns - set(rows[0]))
+    missing_columns = sorted(required_columns - set(header))
     if missing_columns:
         raise LongitudinalIntakeError(
             "composition_profile_columns_missing:" + ",".join(missing_columns)
@@ -339,7 +370,7 @@ class LaborContextRelease:
     release_id: str
     observations_path: Path
     manifest: dict[str, Any]
-    completion: "LaborContextCompletion | None" = None
+    completion: LaborContextCompletion | None = None
 
     def read_observations(self) -> list[dict[str, str]]:
         rows = _read_csv(self.observations_path)

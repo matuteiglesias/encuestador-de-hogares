@@ -16,6 +16,13 @@ from .eph_microdata import (
     read_eph_person_observation_frame,
 )
 from .experiments import ResolvedExperiment, resolve_experiment
+from .longitudinal_c6 import (
+    compare_c6_runs,
+    load_longitudinal_model_plane,
+    materialize_longitudinal_model_plane,
+    resolve_config_for_model_plane,
+    run_resource_safe_l10,
+)
 from .longitudinal_intake import (
     canonical_composition_parent_metadata,
     exact_parent_metadata,
@@ -591,6 +598,99 @@ def _command_longitudinal_run(args: argparse.Namespace) -> int:
     return 0
 
 
+def _command_longitudinal_c6_plane(args: argparse.Namespace) -> int:
+    config = load_longitudinal_config(Path(args.config))
+    if config.arm != "L10":
+        raise CLIError("c6_model_plane_first_release_is_l10_only")
+    eph = load_longitudinal_eph_release(Path(args.eph_release_root))
+    labor = load_labor_context_release(
+        Path(args.labor_release_root),
+        Path(args.labor_completion_root) if args.labor_completion_root else None,
+    )
+    if config.composition_source != "canonical_parent":
+        raise CLIError("c6_requires_canonical_composition_parent")
+    profile = load_composition_plane_profile(
+        Path(args.composition_release_root),
+        config.feature_profile_id,
+    )
+    config = resolve_composition_profile(config, profile)
+    root = materialize_longitudinal_model_plane(
+        eph,
+        labor,
+        profile,
+        config,
+        Path(args.output_root),
+    )
+    plane = load_longitudinal_model_plane(root, verify_hashes=False)
+    sys.stdout.write(
+        _canonical_json(
+            {
+                "status": "complete",
+                "contract": plane.manifest["contract"],
+                "release_id": plane.release_id,
+                "root": str(root),
+                "rows": plane.row_count,
+                "features": list(plane.feature_names),
+                "fold_policy": plane.manifest["fold_policy"],
+                "measurement_mode": True,
+                "forecasting_authorized": False,
+            }
+        )
+    )
+    return 0
+
+
+def _command_longitudinal_c6_run(args: argparse.Namespace) -> int:
+    config = load_longitudinal_config(Path(args.config))
+    plane = load_longitudinal_model_plane(
+        Path(args.model_plane_root),
+        verify_hashes=not args.skip_plane_hash_verification,
+    )
+    config = resolve_config_for_model_plane(config, plane)
+    root = run_resource_safe_l10(
+        plane,
+        config,
+        Path(args.output_root),
+        labor_mode=args.labor_mode,
+        outer_fold=args.outer_fold,
+    )
+    completed = (root / "run_manifest.json").is_file()
+    payload = {
+        "status": "complete" if completed else "checkpointed",
+        "root": str(root),
+        "run_id": (
+            json.loads((root / "run_manifest.json").read_text(encoding="utf-8"))[
+                "run_id"
+            ]
+            if completed
+            else root.name.removeprefix(".").removesuffix(".work")
+        ),
+        "arm": "L10",
+        "labor_mode": args.labor_mode,
+        "outer_fold": args.outer_fold,
+        "restartable": True,
+        "measurement_mode": True,
+        "forecasting_authorized": False,
+    }
+    sys.stdout.write(_canonical_json(payload))
+    return 0
+
+
+def _command_longitudinal_c6_compare(args: argparse.Namespace) -> int:
+    comparison = compare_c6_runs(
+        [Path(value).expanduser().resolve() for value in args.runs]
+    )
+    if args.output:
+        path = Path(args.output).expanduser().resolve()
+        if path.exists():
+            raise CLIError(f"immutable_c6_comparison_exists:{path}")
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(_canonical_json(comparison), encoding="utf-8")
+        comparison["output"] = str(path)
+    sys.stdout.write(_canonical_json(comparison))
+    return 0
+
+
 def _command_longitudinal_compare(args: argparse.Namespace) -> int:
     comparison = compare_longitudinal_runs(
         [Path(value).expanduser().resolve() for value in args.runs]
@@ -696,6 +796,43 @@ def _parser() -> argparse.ArgumentParser:
     longitudinal_run.add_argument("--anchor-json")
     longitudinal_run.add_argument("--output-root", default="runs/longitudinal")
     longitudinal_run.set_defaults(handler=_command_longitudinal_run)
+
+    longitudinal_c6_plane = sub.add_parser("longitudinal-c6-plane")
+    longitudinal_c6_plane.add_argument("config")
+    longitudinal_c6_plane.add_argument("--eph-release-root", required=True)
+    longitudinal_c6_plane.add_argument("--labor-release-root", required=True)
+    longitudinal_c6_plane.add_argument("--labor-completion-root")
+    longitudinal_c6_plane.add_argument("--composition-release-root", required=True)
+    longitudinal_c6_plane.add_argument(
+        "--output-root",
+        default="runs/longitudinal/model-planes",
+    )
+    longitudinal_c6_plane.set_defaults(handler=_command_longitudinal_c6_plane)
+
+    longitudinal_c6_run = sub.add_parser("longitudinal-c6-run")
+    longitudinal_c6_run.add_argument("config")
+    longitudinal_c6_run.add_argument("--model-plane-root", required=True)
+    longitudinal_c6_run.add_argument(
+        "--labor-mode",
+        choices=("none", "national", "national_regional"),
+        default="national_regional",
+    )
+    longitudinal_c6_run.add_argument("--outer-fold", type=int)
+    longitudinal_c6_run.add_argument(
+        "--skip-plane-hash-verification",
+        action="store_true",
+        help="local resume optimization only; exact parent hashes remain bound in the model-plane manifest",
+    )
+    longitudinal_c6_run.add_argument(
+        "--output-root",
+        default="runs/longitudinal/c6",
+    )
+    longitudinal_c6_run.set_defaults(handler=_command_longitudinal_c6_run)
+
+    longitudinal_c6_compare = sub.add_parser("longitudinal-c6-compare")
+    longitudinal_c6_compare.add_argument("runs", nargs="+")
+    longitudinal_c6_compare.add_argument("--output")
+    longitudinal_c6_compare.set_defaults(handler=_command_longitudinal_c6_compare)
 
     longitudinal_compare = sub.add_parser("longitudinal-compare")
     longitudinal_compare.add_argument("runs", nargs="+")

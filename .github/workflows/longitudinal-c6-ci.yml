@@ -1,0 +1,66 @@
+name: Longitudinal C6 CI
+
+on:
+  workflow_dispatch:
+  pull_request:
+    paths:
+      - .github/workflows/longitudinal-c6-ci.yml
+      - src/encuestador/longitudinal_c6.py
+      - src/encuestador/longitudinal_intake.py
+      - src/encuestador/longitudinal_runtime.py
+      - src/encuestador/cli.py
+      - tests/test_longitudinal_c6.py
+      - tests/test_longitudinal_runtime.py
+      - configs/longitudinal/**
+      - docs/C6_RESOURCE_SAFE_LONGITUDINAL_EXECUTION.md
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/longitudinal-c6-ci.yml
+      - src/encuestador/longitudinal_c6.py
+      - src/encuestador/longitudinal_intake.py
+      - src/encuestador/cli.py
+      - tests/test_longitudinal_c6.py
+
+permissions:
+  contents: read
+
+jobs:
+  c6-resource-safe-contract:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      PYTHONPATH: src
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install package and test dependencies
+        run: python -m pip install -e . pytest ruff pandas pyarrow
+
+      - name: Lint C6 boundary
+        run: >-
+          ruff check
+          src/encuestador/longitudinal_c6.py
+          src/encuestador/longitudinal_intake.py
+          src/encuestador/cli.py
+          tests/test_longitudinal_c6.py
+
+      - name: Compile C6 boundary
+        run: >-
+          python -m py_compile
+          src/encuestador/longitudinal_c6.py
+          src/encuestador/longitudinal_intake.py
+          src/encuestador/cli.py
+
+      - name: C6 synthetic parity and restartability
+        run: pytest -q tests/test_longitudinal_c6.py
+
+      - name: Existing C4/C4B longitudinal regression
+        run: pytest -q tests/test_longitudinal_runtime.py tests/test_labor_completion_intake.py
+
+      - name: Full repository regression
+        run: pytest -q
