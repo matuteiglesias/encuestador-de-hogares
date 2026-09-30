@@ -1,6 +1,6 @@
 # C4B — longitudinal runtime hardening before merge
 
-Status: cloud follow-up packet for PR #33, 2026-09-29.
+Status: implemented and merged with C4 via PR #33 on 2026-09-30. Real commissioning remains local L4.
 
 Work on branch:
 
