@@ -65,43 +65,55 @@ def test_model_contract_remains_frozen():
 
 
 def test_canonical_fold_policy_matches_repository_contract():
-    raw = pd.DataFrame(
-        [
+    households_by_fold = {}
+    candidate = 0
+    while set(households_by_fold) != set(range(NR.N_OUTER_FOLDS)):
+        codusu = f"fixture_hh_{candidate}"
+        household_group_id = f"{codusu}\x1f1"
+        fold = NR.canonical_household_fold(household_group_id)
+        households_by_fold.setdefault(fold, codusu)
+        candidate += 1
+
+    raw_rows = []
+    for fold in range(NR.N_OUTER_FOLDS):
+        codusu = households_by_fold[fold]
+        raw_rows.append(
             {
-                "CODUSU": "hhA",
+                "CODUSU": codusu,
                 "NRO_HOGAR": "1",
                 "COMPONENTE": "1",
                 "ANO4": "2024",
                 "TRIMESTRE": "3",
-            },
-            {
-                "CODUSU": "hhA",
-                "NRO_HOGAR": "1",
-                "COMPONENTE": "2",
-                "ANO4": "2024",
-                "TRIMESTRE": "3",
-            },
-            {
-                "CODUSU": "hhB",
-                "NRO_HOGAR": "1",
-                "COMPONENTE": "1",
-                "ANO4": "2024",
-                "TRIMESTRE": "3",
-            },
-        ]
+            }
+        )
+    first_codusu = households_by_fold[0]
+    raw_rows.append(
+        {
+            "CODUSU": first_codusu,
+            "NRO_HOGAR": "1",
+            "COMPONENTE": "2",
+            "ANO4": "2024",
+            "TRIMESTRE": "3",
+        }
     )
+    raw = pd.DataFrame(raw_rows)
+
     payload = NR.build_canonical_fold_manifest(raw)
     assert payload["policy"] == "household_grouped_v1"
     assert payload["n_splits"] == 5
     rows = payload["rows"]
-    assert rows[0]["row_id"] == "hhA\x1f1\x1f1\x1f2024\x1f3"
-    assert rows[0]["household_group_id"] == "hhA\x1f1"
-    assert rows[0]["fold_id"] == rows[1]["fold_id"]
-    expected = int.from_bytes(
-        __import__("hashlib").sha256("hhA\x1f1".encode()).digest()[:8],
-        "big",
-    ) % 5
-    assert rows[0]["fold_id"] == expected
+    assert {row["fold_id"] for row in rows} == set(range(NR.N_OUTER_FOLDS))
+
+    first_group = f"{first_codusu}\x1f1"
+    first_household_rows = [
+        row for row in rows if row["household_group_id"] == first_group
+    ]
+    assert len(first_household_rows) == 2
+    assert {row["fold_id"] for row in first_household_rows} == {0}
+    assert first_household_rows[0]["row_id"] == (
+        f"{first_codusu}\x1f1\x1f1\x1f2024\x1f3"
+    )
+    assert NR.canonical_household_fold(first_group) == 0
 
 
 def test_canonical_json_is_stable():
