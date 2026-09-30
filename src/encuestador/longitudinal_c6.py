@@ -20,10 +20,11 @@ import os
 import resource
 import shutil
 import tempfile
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, replace
 from itertools import zip_longest
 from pathlib import Path
-from typing import Any, Mapping, Sequence
+from typing import Any
 
 import numpy as np
 
@@ -41,7 +42,6 @@ from .longitudinal_runtime import (
     LABOR_CONTEXT_FIELDS,
     LABOR_INDICATORS,
     LongitudinalConfig,
-    LongitudinalRuntimeError,
     _hurdle_estimator,
     labor_context_index,
 )
@@ -567,7 +567,7 @@ def _nested_hurdle_oof(
     config: LongitudinalConfig,
     feature_names: Sequence[str],
 ) -> tuple[np.ndarray, np.ndarray, dict[str, Any]]:
-    surviving = sorted(set(int(value) for value in fold_train.tolist()))
+    surviving = sorted({int(value) for value in fold_train.tolist()})
     if len(surviving) < 2:
         raise C6ExecutionError("c6_nested_training_requires_two_inner_folds")
     probability = np.full(len(x_train), np.nan, dtype=float)
