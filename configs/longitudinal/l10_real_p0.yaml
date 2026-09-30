@@ -1,0 +1,29 @@
+arm: L10
+schema: research.encuestador-longitudinal-config/v1
+composition_source: canonical_parent
+composition_parent_contract: research.eph-longitudinal-composition-plane/v1
+feature_profile_id: P0_LONG
+features:
+  composition: []
+  categorical: []
+target_field: P47T_real
+identity:
+  period_field: period
+  region_field: region_id
+  group_field: panel_household_id
+  row_id_field: row_id
+  household_observation_field: household_observation_id
+panel:
+  person_candidate_field: person_linkage_candidate_id
+  observed_labor_fields: [ESTADO, CONDACT]
+  stale_labor_field: stale_labor_state
+  current_labor_field: target_current_labor_state
+  elapsed_quarters_field: elapsed_quarters
+  allowed_elapsed_quarters: [1, 3]
+splits:
+  n_splits: 5
+estimators:
+  presence: {early_stopping: false, random_state: 42, max_iter: 60, max_leaf_nodes: 31, min_samples_leaf: 20, learning_rate: 0.08}
+  positive_amount: {early_stopping: false, random_state: 42, max_iter: 60, max_leaf_nodes: 31, min_samples_leaf: 20, learning_rate: 0.08}
+  transition: {early_stopping: false, random_state: 42, max_iter: 60, max_leaf_nodes: 31, min_samples_leaf: 20, learning_rate: 0.08}
+anchor: {enabled: false}
