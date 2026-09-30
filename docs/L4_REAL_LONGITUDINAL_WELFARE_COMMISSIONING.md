@@ -1,6 +1,6 @@
 # L4 — real longitudinal welfare and labor commissioning
 
-Status: local/heavy execution packet, 2026-09-29.
+Status: prerequisites green / commissioning blocked-resource, 2026-09-30. L1/L1B/L2/L3B and C4/C4B are available; the first full real L10 attempt terminated before producing a result bundle because the current object-heavy intake exceeded practical memory headroom. Gate A–E science remains uncommissioned pending a resource-safe execution plane.
 
 ## Purpose
 
