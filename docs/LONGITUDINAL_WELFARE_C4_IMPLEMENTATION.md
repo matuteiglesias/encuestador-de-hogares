@@ -20,6 +20,38 @@ The run parent record binds release IDs and parent manifest SHA-256 values. The
 monetary conversion release/reference are inherited from the C2 longitudinal
 EPH parent; this runtime does not silently re-deflate P47T.
 
+## Composition-plane custody
+
+Scientific composition is feature-plane-agnostic. A scientific config declares:
+
+```text
+composition_source: canonical_parent
+composition_parent_contract: research.eph-longitudinal-composition-plane/v1
+feature_profile_id: <named upstream profile>
+```
+
+The runtime then resolves the declared profile from one immutable composition
+parent, verifies its manifest/artifact hashes, and joins it to C2 by exact
+one-to-one `row_id`. Missing, extra, duplicated, or fuzzy identities fail
+closed. EPH↔Census recoding remains upstream in `eph-censo-aligner`.
+
+Every run binds the composition release ID, manifest SHA-256, profile ID,
+profile-spec SHA-256, and resolved feature/categorical lists.
+
+The historical cloud fixture list:
+
+```text
+CH04 CH06 CH09 CH10 CH12 CH13 CH15 IX_TOT
+```
+
+is now explicitly named `RAW_C2_8VAR_TEST_FIXTURE_V1` under
+`fixture.raw-c2-composition-inline/v1`. It is synthetic-test infrastructure,
+not an adjudicated L10 scientific profile. CLI execution requires the explicit
+`--allow-fixture-composition` switch to use it.
+
+C4B supports a synthetic C5-format parent now; no real C5 materialization or
+profile winner is asserted by this PR.
+
 ## Labor-context join
 
 For every person-period row, the runtime performs an exact period × region join
@@ -43,9 +75,14 @@ unemployment/activity probabilities.
 ## Explicit time layer
 
 The nonlinear hurdle base does not receive raw year or quarter as ordinary tree
-features. After the base hurdle is fitted on an outer-training population, an
-explicit low-dimensional correction is fitted using only that same
-outer-training evidence.
+features. For every outer fold, the time layer is estimated from **inner
+household/panel-safe OOF base hurdle predictions** over the outer-training
+population. In-sample base predictions are not residual evidence.
+
+After the time layer is frozen, the base hurdle is refit on all outer-training
+rows, predicts the outer holdout, and the frozen time correction is applied.
+Outer-holdout targets and current labor labels never fit the time layer.
+L11/L12 matched-L10 baselines use the identical discipline.
 
 Presence:
 
@@ -204,9 +241,10 @@ encuestador longitudinal-validate configs/longitudinal/l12.yaml
 Local real L10 commissioning starts with:
 
 ```bash
-encuestador longitudinal-run configs/longitudinal/l10.yaml \
+encuestador longitudinal-run /path/to/adjudicated-l10-config.yaml \
   --eph-release-root /path/to/C2-release \
   --labor-release-root /path/to/C1-release \
+  --composition-release-root /path/to/C5-composition-release \
   --output-root /path/to/runs
 ```
 
@@ -232,8 +270,9 @@ adds defensible value after explicit current context and time controls.
 
 The evidence order remains:
 
-1. **Gate A — L10:** materialize C1/C2 real parents, verify all 37 quarters,
-   monetary reference, labor-context coverage, household-safe OOF and explicit
+1. **Gate A — L10:** materialize C1/C2 plus an adjudicated C5 composition
+   profile, verify all 37 quarters, exact composition row identity, monetary
+   reference, labor-context coverage, household-safe OOF and inner-OOF
    time-layer behavior.
 2. **Gate B — panel evidence:** build real repeated-wave pairs and quantify
    transitions/value by observed gap only.
