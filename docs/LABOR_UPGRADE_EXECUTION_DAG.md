@@ -4,58 +4,26 @@ Status: coordination front door, 2026-09-29.
 
 ## Completed cloud foundation
 
-Merged:
+Merged and complete:
 
 - C1 — `empleoARG` canonical official labor-state product runtime;
 - C2 — `income-modeling-eph` 37-quarter longitudinal EPH frame runtime;
-- C3 — `eph-censo-aligner` explicit donor-vintage labor semantics.
+- C3 — `eph-censo-aligner` explicit donor-vintage labor semantics;
+- B0 — Telescope-B baseline five-fold fixture repair;
+- C4/C4B — `encuestador-de-hogares` longitudinal L10/L11/L12 runtime, canonical composition-parent consumption, and nested-OOF time-layer hardening;
+- C5 — `eph-censo-aligner` longitudinal canonical composition-plane runtime with `P0_LONG` and `P1R_NOLAB_LONG`.
 
-Open:
+The cloud implementation phase is closed. Remaining substantive work is real-data/local commissioning.
 
-- C4 PR #33 — longitudinal L10/L11/L12 runtime.
+## Cloud receipts
 
-## Remaining cloud work
+The completed cloud packets remain documented for provenance:
 
-### B0 — baseline test repair
+- B0: `docs/BASELINE_TELESCOPE_B_TEST_REPAIR.md`;
+- C4B: `docs/C4B_LONGITUDINAL_RUNTIME_HARDENING_PLAN.md`;
+- C5: `matuteiglesias/eph-censo-aligner/docs/C5_LONGITUDINAL_COMPOSITION_PLANE_PLAN.md`.
 
-Repo: `encuestador-de-hogares`
-
-Instruction:
-
-`docs/BASELINE_TELESCOPE_B_TEST_REPAIR.md`
-
-Small independent maintenance PR. It is not part of C4 science.
-
-### C4B — harden PR #33
-
-Repo: `encuestador-de-hogares`
-
-Instruction on C4 branch:
-
-`docs/C4B_LONGITUDINAL_RUNTIME_HARDENING_PLAN.md`
-
-Adds:
-
-- explicit canonical composition-plane consumption/profile identity;
-- fixture-only classification for the current minimal raw feature list;
-- inner-OOF base predictions for year/quarter/shock time-layer estimation.
-
-C4B can proceed against a synthetic C5 parent.
-
-### C5 — longitudinal canonical composition plane
-
-Repo: `eph-censo-aligner`
-
-Instruction:
-
-`docs/C5_LONGITUDINAL_COMPOSITION_PLANE_PLAN.md`
-
-Adds named canonical profiles:
-
-- `P0_LONG`;
-- `P1R_NOLAB_LONG`.
-
-C5 and C4B can run in parallel.
+Do not reopen them during local work unless a real-data gate exposes a concrete contract defect.
 
 ## Remaining local work
 
@@ -182,13 +150,17 @@ Runs:
 Start immediately in parallel:
 
 ```text
-Cloud: C4B + C5 + B0
-Local: L1 + L2
+Local: L1 + L2 + L3A (when convenient)
 ```
 
-L3A may also run opportunistically if the exact CPV-2010 sample is already available.
+Then:
 
-Do not start heavy L4 Gate A until C4B/C5 are merged and L1/L2/L3B have immutable real releases.
+```text
+L2 + merged C5 -> L3B
+L1 + L2 + L3B + merged C4/C4B -> L4 Gate A
+```
+
+Do not start heavy L4 Gate A until L1/L2/L3B have immutable real releases.
 
 ## Program completion
 
