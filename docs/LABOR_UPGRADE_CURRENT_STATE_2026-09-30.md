@@ -43,9 +43,11 @@ published implementation state; it does not claim approved-mode welfare science.
 
 - C4/C4B runtime and explicit L1B intake are published; canonical real L10 configs are available at `configs/longitudinal/l10_real_p0.yaml` and `configs/longitudinal/l10_real_p1r.yaml`.
 - Preflight contracts and tests are green.
-- The first full real L10 attempt terminated under practical memory pressure before emitting a run bundle because the runtime materializes the full C2 person and composition surfaces as Python lists.
-- Current status is `BLOCKED_RESOURCE`; no L10/L11/L12 scientific result bundle exists.
-- Local receipt: `/home/matias/data/L4_RECEIPT.json`.
+- The first full real L10 attempt on the pre-C6 runtime terminated under practical memory pressure before emitting a run bundle because that path materialized the full C2 person and composition surfaces as Python lists.
+- C6 resource-safe execution code is now merged on `main` at `ca3fe0fbf93d89a85a1d10b4498ff28366a890b2`. Hosted CI proved lint/compile, synthetic restartability, numerical parity with the C4B L10 path, existing longitudinal regressions, and the full repository suite.
+- C6 introduces one streamed C2↔C5 model-plane materialization, typed memory-mapped arrays, persistent deterministic fold IDs, sequential outer-fold execution and atomic restartable checkpoints.
+- Current status remains **real acceptance pending**: no real C6 L10 result bundle exists until the 1,869,620-row local resource gate passes.
+- Local pre-C6 failure receipt: `/home/matias/data/L4_RECEIPT.json`.
 
 
 ## Frozen baseline
@@ -68,13 +70,16 @@ should treat the following as settled:
 
 ## Next development frontier
 
-Do not reopen upstream data/semantic architecture merely to address the current failure.
-The only active development blocker is the real-scale data plane:
+The C6 cloud implementation is merged. The active gate is now **local real-scale
+acceptance**, not another architecture/design packet.
 
-```text
-full C2 + C5 rows -> Python list[dict] materialization -> RAM/swap exhaustion
-```
+Use `docs/C6_RESOURCE_SAFE_LONGITUDINAL_EXECUTION.md` to:
 
-The next implementation packet should make execution columnar/bounded/restartable while
-preserving the exact C4B scientific semantics. No real L10 scientific conclusion exists
-until that execution path succeeds.
+1. materialize the exact real P1R C6 model plane;
+2. prove one outer fold stays inside the resource budget;
+3. prove restart/checkpoint reuse;
+4. complete all five P1R folds;
+5. run the matched Gate-A composition/labor-context comparisons.
+
+Do not reopen L1/L2/L3/C4 semantics to solve a resource problem. No real L10 scientific
+conclusion exists until the C6 local acceptance gate succeeds.
