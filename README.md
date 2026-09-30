@@ -85,9 +85,13 @@ L4 Gate A result           not yet produced
 development blocker        resource-safe execution architecture
 ```
 
-The next development frontier is therefore computational C6-style hardening
-(columnar/chunk-safe/restartable execution) while preserving the already-reviewed C4B
-scientific semantics. See `docs/LABOR_UPGRADE_CURRENT_STATE_2026-09-30.md`.
+The C6 resource-safe execution plane is now merged: it streams C2/C5 into one typed
+model plane, persists deterministic folds, executes one outer fold at a time, and
+checkpoints results for restart. Hosted CI proves synthetic numerical parity with C4B.
+The remaining frontier is the **real 1.87M-row C6 acceptance run**; no L10 scientific
+result is claimed before that local gate passes. See
+`docs/C6_RESOURCE_SAFE_LONGITUDINAL_EXECUTION.md` and
+`docs/LABOR_UPGRADE_CURRENT_STATE_2026-09-30.md`.
 
 See `contracts/longitudinal_runtime.yaml` and
 `docs/LONGITUDINAL_WELFARE_C4_IMPLEMENTATION.md`.
@@ -261,7 +265,8 @@ weights. Current cross-ecosystem adjudication and rerun triggers live in
 
 Start here:
 
-- [`docs/LABOR_UPGRADE_CURRENT_STATE_2026-09-30.md`](docs/LABOR_UPGRADE_CURRENT_STATE_2026-09-30.md) — current real longitudinal program state and blocker;
+- [`docs/LABOR_UPGRADE_CURRENT_STATE_2026-09-30.md`](docs/LABOR_UPGRADE_CURRENT_STATE_2026-09-30.md) — current real longitudinal program state and acceptance frontier;
+- [`docs/C6_RESOURCE_SAFE_LONGITUDINAL_EXECUTION.md`](docs/C6_RESOURCE_SAFE_LONGITUDINAL_EXECUTION.md) — resource-safe real-scale execution contract and local acceptance gate;
 - [`docs/LABOR_UPGRADE_EXECUTION_DAG.md`](docs/LABOR_UPGRADE_EXECUTION_DAG.md) — current execution/dependency frontier;
 - [`docs/FUNCTIONAL_CONTRACT.md`](docs/FUNCTIONAL_CONTRACT.md) — what the system asks for, does, evaluates and returns;
 - [`contracts/functional_interface.yaml`](contracts/functional_interface.yaml) — machine-readable target interface;
