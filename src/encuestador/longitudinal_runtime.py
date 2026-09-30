@@ -9,7 +9,7 @@ import shutil
 import tempfile
 from collections import Counter, defaultdict
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from itertools import pairwise
 from pathlib import Path
 from typing import Any
@@ -24,6 +24,12 @@ from .estimators import HGBClassifierAdapter, HGBRegressorAdapter
 from .evaluation import (
     classification_diagnostics,
     distributional_regression_diagnostics,
+)
+from .longitudinal_intake import (
+    COMPOSITION_PLANE_CONTRACT,
+    FIXTURE_COMPOSITION_CONTRACT,
+    FIXTURE_COMPOSITION_PROFILE_ID,
+    CompositionPlaneProfile,
 )
 from .scientific_primitives import FoldManifest, PredictionArtifact
 from .terminal import (
@@ -48,6 +54,24 @@ LABOR_CONTEXT_FIELDS = (
     "labor_regional_subemployment_deviation",
 )
 ARM_IDS = {"L10", "L11", "L12"}
+FIXTURE_COMPOSITION_FEATURES = (
+    "CH04",
+    "CH06",
+    "CH09",
+    "CH10",
+    "CH12",
+    "CH13",
+    "CH15",
+    "IX_TOT",
+)
+FIXTURE_COMPOSITION_CATEGORICAL = (
+    "CH04",
+    "CH09",
+    "CH10",
+    "CH12",
+    "CH13",
+    "CH15",
+)
 FORBIDDEN_COMPOSITION_FIELDS = {
     "ESTADO",
     "CONDACT",
@@ -80,6 +104,9 @@ def _period_index(period: str) -> int:
 @dataclass(frozen=True)
 class LongitudinalConfig:
     arm: str
+    composition_source: str
+    composition_parent_contract: str
+    feature_profile_id: str
     composition_features: tuple[str, ...]
     categorical_features: tuple[str, ...]
     target_field: str
@@ -130,10 +157,48 @@ def load_longitudinal_config(path: Path) -> LongitudinalConfig:
     if not all(isinstance(item, Mapping) for item in (features, identity, panel, estimators, splits, anchor)):
         raise LongitudinalRuntimeError("longitudinal_config_sections_missing")
 
+    composition_source = str(value.get("composition_source") or "")
+    composition_parent_contract = str(
+        value.get("composition_parent_contract") or ""
+    )
+    feature_profile_id = str(value.get("feature_profile_id") or "")
     composition = tuple(str(name) for name in features.get("composition", ()))
     categorical = tuple(str(name) for name in features.get("categorical", ()))
-    if not composition:
-        raise LongitudinalRuntimeError("longitudinal_composition_features_required")
+
+    if composition_source == "raw_c2_fixture":
+        if (
+            composition_parent_contract != FIXTURE_COMPOSITION_CONTRACT
+            or feature_profile_id != FIXTURE_COMPOSITION_PROFILE_ID
+        ):
+            raise LongitudinalRuntimeError(
+                "raw_c2_fixture_composition_identity_invalid"
+            )
+        if composition != FIXTURE_COMPOSITION_FEATURES:
+            raise LongitudinalRuntimeError(
+                "raw_c2_fixture_feature_list_changed"
+            )
+        if categorical != FIXTURE_COMPOSITION_CATEGORICAL:
+            raise LongitudinalRuntimeError(
+                "raw_c2_fixture_categorical_list_changed"
+            )
+    elif composition_source == "canonical_parent":
+        if composition_parent_contract != COMPOSITION_PLANE_CONTRACT:
+            raise LongitudinalRuntimeError(
+                "canonical_composition_parent_contract_invalid"
+            )
+        if not feature_profile_id or feature_profile_id == FIXTURE_COMPOSITION_PROFILE_ID:
+            raise LongitudinalRuntimeError(
+                "canonical_composition_profile_id_required"
+            )
+        if composition or categorical:
+            raise LongitudinalRuntimeError(
+                "canonical_composition_features_must_come_from_parent_profile"
+            )
+    else:
+        raise LongitudinalRuntimeError(
+            f"unknown_composition_source:{composition_source}"
+        )
+
     forbidden = sorted(set(composition) & FORBIDDEN_COMPOSITION_FIELDS)
     if forbidden:
         raise LongitudinalRuntimeError(
@@ -155,6 +220,9 @@ def load_longitudinal_config(path: Path) -> LongitudinalConfig:
     digest = hashlib.sha256(_canonical_json(raw).encode()).hexdigest()
     return LongitudinalConfig(
         arm=arm,
+        composition_source=composition_source,
+        composition_parent_contract=composition_parent_contract,
+        feature_profile_id=feature_profile_id,
         composition_features=composition,
         categorical_features=categorical,
         target_field=str(value.get("target_field") or "P47T_real"),
@@ -182,6 +250,68 @@ def load_longitudinal_config(path: Path) -> LongitudinalConfig:
         raw=raw,
         digest=digest,
     )
+
+
+def resolve_composition_profile(
+    config: LongitudinalConfig,
+    profile: CompositionPlaneProfile,
+) -> LongitudinalConfig:
+    if config.composition_source != "canonical_parent":
+        raise LongitudinalRuntimeError(
+            "composition_profile_resolution_requires_canonical_parent"
+        )
+    if config.composition_parent_contract != COMPOSITION_PLANE_CONTRACT:
+        raise LongitudinalRuntimeError("composition_parent_contract_mismatch")
+    if config.feature_profile_id != profile.profile_id:
+        raise LongitudinalRuntimeError("composition_profile_id_mismatch")
+    forbidden = sorted(set(profile.features) & FORBIDDEN_COMPOSITION_FIELDS)
+    if forbidden:
+        raise LongitudinalRuntimeError(
+            "composition_profile_contains_forbidden_labor_state:"
+            + ",".join(forbidden)
+        )
+    return replace(
+        config,
+        composition_features=profile.features,
+        categorical_features=profile.categorical_features,
+    )
+
+
+def _validate_composition_parent_metadata(
+    config: LongitudinalConfig,
+    parent_metadata: Mapping[str, Any],
+) -> None:
+    parent = parent_metadata.get("composition")
+    if not isinstance(parent, Mapping):
+        raise LongitudinalRuntimeError("composition_parent_metadata_required")
+    if parent.get("source") != config.composition_source:
+        raise LongitudinalRuntimeError("composition_source_parent_mismatch")
+    if parent.get("contract") != config.composition_parent_contract:
+        raise LongitudinalRuntimeError("composition_contract_parent_mismatch")
+    if parent.get("profile_id") != config.feature_profile_id:
+        raise LongitudinalRuntimeError("composition_profile_parent_mismatch")
+    if config.composition_source == "raw_c2_fixture":
+        if parent.get("fixture_only") is not True:
+            raise LongitudinalRuntimeError(
+                "raw_c2_composition_must_be_marked_fixture_only"
+            )
+    else:
+        if parent.get("fixture_only") is not False:
+            raise LongitudinalRuntimeError(
+                "canonical_composition_mislabeled_as_fixture"
+            )
+        if not config.composition_features:
+            raise LongitudinalRuntimeError(
+                "canonical_composition_profile_not_resolved"
+            )
+        if tuple(parent.get("features") or ()) != config.composition_features:
+            raise LongitudinalRuntimeError(
+                "canonical_composition_parent_feature_mismatch"
+            )
+        if not parent.get("release_id") or not parent.get("manifest_sha256"):
+            raise LongitudinalRuntimeError(
+                "canonical_composition_release_identity_incomplete"
+            )
 
 
 def _rate(value: str, key: tuple[str, str, str]) -> float:
@@ -706,6 +836,7 @@ def execute_longitudinal_arm(
     """Run L10, L11, or L12 under one household/panel-safe OOF engine."""
     if not rows:
         raise LongitudinalRuntimeError("longitudinal_run_requires_rows")
+    _validate_composition_parent_metadata(config, parent_metadata)
     if anchors and config.arm != "L12":
         raise LongitudinalRuntimeError("aggregate_anchor_only_allowed_in_L12")
     if config.arm in {"L11", "L12"}:
