@@ -22,6 +22,21 @@ parents:
     contract: research.eph-census-donor-labor-handoff/v1
     producer: matuteiglesias/eph-censo-aligner
     required_for: Census donor scoring handoff, not L10
+  composition:
+    scientific_contract: research.eph-longitudinal-composition-plane/v1
+    producer: matuteiglesias/eph-censo-aligner
+    identity_join: exact row_id one-to-one only
+    required_scientific_identity:
+      - release_id
+      - manifest_sha256
+      - feature_profile_id
+      - profile_sha256
+    fixture_profile:
+      source: raw_c2_fixture
+      contract: fixture.raw-c2-composition-inline/v1
+      profile_id: RAW_C2_8VAR_TEST_FIXTURE_V1
+      scientific_default: false
+      purpose: synthetic tests only
 labor_context:
   interpretation: aggregate contextual covariates, never individual labor probabilities
   features:
@@ -41,6 +56,12 @@ time_layer:
     2020-Q2: pandemic_fieldwork_regime
     2024-Q1: 2024_h1_macroeconomic_shock
     2024-Q2: 2024_h1_macroeconomic_shock
+  fitting_evidence:
+    source: inner household-safe OOF base hurdle predictions within each outer-training fold
+    full_outer_training_refit_after_time_fit: true
+    outer_holdout_used_to_fit_time_layer: false
+    in_sample_base_predictions_used_to_fit_time_layer: false
+    matched_l10_uses_same_discipline: true
   rules:
     - exceptional observations remain measurable
     - exceptional observations do not estimate ordinary year effects
@@ -73,6 +94,7 @@ arms:
       requires_explicit_universe_contract: true
 folds:
   grouping: panel_household_id
+  time_layer_inner_grouping: same panel_household_id policy restricted to outer training
   repeated_household_waves_may_cross_folds: false
   transition_and_terminal_outer_holdout_isolation: required
 panel_pairs:
