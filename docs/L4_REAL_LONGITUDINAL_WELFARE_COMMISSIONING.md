@@ -12,7 +12,7 @@ No forecast or nowcast is authorized.
 
 Required before Gate A:
 
-1. L1 real `publicdata.indec-eph-labor-state/v1`;
+1. L1 real `publicdata.indec-eph-labor-state/v1`; if the parent has the documented 2019-Q3 NEA four-cell official gap, also require the explicit L1B completion overlay defined in `matuteiglesias/empleoARG/docs/L1B_BOUNDED_LABOR_CONTEXT_COMPLETION.md`;
 2. L2 real `research.eph-longitudinal-analysis-frame/v1`;
 3. L3B real `research.eph-longitudinal-composition-plane/v1`;
 4. merged C4/C4B runtime;
@@ -44,6 +44,8 @@ Do not include current person labor state in either profile.
 
 Adjudicate the composition profile from matched evidence. Persist both.
 
+If L1B is used, bind the official C1 release and the completion-overlay release separately in run metadata. The overlay must not be relabeled as official labor data.
+
 ### A1 — labor-context ablation
 
 On the selected composition profile compare:
@@ -63,6 +65,8 @@ subemployment
 ```
 
 Employment rate remains a sensitivity, not an automatic fourth centerline feature.
+
+For the documented 2019-Q3 NEA gap, use the L1B backward-fill overlay as centerline and run at least one matched forward-fill sensitivity. The purpose is only to show whether this one-quarter derived context matters materially.
 
 This adjudicates whether observed aggregate labor context adds terminal welfare information beyond explicit time state.
 
