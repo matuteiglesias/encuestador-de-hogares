@@ -370,7 +370,7 @@ class LaborContextRelease:
     release_id: str
     observations_path: Path
     manifest: dict[str, Any]
-    completion: "LaborContextCompletion | None" = None
+    completion: LaborContextCompletion | None = None
 
     def read_observations(self) -> list[dict[str, str]]:
         rows = _read_csv(self.observations_path)
