@@ -1,0 +1,29 @@
+name: B0 Telescope B repair verification
+
+on:
+  pull_request:
+    paths:
+      - .github/workflows/b0-telescope-b-repair-ci.yml
+      - tests/test_telescope_b_nested_residuals.py
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      PYTHONPATH: src
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install test dependencies
+        run: python -m pip install -e . pytest pandas pyarrow
+      - name: Targeted Telescope B test
+        run: pytest -q tests/test_telescope_b_nested_residuals.py
+      - name: Full repository pytest
+        run: pytest -q
