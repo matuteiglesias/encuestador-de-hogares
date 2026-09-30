@@ -5,12 +5,16 @@ import csv
 import hashlib
 import json
 from dataclasses import dataclass
+from collections.abc import Mapping
 from pathlib import Path
 from typing import Any
 
 LONGITUDINAL_EPH_CONTRACT = "research.eph-longitudinal-analysis-frame/v1"
 LABOR_CONTEXT_CONTRACT = "publicdata.indec-eph-labor-state/v1"
 SEMANTIC_PLANE_CONTRACT = "research.eph-census-semantic-feature-plane/v1"
+COMPOSITION_PLANE_CONTRACT = "research.eph-longitudinal-composition-plane/v1"
+FIXTURE_COMPOSITION_CONTRACT = "fixture.raw-c2-composition-inline/v1"
+FIXTURE_COMPOSITION_PROFILE_ID = "RAW_C2_8VAR_TEST_FIXTURE_V1"
 
 
 class LongitudinalIntakeError(ValueError):
@@ -137,6 +141,196 @@ def load_longitudinal_eph_release(root: Path) -> LongitudinalEPHRelease:
         monetary_release_id=release,
         monetary_reference_period=reference,
     )
+
+
+@dataclass(frozen=True)
+class CompositionPlaneProfile:
+    root: Path
+    release_id: str
+    profile_id: str
+    features: tuple[str, ...]
+    categorical_features: tuple[str, ...]
+    rows_path: Path
+    manifest: dict[str, Any]
+    manifest_sha256: str
+    profile_sha256: str
+
+    def read_rows(self) -> list[dict[str, str]]:
+        return _read_csv(self.rows_path)
+
+
+def load_composition_plane_profile(
+    root: Path,
+    profile_id: str,
+) -> CompositionPlaneProfile:
+    root = Path(root).expanduser().resolve()
+    manifest_path = root / "manifest.json"
+    manifest = _json(manifest_path, "composition_plane_manifest_invalid")
+    if manifest.get("contract") != COMPOSITION_PLANE_CONTRACT:
+        raise LongitudinalIntakeError("unexpected_composition_plane_contract")
+    release_id = str(manifest.get("release_id") or "")
+    if not release_id or root.name != release_id:
+        raise LongitudinalIntakeError("composition_plane_release_directory_mismatch")
+    if manifest.get("row_id_field") != "row_id":
+        raise LongitudinalIntakeError("composition_plane_row_identity_not_canonical")
+
+    profiles = manifest.get("profiles")
+    if not isinstance(profiles, dict) or profile_id not in profiles:
+        raise LongitudinalIntakeError(
+            f"composition_profile_not_declared:{profile_id}"
+        )
+    profile = profiles[profile_id]
+    if not isinstance(profile, dict):
+        raise LongitudinalIntakeError("composition_profile_record_invalid")
+    features = tuple(str(value) for value in profile.get("features", ()))
+    categorical = tuple(
+        str(value) for value in profile.get("categorical_features", ())
+    )
+    if not features or len(set(features)) != len(features):
+        raise LongitudinalIntakeError("composition_profile_features_invalid")
+    if not set(categorical).issubset(features):
+        raise LongitudinalIntakeError(
+            "composition_profile_categorical_not_subset"
+        )
+    forbidden = {
+        "ESTADO",
+        "CONDACT",
+        "donor_condact",
+        "donor_condact_vintage",
+        "stale_labor_state",
+        "target_current_labor_state",
+    }
+    overlap = sorted(set(features) & forbidden)
+    if overlap:
+        raise LongitudinalIntakeError(
+            "composition_profile_contains_labor_state:" + ",".join(overlap)
+        )
+
+    artifact_name = str(profile.get("artifact") or "")
+    if not artifact_name or Path(artifact_name).name != artifact_name:
+        raise LongitudinalIntakeError("composition_profile_artifact_name_invalid")
+    artifacts = manifest.get("artifacts")
+    if not isinstance(artifacts, dict):
+        raise LongitudinalIntakeError("composition_plane_artifacts_missing")
+    artifact = artifacts.get(artifact_name)
+    if not isinstance(artifact, dict):
+        raise LongitudinalIntakeError("composition_profile_artifact_record_missing")
+    rows_path = _verify_artifact(root, artifact, artifact_name)
+    rows = _read_csv(rows_path)
+    declared_rows = artifact.get("rows")
+    if declared_rows is not None and int(declared_rows) != len(rows):
+        raise LongitudinalIntakeError("composition_profile_row_count_mismatch")
+    required_columns = {"row_id", *features}
+    missing_columns = sorted(required_columns - set(rows[0]))
+    if missing_columns:
+        raise LongitudinalIntakeError(
+            "composition_profile_columns_missing:" + ",".join(missing_columns)
+        )
+
+    profile_sha256 = hashlib.sha256(
+        (
+            json.dumps(
+                profile,
+                sort_keys=True,
+                separators=(",", ":"),
+                ensure_ascii=False,
+                allow_nan=False,
+            )
+            + "\n"
+        ).encode()
+    ).hexdigest()
+    return CompositionPlaneProfile(
+        root=root,
+        release_id=release_id,
+        profile_id=profile_id,
+        features=features,
+        categorical_features=categorical,
+        rows_path=rows_path,
+        manifest=manifest,
+        manifest_sha256=sha256_file(manifest_path),
+        profile_sha256=profile_sha256,
+    )
+
+
+def join_composition_profile(
+    rows: list[dict[str, Any]],
+    profile: CompositionPlaneProfile,
+) -> list[dict[str, Any]]:
+    """Join an exact canonical composition profile to C2 observations by row_id."""
+    base_by_id: dict[str, dict[str, Any]] = {}
+    for row in rows:
+        row_id = str(row.get("row_id") or "")
+        if not row_id:
+            raise LongitudinalIntakeError("composition_join_base_row_id_missing")
+        if row_id in base_by_id:
+            raise LongitudinalIntakeError(
+                f"composition_join_duplicate_base_row_id:{row_id}"
+            )
+        base_by_id[row_id] = row
+
+    profile_by_id: dict[str, dict[str, str]] = {}
+    for row in profile.read_rows():
+        row_id = str(row.get("row_id") or "")
+        if not row_id:
+            raise LongitudinalIntakeError("composition_join_parent_row_id_missing")
+        if row_id in profile_by_id:
+            raise LongitudinalIntakeError(
+                f"composition_join_duplicate_parent_row_id:{row_id}"
+            )
+        profile_by_id[row_id] = row
+
+    base_ids = set(base_by_id)
+    profile_ids = set(profile_by_id)
+    if base_ids != profile_ids:
+        missing = sorted(base_ids - profile_ids)
+        extra = sorted(profile_ids - base_ids)
+        raise LongitudinalIntakeError(
+            "composition_join_identity_mismatch:"
+            f"missing={missing[:5]}:extra={extra[:5]}"
+        )
+
+    output: list[dict[str, Any]] = []
+    for source in rows:
+        row_id = str(source["row_id"])
+        governed = profile_by_id[row_id]
+        merged = dict(source)
+        for feature in profile.features:
+            if feature not in governed:
+                raise LongitudinalIntakeError(
+                    f"composition_join_feature_missing:{feature}"
+                )
+            merged[feature] = governed[feature]
+        merged["composition_profile_id"] = profile.profile_id
+        merged["composition_release_id"] = profile.release_id
+        output.append(merged)
+    return output
+
+
+def canonical_composition_parent_metadata(
+    profile: CompositionPlaneProfile,
+) -> dict[str, Any]:
+    return {
+        "source": "canonical_parent",
+        "contract": COMPOSITION_PLANE_CONTRACT,
+        "release_id": profile.release_id,
+        "manifest_sha256": profile.manifest_sha256,
+        "profile_id": profile.profile_id,
+        "profile_sha256": profile.profile_sha256,
+        "features": list(profile.features),
+        "categorical_features": list(profile.categorical_features),
+        "fixture_only": False,
+    }
+
+
+def fixture_composition_parent_metadata() -> dict[str, Any]:
+    return {
+        "source": "raw_c2_fixture",
+        "contract": FIXTURE_COMPOSITION_CONTRACT,
+        "release_id": None,
+        "manifest_sha256": None,
+        "profile_id": FIXTURE_COMPOSITION_PROFILE_ID,
+        "fixture_only": True,
+    }
 
 
 @dataclass(frozen=True)
@@ -270,6 +464,7 @@ def exact_parent_metadata(
     eph: LongitudinalEPHRelease,
     labor: LaborContextRelease,
     *,
+    composition_metadata: Mapping[str, Any],
     donor: DonorLaborRelease | None = None,
     anchor_release_ids: tuple[str, ...] = (),
 ) -> dict[str, Any]:
@@ -288,6 +483,7 @@ def exact_parent_metadata(
             "release_id": eph.monetary_release_id,
             "reference_period": eph.monetary_reference_period,
         },
+        "composition": dict(composition_metadata),
         "anchors": list(anchor_release_ids),
     }
     if donor is not None:
