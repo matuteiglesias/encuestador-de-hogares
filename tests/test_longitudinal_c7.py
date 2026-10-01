@@ -302,3 +302,69 @@ def test_c7_categorical_and_numeric_families_are_distinct(tmp_path: Path):
     l11 = _categorical_positions(names, cfg, include_stale=True)
     assert baseline == (0,)
     assert l11 == (0, len(names) - 1)
+
+
+
+def test_c7_matches_c4_l11_on_same_small_donor_clock_fixture(tmp_path: Path):
+    """Both runtimes must use the exact same paired rows, fold and feature vectors."""
+    source, gate, c6, config_path, _ = fixture(tmp_path)
+    root = materialize_c7_panel(source, gate, c6, tmp_path / "panels")
+    panel = load_c7_panel(root)
+    config = resolve_c7_config(load_longitudinal_config(config_path), panel)
+    # In the historical C4 API, elapsed quarters is a common composition-like
+    # extra numerical feature; no change to the underlying P1R semantics.
+    c4config = replace(
+        config,
+        composition_features=(
+            *panel.manifest["composition_features"], "elapsed_quarters",
+        ),
+    )
+    x = np.load(root / "features.npy")
+    y = np.load(root / "target.npy")
+    rows = []
+    with (root / "pairs.csv").open(encoding="utf-8", newline="") as stream:
+        for idx, record in enumerate(csv.DictReader(stream)):
+            group_label = record["stale_observation_row_id"].split("|")[1] + "|1"
+            row = {
+                "pair_id": record["pair_id"],
+                "panel_household_id": group_label,
+                "household_observation_id": record["target_observation_row_id"],
+                "stale_period": record["stale_observation_row_id"].split("|")[0],
+                "target_period": record["target_period"],
+                "period": record["target_period"],
+                "P47T_real": float(y[idx]),
+                "stale_labor_state": record["stale_labor_state"],
+                "target_current_labor_state": record["target_current_labor_state"],
+            }
+            row.update(zip(panel.feature_names, x[idx], strict=True))
+            rows.append(row)
+    fold_manifest = build_longitudinal_fold_manifest(rows, c4config)
+    assert tuple(fold_manifest.fold_ids) == tuple(np.load(root / "fold_ids.npy"))
+    parent = {
+        "composition": {
+            "source": "canonical_parent",
+            "contract": "research.eph-longitudinal-composition-plane/v1",
+            "profile_id": "P1R_NOLAB_LONG",
+            "fixture_only": False,
+            "features": list(c4config.composition_features),
+            "release_id": "c7-fixture-c4-parity",
+            "manifest_sha256": "a" * 64,
+        },
+    }
+    c4 = execute_longitudinal_arm(
+        rows, c4config, parent_metadata=parent, fold_manifest=fold_manifest,
+    )
+    c7 = run_resource_safe_c7(panel, config, tmp_path / "runs")
+    assert np.allclose(
+        np.load(c7 / "c7_1_p_positive.npy"),
+        c4.hurdle.p_positive.values[:, 1], rtol=1e-8, atol=1e-8,
+    )
+    assert np.allclose(
+        np.load(c7 / "c7_1_positive_amount.npy"),
+        c4.hurdle.positive_amount_prediction.values, rtol=1e-8, atol=1e-8,
+    )
+    assert c4.matched_l10_oof is not None
+    assert np.allclose(
+        np.load(c7 / "c7_0_expected_income.npy"),
+        c4.matched_l10_oof.values, rtol=1e-8, atol=1e-8,
+    )
