@@ -25,6 +25,8 @@ from .longitudinal_c6 import (
 )
 from .longitudinal_c7 import load_c7_panel, materialize_c7_panel
 from .longitudinal_c7_run import run_resource_safe_c7
+from .longitudinal_c8 import run_c8_transition
+from .longitudinal_c8_run import run_c8_welfare
 from .longitudinal_gate_b import run_gate_b
 from .longitudinal_intake import (
     canonical_composition_parent_metadata,
@@ -747,6 +749,41 @@ def _command_longitudinal_c7_run(args: argparse.Namespace) -> int:
     return 0
 
 
+def _command_longitudinal_c8_transition(args: argparse.Namespace) -> int:
+    config = load_longitudinal_config(Path(args.config))
+    panel = load_c7_panel(Path(args.panel_root))
+    root = run_c8_transition(
+        panel, config, Path(args.output_root), outer_fold=args.outer_fold,
+    )
+    complete = (root / "transition_manifest.json").is_file()
+    sys.stdout.write(_canonical_json({
+        "status": "complete" if complete else "checkpointed",
+        "root": str(root), "contract": "research.encuestador-c8-raw-transition/v1",
+        "stage": "transition", "outer_fold": args.outer_fold,
+        "measurement_mode": True, "scientific_promotion_authorized": False,
+        "requires_explicit_welfare_stage": True,
+    }))
+    return 0
+
+
+def _command_longitudinal_c8_welfare(args: argparse.Namespace) -> int:
+    config = load_longitudinal_config(Path(args.config))
+    panel = load_c7_panel(Path(args.panel_root))
+    root = run_c8_welfare(
+        panel, config, Path(args.transition_root), Path(args.c7_run_root),
+        Path(args.output_root), outer_fold=args.outer_fold,
+    )
+    complete = (root / "run_manifest.json").is_file()
+    sys.stdout.write(_canonical_json({
+        "status": "complete" if complete else "checkpointed",
+        "root": str(root), "contract": "research.encuestador-c8-raw-l12-welfare/v1",
+        "stage": "welfare", "outer_fold": args.outer_fold,
+        "arm": "C8-1", "matched_comparators": ["C7-0", "C7-1"],
+        "measurement_mode": True, "scientific_promotion_authorized": False,
+    }))
+    return 0
+
+
 def _command_longitudinal_c6_compare(args: argparse.Namespace) -> int:
     comparison = compare_c6_runs(
         [Path(value).expanduser().resolve() for value in args.runs]
@@ -924,6 +961,22 @@ def _parser() -> argparse.ArgumentParser:
     c7_run.add_argument("--outer-fold", type=int)
     c7_run.add_argument("--output-root", default="runs/longitudinal/c7")
     c7_run.set_defaults(handler=_command_longitudinal_c7_run)
+
+    c8_transition = sub.add_parser("longitudinal-c8-transition")
+    c8_transition.add_argument("config")
+    c8_transition.add_argument("--panel-root", required=True)
+    c8_transition.add_argument("--outer-fold", type=int)
+    c8_transition.add_argument("--output-root", default="runs/longitudinal/c8-transition")
+    c8_transition.set_defaults(handler=_command_longitudinal_c8_transition)
+
+    c8_welfare = sub.add_parser("longitudinal-c8-welfare")
+    c8_welfare.add_argument("config")
+    c8_welfare.add_argument("--panel-root", required=True)
+    c8_welfare.add_argument("--transition-root", required=True)
+    c8_welfare.add_argument("--c7-run-root", required=True)
+    c8_welfare.add_argument("--outer-fold", type=int)
+    c8_welfare.add_argument("--output-root", default="runs/longitudinal/c8-welfare")
+    c8_welfare.set_defaults(handler=_command_longitudinal_c8_welfare)
 
     longitudinal_c6_compare = sub.add_parser("longitudinal-c6-compare")
     longitudinal_c6_compare.add_argument("runs", nargs="+")
