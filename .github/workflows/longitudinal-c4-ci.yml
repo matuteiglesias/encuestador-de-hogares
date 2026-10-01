@@ -15,6 +15,8 @@ on:
       - src/encuestador/longitudinal_c7_contract.py
       - src/encuestador/longitudinal_c7.py
       - src/encuestador/longitudinal_c7_run.py
+      - src/encuestador/longitudinal_c8.py
+      - src/encuestador/longitudinal_c8_run.py
       - src/encuestador/longitudinal_runtime.py
       - src/encuestador/time_layer.py
       - src/encuestador/cli.py
@@ -23,10 +25,13 @@ on:
       - tests/test_longitudinal_gate_b.py
       - tests/test_longitudinal_c7_contract.py
       - tests/test_longitudinal_c7.py
+      - tests/test_longitudinal_c8.py
       - docs/C6_RESOURCE_SAFE_LONGITUDINAL_EXECUTION.md
       - docs/GATE_B_MINIMAL_PANEL_EVIDENCE.md
       - docs/C7_DONOR_CLOCK_MATCHED_L11_CONTRACT.md
       - docs/C7A_RESOURCE_SAFE_L11_EXECUTION.md
+      - docs/C8_RAW_L12_CLOUD_IMPLEMENTATION.md
+      - docs/C8_LOCAL_LOOP_CLOSURE.md
       - docs/LABOR_CONDACT_HISTORICAL_REPAIR_20261001.md
       - docs/L4_REAL_LONGITUDINAL_WELFARE_COMMISSIONING.md
       - README.md
@@ -43,6 +48,8 @@ on:
       - src/encuestador/longitudinal_c7_contract.py
       - src/encuestador/longitudinal_c7.py
       - src/encuestador/longitudinal_c7_run.py
+      - src/encuestador/longitudinal_c8.py
+      - src/encuestador/longitudinal_c8_run.py
       - src/encuestador/longitudinal_runtime.py
       - src/encuestador/time_layer.py
       - src/encuestador/cli.py
@@ -50,6 +57,7 @@ on:
       - tests/test_longitudinal_gate_b.py
       - tests/test_longitudinal_c7_contract.py
       - tests/test_longitudinal_c7.py
+      - tests/test_longitudinal_c8.py
 
 permissions:
   contents: read
@@ -80,6 +88,8 @@ jobs:
           src/encuestador/longitudinal_c7_contract.py
           src/encuestador/longitudinal_c7.py
           src/encuestador/longitudinal_c7_run.py
+          src/encuestador/longitudinal_c8.py
+          src/encuestador/longitudinal_c8_run.py
           src/encuestador/longitudinal_runtime.py
           src/encuestador/time_layer.py
           src/encuestador/cli.py
@@ -88,6 +98,7 @@ jobs:
           tests/test_longitudinal_gate_b.py
           tests/test_longitudinal_c7_contract.py
           tests/test_longitudinal_c7.py
+          tests/test_longitudinal_c8.py
 
       - name: Compile C4 boundary
         run: >-
@@ -107,9 +118,10 @@ jobs:
           encuestador longitudinal-validate configs/longitudinal/l12.yaml
           encuestador longitudinal-validate configs/longitudinal/l12_anchored.yaml
           encuestador longitudinal-validate configs/longitudinal/c7_real_p1r.yaml
+          encuestador longitudinal-validate configs/longitudinal/c8_real_p1r.yaml
 
       - name: Run C4/C6 scientific fixture tests
-        run: pytest -q tests/test_longitudinal_runtime.py tests/test_longitudinal_c6.py tests/test_longitudinal_gate_b.py tests/test_longitudinal_c7_contract.py tests/test_longitudinal_c7.py
+        run: pytest -q tests/test_longitudinal_runtime.py tests/test_longitudinal_c6.py tests/test_longitudinal_gate_b.py tests/test_longitudinal_c7_contract.py tests/test_longitudinal_c7.py tests/test_longitudinal_c8.py
 
       - name: Run full repository regression suite
         run: pytest -q
