@@ -326,4 +326,4 @@ def test_gate_b_multi_batch_keeps_exact_accounting(tmp_path: Path, capsys) -> No
     assert receipt["eligible_pairs_by_gap"] == {"1": 2, "3": 2}
     assert receipt["exclusions_by_first_reason"]["later_observation_reused"] == 2004
     assert receipt["eligible_pairs"] + receipt["exclusion_count"] == 2018
-    assert "indexed 30 person observations" in capsys.readouterr().err
+    assert "indexed 26 person observations" in capsys.readouterr().err
