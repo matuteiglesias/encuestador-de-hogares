@@ -6,15 +6,17 @@ materialization; local C7B owns real-parent commissioning.
 """
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
-from typing import Any, Mapping
+from typing import Any
 
 from .longitudinal_gate_b import (
     CONTRACT as GATE_B_CONTRACT,
-    SELECTION_POLICY as GATE_B_SELECTION_POLICY,
-    _income,
-    _select_reason,
 )
+from .longitudinal_gate_b import (
+    SELECTION_POLICY as GATE_B_SELECTION_POLICY,
+)
+from .longitudinal_gate_b import _income, _select_reason
 
 C7_INPUT_POLICY = "c7_gate_b_exact_donor_x_valid_target_income_v1"
 C7_BASELINE_ARM = "C7-0"
