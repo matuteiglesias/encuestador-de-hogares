@@ -13,8 +13,11 @@ import math
 import os
 import shutil
 import sqlite3
+import sys
 import tempfile
+import time
 from collections import Counter, defaultdict
+from itertools import islice
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
@@ -129,6 +132,35 @@ def _verify_l2(root: Path) -> tuple[dict[str, Any], dict[str, str], str]:
     return manifest, hashes, _sha(manifest_path)
 
 
+def _progress(message: str) -> None:
+    # CLI JSON remains on stdout; visible progress is deliberately stderr only.
+    print(f"[gate-b] {message}", file=sys.stderr, flush=True)
+
+
+def _prefetch_persons(
+    connection: sqlite3.Connection, links: list[dict[str, str]],
+) -> dict[str, sqlite3.Row]:
+    """Use bounded IN queries rather than ~2 Python/SQLite calls per link.
+
+    SQLite still uses the person.row_id primary-key index. Only IDs from the
+    current 2,000-link batch are retained in memory, never the 1.87M persons.
+    """
+    ids = sorted({
+        row_id
+        for link in links
+        if link["person_linkage_status"] == VALID_LINK
+        for row_id in (link["previous_row_id"], link["current_row_id"])
+        if row_id
+    })
+    projected: dict[str, sqlite3.Row] = {}
+    for start in range(0, len(ids), 400):
+        block = ids[start : start + 400]
+        query = "SELECT * FROM person WHERE row_id IN (" + ",".join("?" for _ in block) + ")"
+        for row in connection.execute(query, block):
+            projected[row["row_id"]] = row
+    return projected
+
+
 def _project_persons(connection: sqlite3.Connection, path: Path) -> int:
     connection.execute(
         "CREATE TABLE person ("
@@ -167,6 +199,8 @@ def _project_persons(connection: sqlite3.Connection, path: Path) -> int:
             except sqlite3.IntegrityError as exc:
                 raise GateBEvidenceError("l2_duplicate_person_row_id") from exc
             batch.clear()
+            if count % 200000 == 0:
+                _progress(f"indexed persons: {count:,}")
     if batch:
         try:
             connection.executemany("INSERT INTO person VALUES (?,?,?,?,?,?,?,?,?,?,?)", batch)
@@ -245,7 +279,9 @@ def _median(
 
 
 def _select_reason(
-    link: dict[str, str], connection: sqlite3.Connection, exclude_exceptional: bool
+    link: dict[str, str],
+    person_cache: dict[str, sqlite3.Row],
+    exclude_exceptional: bool,
 ):
     if link["person_linkage_status"] != VALID_LINK:
         return "link_status:" + (link["person_linkage_status"] or "missing"), None
@@ -269,12 +305,8 @@ def _select_reason(
     earlier_id, later_id = link["previous_row_id"], link["current_row_id"]
     if not earlier_id or not later_id or earlier_id == later_id:
         return "pair_row_identity_invalid", None
-    earlier = connection.execute(
-        "SELECT * FROM person WHERE row_id=?", (earlier_id,)
-    ).fetchone()
-    later = connection.execute(
-        "SELECT * FROM person WHERE row_id=?", (later_id,)
-    ).fetchone()
+    earlier = person_cache.get(earlier_id)
+    later = person_cache.get(later_id)
     if earlier is None or later is None:
         return "identity_join_failure", None
     candidate = link["person_linkage_candidate_id"]
@@ -312,7 +344,9 @@ def run_gate_b(
 ) -> Path:
     """Emit only aggregate L2-linked panel support, transitions and income evidence."""
     root = Path(eph_release_root).expanduser().resolve()
+    _progress(f"verifying immutable L2 parent: {root.name}")
     manifest, source_hashes, manifest_sha = _verify_l2(root)
+    _progress("source hashes verified; constructing slim SQLite person index")
     payload = {
         "contract": CONTRACT,
         "l2_release_id": root.name,
@@ -336,7 +370,17 @@ def run_gate_b(
     try:
         connection = sqlite3.connect(staging / "_work.sqlite")
         connection.row_factory = sqlite3.Row
+        # This database is ephemeral and deleted on any failure/interruption.
+        # Durability of immutable L2 parents and final aggregate outputs is unchanged.
+        connection.execute("PRAGMA journal_mode=OFF")
+        connection.execute("PRAGMA synchronous=OFF")
+        connection.execute("PRAGMA temp_store=MEMORY")
+        connection.execute("PRAGMA cache_size=-131072")
         person_count = _project_persons(connection, root / "persons.csv")
+        _progress(
+            f"indexed {person_count:,} person observations; "
+            "evaluating L2 audited links in 2,000-link batches"
+        )
         connection.execute(
             "CREATE TABLE eligible_keys (candidate TEXT NOT NULL,"
             " later_id TEXT PRIMARY KEY, gap INTEGER NOT NULL)"
@@ -353,52 +397,68 @@ def run_gate_b(
         income_stats = defaultdict(Counter)
         income_sums = defaultdict(lambda: defaultdict(float))
         original_links = 0
-        for link in _csv_rows(root / "panel_links.csv", LINK_FIELDS):
-            original_links += 1
-            reason, pair = _select_reason(link, connection, exclude_exceptional)
-            if reason:
-                exclusions[reason] += 1
-                continue
-            gap, previous, current, earlier, later, prior, current_state = pair
-            try:
-                connection.execute(
-                    "INSERT INTO eligible_keys VALUES (?,?,?)",
-                    (link["person_linkage_candidate_id"], later["row_id"], gap),
-                )
-            except sqlite3.IntegrityError:
-                exclusions["later_observation_reused"] += 1
-                continue
-            eligible_gap[gap] += 1
-            support[(gap, previous, current, later["region"])] += 1
-            transitions[(gap, prior, current_state)] += 1
-            if previous in EXCEPTIONAL or current in EXCEPTIONAL:
-                exceptional_touch[gap] += 1
+        link_iterator = iter(_csv_rows(root / "panel_links.csv", LINK_FIELDS))
+        link_start = time.monotonic()
+        while block := list(islice(link_iterator, 2000)):
+            cache = _prefetch_persons(connection, block)
+            for link in block:
+                original_links += 1
+                reason, pair = _select_reason(link, cache, exclude_exceptional)
+                if reason:
+                    exclusions[reason] += 1
+                    continue
+                gap, previous, current, earlier, later, prior, current_state = pair
+                try:
+                    connection.execute(
+                        "INSERT INTO eligible_keys VALUES (?,?,?)",
+                        (link["person_linkage_candidate_id"], later["row_id"], gap),
+                    )
+                except sqlite3.IntegrityError:
+                    exclusions["later_observation_reused"] += 1
+                    continue
+                eligible_gap[gap] += 1
+                support[(gap, previous, current, later["region"])] += 1
+                transitions[(gap, prior, current_state)] += 1
+                if previous in EXCEPTIONAL or current in EXCEPTIONAL:
+                    exceptional_touch[gap] += 1
 
-            income_key = (gap, prior)
-            income_stats[income_key]["eligible_pairs"] += 1
-            later_value = _income(later)
-            if later_value is None:
-                income_stats[income_key]["later_income_invalid"] += 1
-            else:
-                earlier_value = _income(earlier)
-                change = (
-                    later_value - earlier_value if earlier_value is not None else None
-                )
-                income_stats[income_key]["later_income_valid"] += 1
-                income_sums[income_key]["later_income"] += later_value
-                if later_value > 0:
-                    income_stats[income_key]["later_positive"] += 1
-                    income_sums[income_key]["positive_income"] += later_value
-                if change is not None:
-                    income_stats[income_key]["paired_income_valid"] += 1
-                    income_sums[income_key]["income_change"] += change
-                connection.execute(
-                    "INSERT INTO income_values VALUES (?,?,?,?)",
-                    (gap, prior, later_value, change),
-                )
+                income_key = (gap, prior)
+                income_stats[income_key]["eligible_pairs"] += 1
+                later_value = _income(later)
+                if later_value is None:
+                    income_stats[income_key]["later_income_invalid"] += 1
+                else:
+                    earlier_value = _income(earlier)
+                    change = (
+                        later_value - earlier_value if earlier_value is not None else None
+                    )
+                    income_stats[income_key]["later_income_valid"] += 1
+                    income_sums[income_key]["later_income"] += later_value
+                    if later_value > 0:
+                        income_stats[income_key]["later_positive"] += 1
+                        income_sums[income_key]["positive_income"] += later_value
+                    if change is not None:
+                        income_stats[income_key]["paired_income_valid"] += 1
+                        income_sums[income_key]["income_change"] += change
+                    connection.execute(
+                        "INSERT INTO income_values VALUES (?,?,?,?)",
+                        (gap, prior, later_value, change),
+                    )
             if original_links % 20000 == 0:
                 connection.commit()
+            if original_links % 50000 == 0:
+                elapsed = max(time.monotonic() - link_start, 0.001)
+                _progress(
+                    f"audited links: {original_links:,}; eligible: "
+                    f"{sum(eligible_gap.values()):,}; "
+                    f"excluded: {sum(exclusions.values()):,}; "
+                    f"rate: {original_links / elapsed:,.0f} links/s"
+                )
         connection.commit()
+        _progress(
+            f"links complete ({original_links:,}); indexing six income strata "
+            "and writing aggregate outputs"
+        )
 
         audit_count = (manifest.get("panel_audit") or {}).get("candidate_link_rows")
         if audit_count is not None and original_links != int(audit_count):
@@ -685,6 +745,7 @@ def run_gate_b(
         connection.close()
         connection = None
         (staging / "_work.sqlite").unlink()
+        _progress("aggregate outputs staged; re-verifying immutable source hashes")
         # Immutable parent re-check catches mutations during the streaming read.
         if _sha(root / "manifest.json") != manifest_sha:
             raise GateBEvidenceError("l2_manifest_changed_during_run")
@@ -692,6 +753,7 @@ def run_gate_b(
             if _sha(root / name) != source_hashes[name]:
                 raise GateBEvidenceError(f"l2_artifact_changed_during_run:{name}")
         os.replace(staging, destination)
+        _progress(f"complete: {destination}")
         return destination
     except Exception:
         if connection is not None:
