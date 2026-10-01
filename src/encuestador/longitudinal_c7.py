@@ -48,6 +48,7 @@ from .longitudinal_gate_b import (
     PERSON_FIELDS,
     STATE_LABELS,
     _csv_rows,
+    _labor,
     _prefetch_persons,
     _project_persons,
     _sha,
@@ -290,7 +291,8 @@ def materialize_c7_panel(
             " stale_idx INTEGER NOT NULL, target_idx INTEGER NOT NULL,"
             " pair_id TEXT NOT NULL, stale_id TEXT NOT NULL, target_id TEXT NOT NULL,"
             " gap INTEGER NOT NULL, stale_state INTEGER NOT NULL,"
-            " target_state INTEGER NOT NULL, target_period TEXT NOT NULL)"
+            " target_state INTEGER NOT NULL, target_period TEXT NOT NULL,"
+            " target_income REAL NOT NULL)"
         )
         projector = C7PairProjector()
         exclusions = Counter()
@@ -317,7 +319,11 @@ def materialize_c7_panel(
                 gap = int(link["elapsed_quarters"])
                 eligible_by_gap[gap] += 1
                 support[(gap, prior_row["period"], later_row["period"], later_row["region"])] += 1
-                transitions[(gap, prior_row["estado"] or prior_row["condact"], later_row["estado"] or later_row["condact"])] += 1
+                previous_state, previous_error = _labor(prior_row)
+                later_state, later_error = _labor(later_row)
+                if previous_error or later_error:
+                    raise C7ContractError("c7_gate_b_labor_projection_drift")
+                transitions[(gap, previous_state, later_state)] += 1
                 if decision.private_pair is None:
                     target_invalid[decision.exclusion_reason] += 1
                     continue
@@ -330,14 +336,14 @@ def materialize_c7_panel(
                     stale_idx, target_idx, row["pair_id"],
                     row["stale_observation_row_id"], row["target_observation_row_id"],
                     gap, int(row["stale_labor_state"]), int(row["target_current_labor_state"]),
-                    row["target_period"],
+                    row["target_period"], row["target_real_income"],
                 ))
                 accepted += 1
             if selected_batch:
                 connection.executemany(
                     "INSERT INTO selected (stale_idx,target_idx,pair_id,stale_id,"
-                    "target_id,gap,stale_state,target_state,target_period)"
-                    " VALUES (?,?,?,?,?,?,?,?,?)", selected_batch
+                    "target_id,gap,stale_state,target_state,target_period"
+                    ",target_income)" VALUES (?,?,?,?,?,?,?,?,?,?)", selected_batch
                 )
             if total % 20000 == 0:
                 connection.commit()
@@ -430,8 +436,14 @@ def materialize_c7_panel(
                 if int(old_fold[early]) >= c6_plane.n_splits:
                     raise C7ContractError("c7_panel_fold_invalid")
                 target_amount = float(old_target[late])
-                if not math.isfinite(target_amount) or target_amount < 0:
-                    raise C7ContractError("c7_selected_c6_income_invalid")
+                if (
+                    not math.isfinite(target_amount) or target_amount < 0
+                    or not math.isclose(
+                        target_amount, float(row["target_income"]), rel_tol=1e-12,
+                        abs_tol=1e-8,
+                    )
+                ):
+                    raise C7ContractError("c7_selected_c6_l2_income_mismatch")
                 feature_matrix[index, :comp] = old_features[early, :comp]
                 feature_matrix[index, comp:comp+len(LABOR_CONTEXT_FIELDS)] = (
                     old_features[late, comp:]
