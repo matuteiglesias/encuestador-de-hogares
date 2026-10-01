@@ -304,3 +304,26 @@ def test_gate_b_does_not_modify_source_release(tmp_path: Path) -> None:
     run_gate_b(parent, tmp_path / "out")
     after = {name: _sha(parent / name) for name in before}
     assert after == before
+
+
+def test_gate_b_multi_batch_keeps_exact_accounting(tmp_path: Path, capsys) -> None:
+    """Exercise the 2,000-link prefetch boundary without losing a single source row."""
+    parent, _ = _fixture(tmp_path)
+    links_path = parent / "panel_links.csv"
+    links = _read_csv(links_path)
+    links.extend(dict(links[0]) for _ in range(2003))
+    _csv(links_path, list(links[0]), links)
+    manifest_path = parent / "manifest.json"
+    manifest = json.loads(manifest_path.read_text())
+    manifest["artifacts"]["panel_links.csv"]["sha256"] = _sha(links_path)
+    manifest["panel_audit"]["candidate_link_rows"] = len(links)
+    manifest_path.write_text(json.dumps(manifest), encoding="utf-8")
+
+    release = run_gate_b(parent, tmp_path / "out")
+    receipt = json.loads((release / "gate_b_receipt.json").read_text())
+    assert receipt["candidate_link_rows"] == 2018
+    assert receipt["eligible_pairs"] == 4
+    assert receipt["eligible_pairs_by_gap"] == {"1": 2, "3": 2}
+    assert receipt["exclusions_by_first_reason"]["later_observation_reused"] == 2004
+    assert receipt["eligible_pairs"] + receipt["exclusion_count"] == 2018
+    assert "indexed 26 person observations" in capsys.readouterr().err

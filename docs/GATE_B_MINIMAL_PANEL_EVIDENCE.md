@@ -29,6 +29,21 @@ Optional bounded exceptional-period robustness produces a separate immutable out
 The optional variant removes pairs touching 2020-Q2 or 2024-Q1/Q2 and never
 replaces the observed baseline.
 
+## Execution and progress
+
+The diagnostic verifies source hashes, indexes the narrow person projection, and
+processes panel links in bounded 2,000-row blocks with batched indexed SQLite
+prefetch (400 row IDs per SELECT). It reports phase and periodic throughput to
+stderr; only the final machine-readable JSON goes to stdout. The temporary
+SQLite scratch DB uses non-durable settings deliberately because it is never a
+source of truth and is deleted on errors/interruption. Existing immutable L2
+source hashes are rechecked before finalization.
+
+After Ctrl-C, rerunning starts the small diagnostic anew (there are no durable
+checkpoints for this bounded descriptive gate). The parent L2 release is not
+altered. Do not interpret a progress-free interval during source hashing,
+person indexing, income indexing or final hash re-check as an L11 fitting run.
+
 ## Selection and income policy
 
 One exclusive first exclusion reason per link. Eligible links must be:
