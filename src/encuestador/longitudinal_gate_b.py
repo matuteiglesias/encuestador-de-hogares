@@ -571,8 +571,6 @@ def run_gate_b(
             f"- Largest later-region stratum: **{top_region}**, {top_region_count:,} pairs ({top_region_count / eligible:.1%} of selected pairs)." if eligible else "- No eligible regional stratum.",
             f"- Largest period-pair window: **{top_period_pair[0]}→{top_period_pair[1]}**, {top_period_pair_count:,} pairs ({top_period_pair_count / eligible:.1%})." if eligible else "- No eligible period-pair window.",
             "",
-            "Observed diagonal persistence (prior-class denominators shown):",
-            "",
             "## Reading the outputs",
             "",
             "The 18 cells of `transition_matrix.csv` give counts and row-conditional",
@@ -594,6 +592,10 @@ def run_gate_b(
             "L10 baseline with household-safe folds; L12 needs separate OOF science.",
             "",
         ]
+        note.append("## Observed diagonal persistence")
+        note.append("")
+        note.append("Each proportion is conditional on the earlier labor class:")
+        note.append("")
         for gap in (1, 3):
             note.append(
                 f"- {gap}Q E→E: {persistence(gap, '1')}; "
