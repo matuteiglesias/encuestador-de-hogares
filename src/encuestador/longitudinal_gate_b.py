@@ -755,7 +755,9 @@ def run_gate_b(
         os.replace(staging, destination)
         _progress(f"complete: {destination}")
         return destination
-    except Exception:
+    except BaseException:
+        # Ctrl-C raises KeyboardInterrupt (BaseException, not Exception).
+        # The DB is scratch only; remove incomplete staging without touching L2.
         if connection is not None:
             connection.close()
         shutil.rmtree(staging, ignore_errors=True)

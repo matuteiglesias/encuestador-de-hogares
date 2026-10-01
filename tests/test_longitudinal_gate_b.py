@@ -327,3 +327,22 @@ def test_gate_b_multi_batch_keeps_exact_accounting(tmp_path: Path, capsys) -> No
     assert receipt["exclusions_by_first_reason"]["later_observation_reused"] == 2004
     assert receipt["eligible_pairs"] + receipt["exclusion_count"] == 2018
     assert "indexed 26 person observations" in capsys.readouterr().err
+
+
+def test_gate_b_keyboard_interrupt_removes_scratch_staging(tmp_path: Path, monkeypatch) -> None:
+    """Ctrl-C must not leave the temporary indexed person database behind."""
+    parent, _ = _fixture(tmp_path)
+    output_root = tmp_path / "out"
+
+    def interrupt_before_batch(_connection, _links):
+        raise KeyboardInterrupt
+
+    monkeypatch.setattr(
+        "encuestador.longitudinal_gate_b._prefetch_persons",
+        interrupt_before_batch,
+    )
+    with pytest.raises(KeyboardInterrupt):
+        run_gate_b(parent, output_root)
+    assert list(output_root.iterdir()) == []
+    assert (parent / "persons.csv").exists()
+    assert (parent / "panel_links.csv").exists()
