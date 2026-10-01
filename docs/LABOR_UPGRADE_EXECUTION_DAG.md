@@ -42,6 +42,14 @@ remaining scientific work is a matched L11 evaluation on supported one- and
 three-quarter panel gaps; L12 remains pending separate OOF transition-model
 justification.
 
+R0's frozen donor-clock selection and historical CONDACT audit live in
+`docs/C7_DONOR_CLOCK_MATCHED_L11_CONTRACT.md` and
+`docs/LABOR_CONDACT_HISTORICAL_REPAIR_20261001.md`. R0 is a *contract/fixture*
+repair, not real L11 commissioning. C7A must still implement the resource-safe
+panel bridge; local C7B alone accepts the real matched L11 scientific run.
+C8/L12 follows only after C7B's evidence; donor Census scoring remains a
+separate transport gate.
+
 ## Current DAG
 
 ```text
@@ -72,8 +80,15 @@ justification.
        descriptive short-gap evidence
                      |
                      v
-              Gate C L11
-       matched panel evaluation
+              R0 contract repair
+          exact Gate-B/C7 policy
+                     |
+                     v
+           C7A cloud plane/run
+                     |
+                     v
+             C7B local Gate C
+          matched real L11 result
                      |
               Gate D L12 (restricted)
               |             |
