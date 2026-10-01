@@ -12,14 +12,19 @@ on:
       - src/encuestador/longitudinal_intake.py
       - src/encuestador/longitudinal_c6.py
       - src/encuestador/longitudinal_gate_b.py
+      - src/encuestador/longitudinal_c7_contract.py
       - src/encuestador/longitudinal_runtime.py
       - src/encuestador/time_layer.py
       - src/encuestador/cli.py
       - tests/test_longitudinal_runtime.py
       - tests/test_longitudinal_c6.py
       - tests/test_longitudinal_gate_b.py
+      - tests/test_longitudinal_c7_contract.py
       - docs/C6_RESOURCE_SAFE_LONGITUDINAL_EXECUTION.md
       - docs/GATE_B_MINIMAL_PANEL_EVIDENCE.md
+      - docs/C7_DONOR_CLOCK_MATCHED_L11_CONTRACT.md
+      - docs/LABOR_CONDACT_HISTORICAL_REPAIR_20261001.md
+      - docs/L4_REAL_LONGITUDINAL_WELFARE_COMMISSIONING.md
       - README.md
       - SYSTEM.yaml
   push:
@@ -31,11 +36,13 @@ on:
       - src/encuestador/longitudinal_intake.py
       - src/encuestador/longitudinal_c6.py
       - src/encuestador/longitudinal_gate_b.py
+      - src/encuestador/longitudinal_c7_contract.py
       - src/encuestador/longitudinal_runtime.py
       - src/encuestador/time_layer.py
       - src/encuestador/cli.py
       - tests/test_longitudinal_runtime.py
       - tests/test_longitudinal_gate_b.py
+      - tests/test_longitudinal_c7_contract.py
 
 permissions:
   contents: read
@@ -63,12 +70,14 @@ jobs:
           src/encuestador/longitudinal_intake.py
           src/encuestador/longitudinal_c6.py
           src/encuestador/longitudinal_gate_b.py
+          src/encuestador/longitudinal_c7_contract.py
           src/encuestador/longitudinal_runtime.py
           src/encuestador/time_layer.py
           src/encuestador/cli.py
           tests/test_longitudinal_runtime.py
           tests/test_longitudinal_c6.py
           tests/test_longitudinal_gate_b.py
+          tests/test_longitudinal_c7_contract.py
 
       - name: Compile C4 boundary
         run: >-
@@ -89,7 +98,7 @@ jobs:
           encuestador longitudinal-validate configs/longitudinal/l12_anchored.yaml
 
       - name: Run C4/C6 scientific fixture tests
-        run: pytest -q tests/test_longitudinal_runtime.py tests/test_longitudinal_c6.py tests/test_longitudinal_gate_b.py
+        run: pytest -q tests/test_longitudinal_runtime.py tests/test_longitudinal_c6.py tests/test_longitudinal_gate_b.py tests/test_longitudinal_c7_contract.py
 
       - name: Run full repository regression suite
         run: pytest -q
