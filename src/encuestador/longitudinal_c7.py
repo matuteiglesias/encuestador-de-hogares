@@ -18,7 +18,7 @@ import sqlite3
 import sys
 import tempfile
 from collections import Counter
-from collections.abc import Iterator, Mapping
+from collections.abc import Iterator
 from dataclasses import dataclass
 from itertools import islice, zip_longest
 from pathlib import Path
