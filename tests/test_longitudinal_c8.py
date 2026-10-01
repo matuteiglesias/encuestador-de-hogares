@@ -7,6 +7,7 @@ from pathlib import Path
 
 import numpy as np
 import pytest
+from test_longitudinal_c7 import fixture
 
 from encuestador.longitudinal_c6 import (
     _household_fold,
@@ -16,8 +17,8 @@ from encuestador.longitudinal_c7 import load_c7_panel, materialize_c7_panel
 from encuestador.longitudinal_c7_contract import C7ContractError
 from encuestador.longitudinal_c7_run import run_resource_safe_c7
 from encuestador.longitudinal_c8 import (
-    CLASS_ORDER,
     C8_TRANSITION_CONTRACT,
+    CLASS_ORDER,
     _normalize,
     crossfit_transitions,
     load_c8_transition,
@@ -35,7 +36,6 @@ from encuestador.longitudinal_runtime import (
     _categorical_positions,
     load_longitudinal_config,
 )
-from test_longitudinal_c7 import fixture
 
 
 def make_config(tmp_path: Path, n_splits: int) -> Path:
