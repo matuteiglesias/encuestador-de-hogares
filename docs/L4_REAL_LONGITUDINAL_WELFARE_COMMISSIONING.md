@@ -1,6 +1,8 @@
 # L4 — real longitudinal welfare and labor commissioning
 
-Status: prerequisites green / commissioning blocked-resource, 2026-09-30. L1/L1B/L2/L3B and C4/C4B are available; the first full real L10 attempt terminated before producing a result bundle because the current object-heavy intake exceeded practical memory headroom. Gate A–E science remains uncommissioned pending a resource-safe execution plane.
+Status at 2026-10-01: **C6 real resource acceptance PASS; Gate A COMPLETE_BOUNDED_COMMISSIONING; Gate B COMPLETE_DESCRIPTIVE_EVIDENCE.** The 2017-Q1–2026-Q1 L2 source, P0/P1R L3B composition planes, official L1/L1B context and C6 resource-safe L10 plane are available. The historic pre-C6 RAM failure below is resolved, not an active blocker. R0 freezes the C7 input/identity contract; the next real model experiment is Gate C (L11). L12 and Census donor-clock scoring remain separate subsequent gates.
+
+The Gate-B real baseline has 1,172,374 audited candidate links and 827,793 eligible 1Q/3Q transitions: 571,984 (1Q), 255,809 (3Q). This establishes *descriptive* short-gap evidence, not L11/L12 model gains. Source receipt: `data/l4-gate-b-20261001/GATE_B_REAL_RECEIPT.json`; original diagnostic release `gate-b-panel-evidence-c15bac5f1a6cbeb7`. Consult `docs/LABOR_UPGRADE_CURRENT_STATE_2026-09-30.md`, `docs/C7_DONOR_CLOCK_MATCHED_L11_CONTRACT.md` and `docs/LABOR_CONDACT_HISTORICAL_REPAIR_20261001.md` for the current execution boundary.
 
 ## Purpose
 
@@ -115,81 +117,91 @@ At person and household level persist:
 
 Gate A selects a stabilized **L10** configuration but does not yet claim Census transport validity.
 
-## Gate B — repeated-wave labor persistence evidence
+## Gate B — repeated-wave descriptive evidence (COMPLETE)
 
-Using the real L2 panel audit and C4 panel-pair builder:
+The exact L2 `panel_links.csv` audit and existing Gate-B selector establish
+one- and three-quarter observed labor transitions and later-income associations.
+It uses a 14+ reviewed E/U/I universe, preserves missing income separately
+from zero, and counts excluded links by exclusive first reason. It does NOT
+fit an L11 or L12 model, estimate incremental held-out welfare error, or
+prove 2010→2024/2026 donor persistence.
 
-1. construct only credible short-horizon person-link pairs;
-2. report transition matrices for supported elapsed gaps, especially 1 and 3 quarters;
-3. stratify transition behavior by starting labor state and broad composition;
-4. quantify how stale observed labor state changes terminal welfare performance beyond L10;
-5. test whether current aggregate labor context improves transition prediction;
-6. quantify linkage/conflict/attrition support.
+Real baseline: 1,172,374 audited links; 827,793 eligible pairs;
+344,581 exclusions. The exceptional-period exclusion sensitivity has
+719,097 eligible pairs and retains the broad transition pattern.
 
-Do not extrapolate short-gap persistence to 2010→2026.
+All downstream pairs must delegate to the exact Gate-B selector and
+reconcile candidate, exclusion, 1Q/3Q and distinct-later-row totals before
+the *additional* valid-target-income filter. No new ad hoc linkage method.
 
-Gate B defines the support boundary for L11/L12.
+## Gate C — L11 donor-clock stale-state experiment (NEXT)
 
-## Gate C — L11 stale-state sensitivity
+Use the exact selection/provenance contract in
+`docs/C7_DONOR_CLOCK_MATCHED_L11_CONTRACT.md`.
 
-Run L11 only on Gate-B-supported gaps.
+The real EPH experiment is pooled on Gate-B-supported 1Q/3Q pairs,
+restricted further only for a valid later-income target. Take P1R
+composition from the **earlier** observation, not the target observation.
+Use official national/regional labor context at the **target** quarter,
+explicit target time and elapsed gap in BOTH arms:
 
-Compare to matched L10 on identical target rows/folds.
+- C7-0: donor-X/historical-input L10 analogue, without donor labor;
+- C7-1 (L11): exactly C7-0 plus actually observed earlier labor.
 
-Report:
+Run identical target rows, panel-household-safe folds, hurdle parameters
+and nested OOF time-layer policy. C7-0 is not numerically identical to
+Gate-A whole-population L10, which uses current composition.
 
-- overall welfare delta;
-- positive-amount delta;
-- distribution/tail delta;
-- performance by elapsed gap;
-- performance by stale labor class.
+Primary endpoint: matched held-out person welfare deltas, including
+presence and positive-amount metrics, horizon-specific and prior
+E/U/I diagnostic strata, plus fold-wise uncertainty. Do not present
+partial-panel member income sums as full household income.
 
-L11 is an empirical stale-proxy sensitivity, not automatically a Census model.
+Cloud C7A implements resource-safe private C6/Gate-B pair plane and
+restartable paired runs; local C7B independently verifies real source
+reconciliation, memory and the scientific result. No CPV scoring or
+long-horizon transport authorization follows automatically.
 
-## Gate D — L12 latent current labor
+## Gate D — L12 latent current labor (CONDITIONAL)
 
-Fit the donor-informed transition probabilities under nested household-safe OOF.
+Do not begin expensive L12 terminal execution before inspecting the
+accepted C7 real matched receipt. Reuse existing C4 science, C7 resource-safe
+plane, the same outer group folds and strictly nested OOF components.
 
-Evaluate:
+First test *transition prediction* on the observed 1Q/3Q horizon:
 
-```text
-L10
-L12 raw probabilities
-L12 anchored probabilities
-```
+- T0 empirical P(later E/U/I | earlier E/U/I, gap), fitted within each
+  outer training population, not imported from full-population Gate B;
+- T1 multiclass conditional model adding earlier P1R composition and
+  target-quarter official labor context.
 
-### Anchor target construction
+Report multiclass log-loss, Brier, classwise support/calibration and
+stratification by 1Q/3Q. Then conditionally compare L12's raw ordered
+E/U/I probability inputs with matched C7-0 and C7-1 welfare on identical
+rows/folds. Never make true target-period labor an external terminal input.
+Do not let probability-column append silently disable categorical metadata
+for existing composition predictors. See the historical Q4 method audit in
+`docs/LABOR_CONDACT_HISTORICAL_REPAIR_20261001.md`.
 
-For a CONDACT-like three-class state, official aggregate moments must be derived under an explicit matching universe.
+Moment/KL anchoring is a **deferred L12 sensitivity**, not the default
+centerline and not a requirement for the first C8 run. Before ever
+attempting it, verify the modeled E/U/I universe matches the official
+activity/unemployment denominator. Only under that condition, with rates
+expressed as proportions:
 
-From compatible official activity rate `a` and unemployment rate `u`:
+    P(unemployed) = a * u
+    P(employed)   = a * (1 - u)
+    P(inactive)   = 1 - a
 
-```text
-P(unemployed) = a * u
-P(employed)   = a * (1 - u)
-P(inactive)   = 1 - a
-```
+Do not treat subemployment as an additional CONDACT class. Persist
+raw/anchored moments and displacement if a later separately reviewed
+anchor experiment is undertaken.
 
-after converting percentages to proportions and only when C1 denominator/universe semantics prove the rates are compatible with the modeled anchor universe.
-
-Do not use subemployment as a CONDACT class moment.
-
-Persist raw and anchored probabilities separately plus:
-
-- target/raw/anchored moments;
-- lambda;
-- KL displacement;
-- probability displacement;
-- constraint residual;
-- downstream welfare delta.
-
-If the universe does not match, anchored L12 does not run.
-
-## Gate E — CPV-2010 research scoring
+## Gate E — separately authorized Census donor-clock research scoring
 
 Prerequisites:
 
-- selected L10/L11/L12 arm from real EPH evidence;
+- completed matched L10/L11 evidence and any separately accepted L12 evidence;
 - L3A real donor-labor handoff if the selected arm uses donor state;
 - exact CPV-2010 Census sample/scoring plane;
 - same canonical composition profile identity as the selected EPH model.
@@ -210,7 +222,7 @@ monetary reference
 support status
 ```
 
-For CPV-2010, L11/L12 donor persistence may remain unsupported at long horizons. It is acceptable for the promoted scoring arm to be L10.
+For CPV-2010, observed 1Q/3Q EPH evidence does NOT establish 2010-to-target donor persistence. CPV-2022 requires its own exact governed policy/sample/geography and cannot silently reuse CPV-2010 semantics. It is valid to retain historical-input L11/L12 as short-gap EPH research and use L10 for bounded Census scoring.
 
 No Census outcome-validation claim is authorized.
 
@@ -249,4 +261,5 @@ Persist a program receipt containing:
 - no forecasting;
 - no nowcasting;
 - no causal interpretation of labor-context coefficients;
-- no poverty methodology change.
+- no poverty methodology change;
+- no unvalidated source-clock substitution of donor CONDACT for current labor.
