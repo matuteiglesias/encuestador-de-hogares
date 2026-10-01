@@ -246,9 +246,9 @@ def _execute_fold(
 
 def _point_metrics(y: np.ndarray, predicted: np.ndarray) -> dict[str, Any]:
     if len(y) < 2:
-        return {"n": int(len(y)), "mae": float(np.mean(np.abs(y - predicted)))}
+        return {"n": len(y), "mae": float(np.mean(np.abs(y - predicted)))}
     return {
-        "n": int(len(y)),
+        "n": len(y),
         **distributional_regression_diagnostics(y, predicted),
     }
 
