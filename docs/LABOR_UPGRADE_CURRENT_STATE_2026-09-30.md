@@ -46,8 +46,10 @@ published implementation state; it does not claim approved-mode welfare science.
 - The first full real L10 attempt on the pre-C6 runtime terminated under practical memory pressure before emitting a run bundle because that path materialized the full C2 person and composition surfaces as Python lists.
 - C6 resource-safe execution code is now merged on `main` at `ca3fe0fbf93d89a85a1d10b4498ff28366a890b2`. Hosted CI proved lint/compile, synthetic restartability, numerical parity with the C4B L10 path, existing longitudinal regressions, and the full repository suite.
 - C6 introduces one streamed C2↔C5 model-plane materialization, typed memory-mapped arrays, persistent deterministic fold IDs, sequential outer-fold execution and atomic restartable checkpoints.
-- Current status remains **real acceptance pending**: no real C6 L10 result bundle exists until the 1,869,620-row local resource gate passes.
-- Local pre-C6 failure receipt: `/home/matias/data/L4_RECEIPT.json`.
+- C6 real acceptance is **PASS**: the P1R model plane has 1,869,620 rows, is 459 MiB on disk, used 0.64 GiB peak RSS to build and about 2.03 GiB peak RSS to fit, with zero swap events and restartable five-fold execution.
+- Gate A is **COMPLETE_BOUNDED_COMMISSIONING**. Matched P1R arms show national-only context is immaterial while national-plus-regional deviations improve held-out welfare error.
+- Gate B is **COMPLETE_DESCRIPTIVE_EVIDENCE**: 827,793 eligible pairs (571,984 at 1Q; 255,809 at 3Q). Receipt: `/home/matias/data/l4-gate-b-20261001/GATE_B_REAL_RECEIPT.json`.
+- C6/Gate-A artifacts and receipts: `/home/matias/data/l4-c6-20260930/`.
 
 
 ## Frozen baseline
@@ -70,16 +72,8 @@ should treat the following as settled:
 
 ## Next development frontier
 
-The C6 cloud implementation is merged. The active gate is now **local real-scale
-acceptance**, not another architecture/design packet.
-
-Use `docs/C6_RESOURCE_SAFE_LONGITUDINAL_EXECUTION.md` to:
-
-1. materialize the exact real P1R C6 model plane;
-2. prove one outer fold stays inside the resource budget;
-3. prove restart/checkpoint reuse;
-4. complete all five P1R folds;
-5. run the matched Gate-A composition/labor-context comparisons.
-
-Do not reopen L1/L2/L3/C4 semantics to solve a resource problem. No real L10 scientific
-conclusion exists until the C6 local acceptance gate succeeds.
+Gate B closes the descriptive short-gap panel question without promoting a model.
+The next work package is a matched L11 experiment on the exact Gate-B-supported
+rows and grouped folds. L12 remains pending justification/design and must use
+OOF transition probabilities; neither result may be extrapolated to the
+CPV-2010 donor clock. The monetary conversion parent remains candidate.

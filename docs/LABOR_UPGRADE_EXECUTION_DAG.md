@@ -26,20 +26,21 @@ Real/local gates:
 - L3A — real CPV-2010 donor-labor handoff materialized;
 - L3B — real `P0_LONG` and `P1R_NOLAB_LONG` planes materialized over all 37 quarters;
 - L4 preflight — exact upstream parent intake and tests green.
+- C6 real acceptance — PASS, with restartable five-fold P1R execution;
+- Gate A — complete bounded commissioning on matched P0/P1R arms;
+- Gate B — complete descriptive evidence on 827,793 real repeated-wave pairs.
 
 Authoritative factual receipt:
 
 `docs/LABOR_UPGRADE_CURRENT_STATE_2026-09-30.md`
 
-## Current blocker
+## Current frontier
 
-The first full real L10 attempt reached the real input runtime but terminated before a
-run bundle was emitted because the current implementation holds the full 1.87M-row EPH
-surface and canonical composition surface in Python object-heavy lists.
-
-This is a **resource/execution-plane blocker**, not an upstream data or semantic blocker.
-
-No L10/L11/L12 scientific result has yet been produced by the longitudinal program.
+C6 resolved the former resource/execution-plane blocker. Gate A is complete for
+bounded commissioning and Gate B is complete as descriptive evidence only. The
+remaining scientific work is a matched L11 evaluation on supported one- and
+three-quarter panel gaps; L12 remains pending separate OOF transition-model
+justification.
 
 ## Current DAG
 
@@ -67,19 +68,14 @@ No L10/L11/L12 scientific result has yet been produced by the longitudinal progr
 
                     CURRENT
 
-        C6 real local acceptance
-    1.87M rows / RSS / swap / resume
+             Gate B complete
+       descriptive short-gap evidence
                      |
                      v
-              L4 Gate A — L10
-        profile + labor context + time
+              Gate C L11
+       matched panel evaluation
                      |
-              L4 Gate B — panel
-                     |
-              +------+------+
-              |             |
-              v             v
-           Gate C L11    Gate D L12
+              Gate D L12 (restricted)
               |             |
               +------+------+
                      |
