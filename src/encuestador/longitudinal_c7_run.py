@@ -9,9 +9,8 @@ from __future__ import annotations
 import gc
 import hashlib
 import json
-import math
+
 import os
-import shutil
 import tempfile
 from collections.abc import Mapping
 from dataclasses import replace
@@ -33,12 +32,7 @@ from .longitudinal_c6 import (
     _peak_rss_gib,
     _sha256,
 )
-from .longitudinal_c7 import (
-    C7_BASE_FEATURES,
-    C7_L11_FEATURES,
-    C7_RUN_CONTRACT,
-    C7PanelPlane,
-)
+from .longitudinal_c7 import C7_RUN_CONTRACT, C7PanelPlane
 from .longitudinal_c7_contract import C7_COMPOSITION_PROFILE, C7ContractError
 from .longitudinal_runtime import EXCEPTIONAL_PERIODS, LongitudinalConfig
 from .time_layer import fit_time_layer
