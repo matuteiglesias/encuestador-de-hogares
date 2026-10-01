@@ -23,6 +23,7 @@ from .longitudinal_c6 import (
     resolve_config_for_model_plane,
     run_resource_safe_l10,
 )
+from .longitudinal_gate_b import run_gate_b
 from .longitudinal_intake import (
     canonical_composition_parent_metadata,
     exact_parent_metadata,
@@ -676,6 +677,31 @@ def _command_longitudinal_c6_run(args: argparse.Namespace) -> int:
     return 0
 
 
+def _command_longitudinal_gate_b(args: argparse.Namespace) -> int:
+    root = run_gate_b(
+        Path(args.eph_release_root),
+        Path(args.output_root),
+        exclude_exceptional=args.exclude_exceptional,
+    )
+    receipt = json.loads((root / "gate_b_receipt.json").read_text(encoding="utf-8"))
+    sys.stdout.write(
+        _canonical_json(
+            {
+                "status": receipt["status"],
+                "contract": receipt["contract"],
+                "release_id": receipt["release_id"],
+                "root": str(root),
+                "candidate_link_rows": receipt["candidate_link_rows"],
+                "eligible_pairs": receipt["eligible_pairs"],
+                "eligible_pairs_by_gap": receipt["eligible_pairs_by_gap"],
+                "exclusion_count": receipt["exclusion_count"],
+                "exclude_exceptional": receipt["exclude_exceptional"],
+            }
+        )
+    )
+    return 0
+
+
 def _command_longitudinal_c6_compare(args: argparse.Namespace) -> int:
     comparison = compare_c6_runs(
         [Path(value).expanduser().resolve() for value in args.runs]
@@ -828,6 +854,17 @@ def _parser() -> argparse.ArgumentParser:
         default="runs/longitudinal/c6",
     )
     longitudinal_c6_run.set_defaults(handler=_command_longitudinal_c6_run)
+
+    gate_b = sub.add_parser("longitudinal-gate-b")
+    gate_b.add_argument("--eph-release-root", required=True)
+    gate_b.add_argument(
+        "--output-root", default="runs/longitudinal/gate-b",
+    )
+    gate_b.add_argument(
+        "--exclude-exceptional", action="store_true",
+        help="Bounded sensitivity excluding pairs touching 2020-Q2 or 2024-Q1/Q2",
+    )
+    gate_b.set_defaults(handler=_command_longitudinal_gate_b)
 
     longitudinal_c6_compare = sub.add_parser("longitudinal-c6-compare")
     longitudinal_c6_compare.add_argument("runs", nargs="+")
