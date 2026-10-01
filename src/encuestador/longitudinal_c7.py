@@ -343,7 +343,7 @@ def materialize_c7_panel(
                 connection.executemany(
                     "INSERT INTO selected (stale_idx,target_idx,pair_id,stale_id,"
                     "target_id,gap,stale_state,target_state,target_period"
-                    ",target_income)" VALUES (?,?,?,?,?,?,?,?,?,?)", selected_batch
+                    ",target_income) VALUES (?,?,?,?,?,?,?,?,?,?)", selected_batch
                 )
             if total % 20000 == 0:
                 connection.commit()
