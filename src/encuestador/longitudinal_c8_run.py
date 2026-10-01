@@ -35,8 +35,8 @@ from .longitudinal_c7_contract import C7ContractError
 from .longitudinal_c7_run import _point_metrics, _selected_household_metrics
 from .longitudinal_c8 import (
     C8_WELFARE_CONTRACT,
-    PROBABILITY_FEATURES,
     CLASS_ORDER,
+    PROBABILITY_FEATURES,
     _normalize,
     crossfit_transitions,
     load_c8_transition,
