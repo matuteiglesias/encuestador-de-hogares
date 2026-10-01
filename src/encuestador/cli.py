@@ -23,6 +23,8 @@ from .longitudinal_c6 import (
     resolve_config_for_model_plane,
     run_resource_safe_l10,
 )
+from .longitudinal_c7 import load_c7_panel, materialize_c7_panel
+from .longitudinal_c7_run import run_resource_safe_c7
 from .longitudinal_gate_b import run_gate_b
 from .longitudinal_intake import (
     canonical_composition_parent_metadata,
@@ -702,6 +704,49 @@ def _command_longitudinal_gate_b(args: argparse.Namespace) -> int:
     return 0
 
 
+def _command_longitudinal_c7_plane(args: argparse.Namespace) -> int:
+    c6 = load_longitudinal_model_plane(Path(args.c6_plane_root))
+    root = materialize_c7_panel(
+        Path(args.eph_release_root),
+        Path(args.gate_b_root),
+        c6,
+        Path(args.output_root),
+    )
+    panel = load_c7_panel(root)
+    sys.stdout.write(_canonical_json({
+        "status": "materialized_private_panel",
+        "contract": panel.manifest["contract"],
+        "release_id": root.name,
+        "root": str(root),
+        "row_count": panel.row_count,
+        "gate_b_eligible_pairs": panel.manifest["gate_b_eligible_pairs"],
+        "extra_invalid_later_income": panel.manifest["extra_invalid_later_income"],
+        "feature_names": list(panel.feature_names),
+        "forecasting_authorized": False,
+        "long_horizon_census_transport_authorized": False,
+    }))
+    return 0
+
+
+def _command_longitudinal_c7_run(args: argparse.Namespace) -> int:
+    config = load_longitudinal_config(Path(args.config))
+    panel = load_c7_panel(Path(args.panel_root))
+    root = run_resource_safe_c7(
+        panel, config, Path(args.output_root), outer_fold=args.outer_fold,
+    )
+    complete = (root / "run_manifest.json").is_file()
+    sys.stdout.write(_canonical_json({
+        "status": "complete" if complete else "checkpointed",
+        "root": str(root),
+        "arm": "C7-0_vs_C7-1_L11",
+        "outer_fold": args.outer_fold,
+        "measurement_mode": True,
+        "scientific_promotion_authorized": False,
+        "restartable": True,
+    }))
+    return 0
+
+
 def _command_longitudinal_c6_compare(args: argparse.Namespace) -> int:
     comparison = compare_c6_runs(
         [Path(value).expanduser().resolve() for value in args.runs]
@@ -865,6 +910,20 @@ def _parser() -> argparse.ArgumentParser:
         help="Bounded sensitivity excluding pairs touching 2020-Q2 or 2024-Q1/Q2",
     )
     gate_b.set_defaults(handler=_command_longitudinal_gate_b)
+
+    c7_plane = sub.add_parser("longitudinal-c7-plane")
+    c7_plane.add_argument("--eph-release-root", required=True)
+    c7_plane.add_argument("--gate-b-root", required=True)
+    c7_plane.add_argument("--c6-plane-root", required=True)
+    c7_plane.add_argument("--output-root", default="runs/longitudinal/c7-planes")
+    c7_plane.set_defaults(handler=_command_longitudinal_c7_plane)
+
+    c7_run = sub.add_parser("longitudinal-c7-run")
+    c7_run.add_argument("config")
+    c7_run.add_argument("--panel-root", required=True)
+    c7_run.add_argument("--outer-fold", type=int)
+    c7_run.add_argument("--output-root", default="runs/longitudinal/c7")
+    c7_run.set_defaults(handler=_command_longitudinal_c7_run)
 
     longitudinal_c6_compare = sub.add_parser("longitudinal-c6-compare")
     longitudinal_c6_compare.add_argument("runs", nargs="+")
