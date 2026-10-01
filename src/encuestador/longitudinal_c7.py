@@ -179,7 +179,7 @@ def load_c7_panel(root: Path, *, verify_hashes: bool = True) -> C7PanelPlane:
         raise C7ContractError("c7_plane_row_or_fold_count_invalid")
     if manifest.get("feature_names") != (
         list(manifest.get("composition_features") or ())
-        + list(LABOR_CONTEXT_FIELDS) + ["elapsed_quarters", "stale_labor_state"]
+        + ["elapsed_quarters"] + list(LABOR_CONTEXT_FIELDS) + ["stale_labor_state"]
     ):
         raise C7ContractError("c7_plane_feature_schema_invalid")
     required = {
@@ -394,8 +394,8 @@ def materialize_c7_panel(
 
         comp = len(c6_plane.composition_features)
         names = (
-            *c6_plane.composition_features, *LABOR_CONTEXT_FIELDS,
-            *C7_BASE_FEATURES, *C7_L11_FEATURES,
+            *c6_plane.composition_features, *C7_BASE_FEATURES,
+            *LABOR_CONTEXT_FIELDS, *C7_L11_FEATURES,
         )
         feature_matrix = np.lib.format.open_memmap(
             staging / "features.npy", mode="w+", dtype=np.float64,
@@ -455,10 +455,9 @@ def materialize_c7_panel(
                 ):
                     raise C7ContractError("c7_selected_c6_l2_income_mismatch")
                 feature_matrix[index, :comp] = old_features[early, :comp]
-                feature_matrix[index, comp:comp+len(LABOR_CONTEXT_FIELDS)] = (
-                    old_features[late, comp:]
-                )
-                feature_matrix[index, -2:] = (int(row["gap"]), int(row["stale_state"]))
+                feature_matrix[index, comp] = int(row["gap"])
+                feature_matrix[index, comp+1:-1] = old_features[late, comp:]
+                feature_matrix[index, -1] = int(row["stale_state"])
                 output_arrays["target"][index] = target_amount
                 output_arrays["period_codes"][index] = old_period[late]
                 output_arrays["fold_ids"][index] = old_fold[late]
