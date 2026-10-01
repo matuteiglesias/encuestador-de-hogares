@@ -532,24 +532,54 @@ def run_gate_b(
                 )
         _write_csv(staging / "income_by_prior_state.csv", income_fields, income_rows)
 
+        region_counts = Counter()
+        period_pair_counts = Counter()
+        for (gap, previous, current, region), count in support.items():
+            region_counts[region] += count
+            period_pair_counts[(previous, current)] += count
+        top_region, top_region_count = (
+            region_counts.most_common(1)[0] if region_counts else ("", 0)
+        )
+        top_period_pair, top_period_pair_count = (
+            period_pair_counts.most_common(1)[0]
+            if period_pair_counts else (("", ""), 0)
+        )
+
+        def persistence(gap: int, prior: str) -> str:
+            denominator = sum(transitions[(gap, prior, later)] for later in STATES)
+            if not denominator:
+                return "n/a (n=0)"
+            return (
+                f"{transitions[(gap, prior, prior)] / denominator:.3f} "
+                f"(n={denominator:,})"
+            )
+
         note = [
             "# Gate B — descriptive real-panel evidence",
             "",
-            f"- L2 parent: \`{root.name}\` (SHA-256 \`{manifest_sha}\`).",
-            f"- Selection policy: \`{SELECTION_POLICY}\`.",
-            f"- Exceptional-period pairs excluded: \`{exclude_exceptional}\`.",
+            f"- L2 parent: `{root.name}` (SHA-256 `{manifest_sha}`).",
+            f"- Selection policy: `{SELECTION_POLICY}`.",
+            f"- Exceptional-period pairs excluded: `{exclude_exceptional}`.",
             f"- Original audited candidate links: **{original_links:,}**.",
             f"- Eligible: **{eligible:,}** ({eligible_gap[1]:,} at 1Q; {eligible_gap[3]:,} at 3Q).",
             f"- Excluded: **{sum(exclusions.values()):,}**, with exhaustive reasons in the receipt.",
             f"- Distinct eligible candidate keys: **{unique_candidates:,}**; distinct later observations: **{unique_targets:,}**.",
             "",
+            "## Descriptive support and persistence checks",
+            "",
+            f"- Later regions represented: **{len(region_counts)}**; observed period-pair windows: **{len(period_pair_counts)}**.",
+            f"- Largest later-region stratum: **{top_region}**, {top_region_count:,} pairs ({top_region_count / eligible:.1%} of selected pairs)." if eligible else "- No eligible regional stratum.",
+            f"- Largest period-pair window: **{top_period_pair[0]}→{top_period_pair[1]}**, {top_period_pair_count:,} pairs ({top_period_pair_count / eligible:.1%})." if eligible else "- No eligible period-pair window.",
+            "",
+            "Observed diagonal persistence (prior-class denominators shown):",
+            "",
             "## Reading the outputs",
             "",
-            "The 18 cells of \`transition_matrix.csv\` give counts and row-conditional",
+            "The 18 cells of `transition_matrix.csv` give counts and row-conditional",
             "probabilities separately for 1Q and 3Q. Empty denominator means no",
             "supported observation; no probability is imputed.",
             "",
-            "\`income_by_prior_state.csv\` gives later-income incidence and levels",
+            "`income_by_prior_state.csv` gives later-income incidence and levels",
             "by earlier state/gap, with valid-target and paired-income denominators.",
             "Zeros are retained; negative/missing/unusable source incomes are not zeros.",
             "",
@@ -564,6 +594,19 @@ def run_gate_b(
             "L10 baseline with household-safe folds; L12 needs separate OOF science.",
             "",
         ]
+        for gap in (1, 3):
+            note.append(
+                f"- {gap}Q E→E: {persistence(gap, '1')}; "
+                f"U→U: {persistence(gap, '2')}; "
+                f"I→I: {persistence(gap, '3')}."
+            )
+        note.append("")
+        note.append(
+            "These are observed transitions, not an assessment of L11's held-out "
+            "incremental value. Inspect the aggregate income table for later-income "
+            "association and its explicit valid-denominator counts."
+        )
+        note.append("")
         (staging / "GATE_B_NOTE.md").write_text("\n".join(note), encoding="utf-8")
         monetary = manifest.get("monetary_lineage") or {}
         monetary_parent = (manifest.get("parents") or {}).get("monetary_conversion") or {}
@@ -590,6 +633,27 @@ def run_gate_b(
             "distinct_eligible_candidate_keys": unique_candidates,
             "distinct_eligible_later_observations": unique_targets,
             "distinct_candidate_keys_by_gap": unique_by_gap,
+            "support_diagnostics": {
+                "regions_with_eligible_pairs": len(region_counts),
+                "observed_period_pair_windows": len(period_pair_counts),
+                "largest_region": top_region,
+                "largest_region_pair_count": top_region_count,
+                "largest_period_pair": list(top_period_pair),
+                "largest_period_pair_count": top_period_pair_count,
+                "diagonal_persistence": {
+                    str(gap): {
+                        STATE_LABELS[prior]: (
+                            transitions[(gap, prior, prior)] / denominator
+                            if denominator else None
+                        )
+                        for prior in STATES
+                        for denominator in (
+                            sum(transitions[(gap, prior, later)] for later in STATES),
+                        )
+                    }
+                    for gap in (1, 3)
+                },
+            },
             "exceptional_period_touching_eligible_pairs_by_gap": {
                 str(gap): exceptional_touch[gap] for gap in (1, 3)
             },
