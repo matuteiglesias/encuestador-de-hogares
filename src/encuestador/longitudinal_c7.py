@@ -234,7 +234,7 @@ def materialize_c7_panel(
         raise C7ContractError("c7_c6_target_field_changed")
     if c6_plane.manifest.get("fold_policy") != FOLD_POLICY:
         raise C7ContractError("c7_c6_fold_policy_changed")
-    manifest, hashes, manifest_sha = _verify_l2(eph_root)
+    _, hashes, manifest_sha = _verify_l2(eph_root)
     parent = (c6_plane.manifest.get("parents") or {}).get("longitudinal_eph") or {}
     if (parent.get("release_id"), parent.get("manifest_sha256")) != (
         eph_root.name, manifest_sha
@@ -292,7 +292,8 @@ def materialize_c7_panel(
             " pair_id TEXT NOT NULL, stale_id TEXT NOT NULL, target_id TEXT NOT NULL,"
             " gap INTEGER NOT NULL, stale_state INTEGER NOT NULL,"
             " target_state INTEGER NOT NULL, target_period TEXT NOT NULL,"
-            " target_income REAL NOT NULL)"
+            " target_income REAL NOT NULL, stale_period TEXT NOT NULL,"
+            " panel_group TEXT NOT NULL)"
         )
         projector = C7PairProjector()
         exclusions = Counter()
@@ -337,13 +338,15 @@ def materialize_c7_panel(
                     row["stale_observation_row_id"], row["target_observation_row_id"],
                     gap, int(row["stale_labor_state"]), int(row["target_current_labor_state"]),
                     row["target_period"], row["target_real_income"],
+                    row["stale_period"], row["panel_household_id"],
                 ))
                 accepted += 1
             if selected_batch:
                 connection.executemany(
                     "INSERT INTO selected (stale_idx,target_idx,pair_id,stale_id,"
                     "target_id,gap,stale_state,target_state,target_period"
-                    ",target_income) VALUES (?,?,?,?,?,?,?,?,?,?)", selected_batch
+                    ",target_income,stale_period,panel_group)"
+                    " VALUES (?,?,?,?,?,?,?,?,?,?,?,?)", selected_batch
                 )
             if total % 20000 == 0:
                 connection.commit()
@@ -429,9 +432,16 @@ def materialize_c7_panel(
                 early, late = int(row["stale_idx"]), int(row["target_idx"])
                 early_id, later_id = row["stale_id"], row["target_id"]
                 period = row["target_period"]
-                if labels[int(old_period[late])] != period:
-                    raise C7ContractError("c7_selected_target_period_mismatch")
-                if int(old_fold[early]) != int(old_fold[late]):
+                if (
+                    labels[int(old_period[late])] != period
+                    or labels[int(old_period[early])] != row["stale_period"]
+                ):
+                    raise C7ContractError("c7_selected_period_clock_mismatch")
+                expected_fold = _household_fold(row["panel_group"], c6_plane.n_splits)
+                if (
+                    int(old_fold[early]) != int(old_fold[late])
+                    or int(old_fold[early]) != expected_fold
+                ):
                     raise C7ContractError("c7_panel_household_fold_drift")
                 if int(old_fold[early]) >= c6_plane.n_splits:
                     raise C7ContractError("c7_panel_fold_invalid")
