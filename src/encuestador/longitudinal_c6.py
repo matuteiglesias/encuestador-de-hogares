@@ -566,6 +566,8 @@ def _nested_hurdle_oof(
     fold_train: np.ndarray,
     config: LongitudinalConfig,
     feature_names: Sequence[str],
+    *,
+    include_stale: bool = False,
 ) -> tuple[np.ndarray, np.ndarray, dict[str, Any]]:
     surviving = sorted({int(value) for value in fold_train.tolist()})
     if len(surviving) < 2:
@@ -581,7 +583,7 @@ def _nested_hurdle_oof(
         estimator = _hurdle_estimator(
             config,
             feature_names,
-            include_stale=False,
+            include_stale=include_stale,
         )
         estimator.fit(x_train[fit], y_train[fit])
         components = estimator.predict_components(x_train[holdout])
