@@ -12,8 +12,8 @@ import pytest
 
 from encuestador.longitudinal_c6 import (
     FOLD_POLICY,
-    MODEL_PLANE_CONTRACT,
     LABOR_CONTEXT_FIELDS,
+    MODEL_PLANE_CONTRACT,
     _household_fold,
     load_longitudinal_model_plane,
 )
