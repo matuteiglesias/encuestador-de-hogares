@@ -33,6 +33,7 @@ from encuestador.longitudinal_c8_run import (
     run_c8_welfare,
 )
 from encuestador.longitudinal_runtime import (
+    LABOR_CONTEXT_FIELDS,
     _categorical_positions,
     load_longitudinal_config,
 )
@@ -80,12 +81,15 @@ def five_fold_fixture(tmp_path: Path):
 
 
 def test_c8_T0_train_only_smoothing_and_three_class_order() -> None:
-    features = np.asarray(
-        [[0, 1, 1], [0, 1, 1], [0, 3, 1],
-         [0, 1, 2], [0, 3, 2], [0, 1, 3]], dtype=float,
-    )
+    def row(gap: int, prior: int) -> list[float]:
+        return [0, gap, *([0] * len(LABOR_CONTEXT_FIELDS)), prior]
+
+    features = np.asarray([
+        row(1, 1), row(1, 1), row(3, 1),
+        row(1, 2), row(3, 2), row(1, 3),
+    ], dtype=float)
     observed = np.asarray([1, 1, 2, 2, 3, 3])
-    score = np.asarray([[0, 1, 1], [0, 3, 1], [0, 3, 3]], dtype=float)
+    score = np.asarray([row(1, 1), row(3, 1), row(3, 3)], dtype=float)
     q = t0_empirical(features, observed, score)
     assert q.shape == (3, 3)
     assert np.isfinite(q).all() and (q > 0).all()
@@ -107,10 +111,15 @@ def test_c8_inner_oof_labor_labels_are_never_consumed_by_their_fold(
         config, composition_features=("P02",),
         categorical_features=("P02",),
     )
-    names = ("P02", "elapsed_quarters", "stale_labor_state")
+    names = (
+        "P02", "elapsed_quarters", *LABOR_CONTEXT_FIELDS,
+        "stale_labor_state",
+    )
     indices = np.arange(75)
     x = np.column_stack((
-        1 + indices % 2, np.where(indices % 2, 1, 3), 1 + indices % 3,
+        1 + indices % 2, np.where(indices % 2, 1, 3),
+        np.zeros((len(indices), len(LABOR_CONTEXT_FIELDS))),
+        1 + indices % 3,
     )).astype(float)
     y = np.asarray(1 + (indices // 2) % 3)
     folds = indices % 5
