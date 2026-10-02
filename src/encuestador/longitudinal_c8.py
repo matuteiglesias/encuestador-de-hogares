@@ -28,7 +28,7 @@ from .longitudinal_c6 import (
 )
 from .longitudinal_c7 import C7PanelPlane
 from .longitudinal_c7_contract import C7_COMPOSITION_PROFILE, C7ContractError
-from .longitudinal_runtime import LongitudinalConfig, _transition_factory
+from .longitudinal_runtime import LABOR_CONTEXT_FIELDS, LongitudinalConfig, _transition_factory
 
 C8_TRANSITION_CONTRACT = "research.encuestador-c8-raw-transition/v1"
 C8_WELFARE_CONTRACT = "research.encuestador-c8-raw-l12-welfare/v1"
@@ -63,7 +63,11 @@ def resolve_c8_config(
         or config.elapsed_quarters_field != "elapsed_quarters"
     ):
         raise C7ContractError("c8_labor_state_fields_changed")
-    if tuple(plane.feature_names[-2:]) != ("elapsed_quarters", "stale_labor_state"):
+    expected = (
+        *plane.manifest["composition_features"], "elapsed_quarters",
+        *LABOR_CONTEXT_FIELDS, "stale_labor_state",
+    )
+    if tuple(plane.feature_names) != expected:
         raise C7ContractError("c8_c7_feature_clock_changed")
     if plane.manifest.get("fold_policy") != FOLD_POLICY:
         raise C7ContractError("c8_group_fold_policy_changed")
@@ -96,7 +100,15 @@ def _state_codes(y: np.ndarray) -> np.ndarray:
 
 
 def _pair_codes(features: np.ndarray) -> np.ndarray:
-    pairs = np.asarray(features[:, -2:], dtype=float)
+    features = np.asarray(features, dtype=float)
+    # C7A freezes: donor P1R composition, elapsed gap, then SIX official
+    # context variables, with earlier labor as the final column.
+    if features.ndim != 2 or features.shape[1] < len(LABOR_CONTEXT_FIELDS) + 3:
+        raise C7ContractError("c8_pair_feature_schema_invalid")
+    gap_position = features.shape[1] - len(LABOR_CONTEXT_FIELDS) - 2
+    pairs = np.asarray(
+        features[:, (gap_position, features.shape[1] - 1)], dtype=float
+    )
     if (
         pairs.ndim != 2 or pairs.shape[1] != 2
         or not np.isfinite(pairs).all()
