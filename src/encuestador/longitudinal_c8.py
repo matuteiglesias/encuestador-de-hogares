@@ -28,7 +28,11 @@ from .longitudinal_c6 import (
 )
 from .longitudinal_c7 import C7PanelPlane
 from .longitudinal_c7_contract import C7_COMPOSITION_PROFILE, C7ContractError
-from .longitudinal_runtime import LABOR_CONTEXT_FIELDS, LongitudinalConfig, _transition_factory
+from .longitudinal_runtime import (
+    LABOR_CONTEXT_FIELDS,
+    LongitudinalConfig,
+    _transition_factory,
+)
 
 C8_TRANSITION_CONTRACT = "research.encuestador-c8-raw-transition/v1"
 C8_WELFARE_CONTRACT = "research.encuestador-c8-raw-l12-welfare/v1"
