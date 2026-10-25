@@ -69,10 +69,22 @@ def validate(receipt: dict[str, Any], run_id: str, attempt: str) -> None:
     require((result["scheduler_state"] == "not_applicable") == (receipt["trigger"] == "event"))
     semantic = [k for k in STAGES if k not in ("workflow", "evidence_upload")]
     complete = all(stages[k] == "success" for k in semantic)
-    require((result["artifact_state"] == "healthy")
-            == (complete and stages["evidence_upload"] == "success"))
-    if result["artifact_state"] == "healthy":
-        require(result["terminal_state"] in ("healthy", "failed"))
+    expected_execution = {"success": "healthy", "failed": "failed",
+                          "unknown": "unknown"}[stages["workflow"]]
+    require(result["execution_state"] == expected_execution)
+    semantically_failed = any(stages[k] == "failed" for k in semantic)
+    expected_artifact = (
+        "healthy" if complete and stages["evidence_upload"] == "success"
+        else "failed" if semantically_failed
+        else "degraded" if complete else "unknown"
+    )
+    require(result["artifact_state"] == expected_artifact)
+    expected_terminal = (
+        "healthy" if expected_execution == "healthy" and expected_artifact == "healthy"
+        else "failed" if expected_execution == "failed" or expected_artifact == "failed"
+        else "degraded" if expected_artifact == "degraded" else "unknown"
+    )
+    require(result["terminal_state"] == expected_terminal)
     outputs = receipt["outputs"]
     require(isinstance(outputs, list) and len(outputs) == 1)
     o = outputs[0]
@@ -112,6 +124,14 @@ def validate(receipt: dict[str, Any], run_id: str, attempt: str) -> None:
                  "comparison_" + prefixes[0].split(":")[1])
         require(stages[stage] == "success")
         seen.add(prefixes[0])
+    # References are mandatory exactly for successfully verified bundles and
+    # comparisons, not merely validated when the caller happens to provide them.
+    for name in MATRIX.values():
+        prefix = f"run-manifest-sha256:{name}:"
+        require((prefix in seen) == (stages[f"bundle_{name}"] == "success"))
+    for name in PAIRS:
+        prefix = f"comparison-sha256:{name}:"
+        require((prefix in seen) == (stages[f"comparison_{name}"] == "success"))
     # No free-form source values can cross the GCP boundary.
     serialized = canonical_json(receipt).lower()
     require(len(serialized) <= 14000)

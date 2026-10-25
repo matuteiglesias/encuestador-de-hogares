@@ -246,3 +246,33 @@ def test_upload_failure_does_not_retroactively_invalidate_computation(fixture):
     assert rec["result"]["execution_state"] == "failed"
     assert rec["outputs"][0]["state"] == "partial"
     build_entry(rec, "39617231503", "1")
+
+
+def test_exporter_rejects_missing_required_evidence_hash(fixture):
+    rec = _receipt(fixture)
+    rec["evidence_refs"] = [
+        ref for ref in rec["evidence_refs"] if not ref.startswith("comparison-sha256:terminal_lean:")
+    ]
+    with pytest.raises(ExportError):
+        build_entry(rec, "39617231503", "1")
+
+
+def test_exporter_rejects_inconsistent_execution_status(fixture):
+    rec = _receipt(fixture)
+    rec["stages"]["workflow"] = "failed"
+    rec["warnings"] = ["workflow:failed", "bounded_science_evidence_not_public_release"]
+    # Otherwise-healthy stage claims may not override a failed job.
+    with pytest.raises(ExportError):
+        build_entry(rec, "39617231503", "1")
+
+
+def test_exporter_rejects_contradictory_terminal_or_artifact(fixture):
+    rec = _receipt(fixture)
+    rec["result"]["terminal_state"] = "failed"
+    with pytest.raises(ExportError):
+        build_entry(rec, "39617231503", "1")
+    rec = _receipt(fixture)
+    rec["result"]["artifact_state"] = "degraded"
+    rec["outputs"][0]["state"] = "partial"
+    with pytest.raises(ExportError):
+        build_entry(rec, "39617231503", "1")

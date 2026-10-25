@@ -7,6 +7,8 @@ on:
     # lighter Wednesday welfare and Poverty pulses.
     - cron: "17 9 * * 3"
   pull_request:
+    # Receipt-only scripts are tested by synthetic-transport CI without
+    # rerunning this expensive pinned scientific workflow solely for telemetry.
     paths:
       - .github/workflows/real-eph-2024q3-acceptance.yml
       - pyproject.toml
