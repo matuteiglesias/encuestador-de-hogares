@@ -38,6 +38,9 @@ jobs:
       OPENBLAS_NUM_THREADS: "2"
       MKL_NUM_THREADS: "2"
     steps:
+      - name: Capture job start for producer receipt
+        run: echo "PRODUCER_STARTED_AT=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> "$GITHUB_ENV"
+
       - uses: actions/checkout@v4
 
       - uses: actions/setup-python@v5
@@ -196,6 +199,7 @@ jobs:
           PY
 
       - name: Upload governed real-EPH evidence
+        id: science_evidence
         uses: actions/upload-artifact@v4
         with:
           name: real-eph-2024q3-science-evidence
@@ -207,3 +211,103 @@ jobs:
             /tmp/cli-output
           if-no-files-found: error
           retention-days: 14
+
+      # The canonical receipt is not a claim of promoted welfare data. It
+      # inspects the completed science outputs, including failed/partial runs.
+      - name: Emit independent scientific acceptance receipt
+        id: science_receipt
+        if: always()
+        env:
+          PRODUCER_JOB_STATUS: ${{ job.status }}
+          SCIENCE_UPLOAD_OUTCOME: ${{ steps.science_evidence.outcome }}
+        run: |
+          mkdir -p receipt-evidence
+          PYTHONPATH=src python3 scripts/emit_real_eph_receipt.py \
+            --scheduler-run-id "${{ github.run_id }}" \
+            --attempt "${{ github.run_attempt }}" \
+            --event "${{ github.event_name }}" \
+            --job-status "$PRODUCER_JOB_STATUS" \
+            --evidence-upload "$SCIENCE_UPLOAD_OUTCOME" \
+            --started-at "${PRODUCER_STARTED_AT:-$(date -u +%Y-%m-%dT%H:%M:%SZ)}" \
+            --output "receipt-evidence/real-eph-${{ github.run_id }}-${{ github.run_attempt }}.json"
+
+      - name: Preserve metadata-only receipt for recovery
+        if: always()
+        continue-on-error: true
+        uses: actions/upload-artifact@v4
+        with:
+          name: real-eph-acceptance-receipt-${{ github.run_id }}-${{ github.run_attempt }}
+          path: receipt-evidence/real-eph-${{ github.run_id }}-${{ github.run_attempt }}.json
+          if-no-files-found: warn
+          retention-days: 14
+
+  # OIDC permissions exist only in this isolated, default-branch-only job;
+  # pull-request and fork code cannot request Cloud Logging credentials.
+  export-science-receipt:
+    needs: real-eph-science
+    if: >-
+      ${{ always() && github.ref == 'refs/heads/main' &&
+          (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    continue-on-error: true
+    permissions:
+      contents: read
+      actions: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download source-owned receipt (not raw science)
+        id: receipt_download
+        continue-on-error: true
+        uses: actions/download-artifact@v4
+        with:
+          name: real-eph-acceptance-receipt-${{ github.run_id }}-${{ github.run_attempt }}
+          path: receipt-evidence
+
+      - name: Validate privacy and canonical projection before authentication
+        id: receipt_validate
+        if: steps.receipt_download.outcome == 'success'
+        continue-on-error: true
+        run: |
+          python3 scripts/export_real_eph_receipt_gcp.py \
+            --receipt "receipt-evidence/real-eph-${{ github.run_id }}-${{ github.run_attempt }}.json" \
+            --scheduler-run-id "${{ github.run_id }}" \
+            --attempt "${{ github.run_attempt }}" --validate-only
+
+      - name: Authenticate dedicated Cloud Logging writer using GitHub OIDC
+        id: gcp_auth
+        if: steps.receipt_validate.outcome == 'success'
+        continue-on-error: true
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: estate-observability-510700
+          workload_identity_provider: projects/456183330588/locations/global/workloadIdentityPools/estate-producer-github/providers/welfare-real-eph-main-oidc
+          service_account: estate-welfare-receipt-writer@estate-observability-510700.iam.gserviceaccount.com
+
+      - name: Export metadata receipt with dry-run then write
+        id: gcp_write
+        if: steps.gcp_auth.outcome == 'success'
+        continue-on-error: true
+        run: |
+          python3 -m pip install 'google-auth>=2.30,<3' 'requests>=2.31,<3'
+          python3 scripts/export_real_eph_receipt_gcp.py \
+            --receipt "receipt-evidence/real-eph-${{ github.run_id }}-${{ github.run_attempt }}.json" \
+            --scheduler-run-id "${{ github.run_id }}" \
+            --attempt "${{ github.run_attempt }}" --write
+
+      - name: Report transport independently of scientific execution
+        if: always()
+        env:
+          DOWNLOAD: ${{ steps.receipt_download.outcome }}
+          VALIDATE: ${{ steps.receipt_validate.outcome }}
+          AUTH: ${{ steps.gcp_auth.outcome }}
+          WRITE: ${{ steps.gcp_write.outcome }}
+        run: |
+          if [[ "$WRITE" == success ]]; then
+            echo "Canonical real-EPH receipt exported to Cloud Logging." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "Receipt transport unavailable (download=$DOWNLOAD validate=$VALIDATE auth=$AUTH write=$WRITE); science result unchanged." >> "$GITHUB_STEP_SUMMARY"
+            echo "::warning::Real-EPH Cloud Logging receipt transport unavailable; science result unchanged."
+          fi
