@@ -16,6 +16,7 @@ import argparse
 import hashlib
 import json
 from pathlib import Path
+from datetime import datetime, timezone
 
 import pandas as pd
 
@@ -229,6 +230,46 @@ def parser() -> argparse.ArgumentParser:
     return p
 
 
+def utc_timestamp() -> str:
+    return datetime.now(timezone.utc).isoformat(timespec="microseconds").replace("+00:00", "Z")
+
+
+def record_successful_release_run(root: Path, started_at: str, finished_at: str) -> Path:
+    """Prove a genuine command invocation without modifying scientific outputs.
+
+    This sidecar is deliberately excluded from the immutable scientific release
+    manifest and checksums. It is not a scientific promotion/approval.
+    """
+    manifest_path = root / "manifest.json"
+    manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    if manifest.get("release_id") != root.name or manifest.get("artifact_type") != ARTIFACT_TYPE:
+        raise ValueError("predictive release identity mismatch")
+    proof = {
+        "contract": "observability:source-execution@1",
+        "producer_id": "producer.event.welfare-predictive-release",
+        "run_id": manifest["release_id"],
+        "source_kind": "producer_run_record",
+        "started_at": started_at,
+        "finished_at": finished_at,
+        "manifest_sha256": sha256(manifest_path),
+    }
+    evidence_path = root / "source_execution_proof.json"
+    if evidence_path.exists():
+        raise FileExistsError("predictive release source proof already exists")
+    evidence_path.write_text(json.dumps(proof, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    return evidence_path
+
+
 if __name__ == "__main__":
     args = parser().parse_args()
-    print(build_release(args))
+    started = utc_timestamp()
+    release_root = build_release(args)
+    finished = utc_timestamp()
+    try:
+        record_successful_release_run(release_root, started, finished)
+    except (OSError, ValueError) as exc:
+        # Telemetry proof is independent of scientific release success.
+        # Do not echo filesystem paths or dataset details to stderr.
+        import sys
+        print(f"WP04 source proof unavailable ({type(exc).__name__})", file=sys.stderr)
+    print(release_root)
